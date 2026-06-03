@@ -1,0 +1,4 @@
+company,contact,email,phone,lanes,equipment,volume,notes
+Peachtree Building Supply,Mason Keller,mason@peachtree.example,(404) 555-0148,"Atlanta -> Dallas; Marietta -> Charlotte",Dry van,18-24 loads/mo,Spot rates swing weekly and current provider is slow on PODs
+Southline Foods,Erica Walsh,erica@southline.example,(678) 555-0182,Savannah -> Nashville,Reefer,8-12 loads/mo,Needs appointment discipline and proactive temperature updates
+North Metro Packaging,Chris Duarte,chris@northmetro.example,(770) 555-0160,Atlanta -> Orlando,Dry van,10 loads/mo,Wants fewer missed pickups during end-of-month surges

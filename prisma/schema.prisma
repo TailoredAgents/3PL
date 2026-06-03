@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  SALES
+  OPS
+  ADMIN
+}
+
+enum ShipperStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  QUOTED
+  WON
+  LOST
+}
+
+enum LeadSource {
+  AUDIT
+  QUOTE_FORM
+  REFERRAL
+  MANUAL
+  OUTBOUND
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  SMS
+  NOTE
+  AI_TOUCH
+  MEETING
+}
+
+enum ActivityDirection {
+  INBOUND
+  OUTBOUND
+  INTERNAL
+}
+
+enum AuditStatus {
+  SUBMITTED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum QuoteRequestStatus {
+  NEW
+  PRICING
+  QUOTED
+  ACCEPTED
+  REJECTED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum LoadStatus {
+  TENDERED
+  BOOKED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  POD_RECEIVED
+  INVOICED
+  PAID
+}
+
+enum ComplianceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum CarrierQuoteStatus {
+  REQUESTED
+  RECEIVED
+  ACCEPTED
+  REJECTED
+}
+
+enum ShipmentEventType {
+  PICKUP_CONFIRMED
+  LOCATION_UPDATE
+  DELAY
+  DELIVERED
+  POD_UPLOADED
+}
+
+enum DocumentType {
+  INVOICE
+  POD
+  RATE_CONFIRMATION
+  AUDIT_UPLOAD
+  OTHER
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum AiAgentStatus {
+  STARTED
+  COMPLETED
+  FAILED
+  NEEDS_HUMAN_APPROVAL
+}
+
+model User {
+  id         String          @id @default(cuid())
+  name       String
+  email      String          @unique
+  role       UserRole        @default(SALES)
+  phone      String?
+  leads      Lead[]          @relation("LeadOwner")
+  activities Activity[]
+  quotes     CustomerQuote[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Shipper {
+  id            String         @id @default(cuid())
+  companyName   String
+  website       String?
+  industry      String?
+  status        ShipperStatus  @default(LEAD)
+  source        LeadSource?
+  notes         String?
+  contacts      Contact[]
+  leads         Lead[]
+  activities    Activity[]
+  audits        SavingsAudit[]
+  quoteRequests QuoteRequest[]
+  loads         Load[]
+  documents     Document[]
+  invoices      Invoice[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([companyName])
+  @@index([status])
+}
+
+model Contact {
+  id            String         @id @default(cuid())
+  shipperId     String
+  shipper       Shipper        @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String?
+  title         String?
+  email         String?
+  phone         String?
+  isPrimary     Boolean        @default(false)
+  leads         Lead[]
+  activities    Activity[]
+  audits        SavingsAudit[]
+  quoteRequests QuoteRequest[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([email])
+  @@index([shipperId])
+}
+
+model Lead {
+  id                    String     @id @default(cuid())
+  shipperId             String
+  shipper               Shipper    @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  contactId             String?
+  contact               Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  ownerUserId           String?
+  owner                 User?      @relation("LeadOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  stage                 LeadStage  @default(NEW)
+  source                LeadSource @default(MANUAL)
+  priority              Int        @default(3)
+  nextFollowUpAt        DateTime?
+  estimatedMonthlySpend Decimal?   @db.Decimal(12, 2)
+  notes                 String?
+  activities            Activity[]
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  @@index([stage])
+  @@index([source])
+  @@index([nextFollowUpAt])
+}
+
+model Activity {
+  id        String            @id @default(cuid())
+  leadId    String?
+  lead      Lead?             @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  shipperId String?
+  shipper   Shipper?          @relation(fields: [shipperId], references: [id], onDelete: SetNull)
+  contactId String?
+  contact   Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  userId    String?
+  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type      ActivityType
+  direction ActivityDirection @default(INTERNAL)
+  subject   String?
+  body      String?
+  outcome   String?
+  createdAt DateTime          @default(now())
+
+  @@index([leadId])
+  @@index([shipperId])
+  @@index([createdAt])
+}
+
+model SavingsAudit {
+  id                   String      @id @default(cuid())
+  shipperId            String
+  shipper              Shipper     @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  contactId            String?
+  contact              Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  status               AuditStatus @default(SUBMITTED)
+  extractedLanes       Json?
+  estimatedSavingsLow  Decimal?    @db.Decimal(12, 2)
+  estimatedSavingsHigh Decimal?    @db.Decimal(12, 2)
+  reportSummary        String?
+  reportUrl            String?
+  grokConfidence       Decimal?    @db.Decimal(5, 2)
+  documents            Document[]
+  createdAt            DateTime    @default(now())
+  completedAt          DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model QuoteRequest {
+  id                  String             @id @default(cuid())
+  shipperId           String
+  shipper             Shipper            @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  contactId           String?
+  contact             Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  originCity          String
+  originState         String
+  destinationCity     String
+  destinationState    String
+  pickupDate          DateTime?
+  deliveryDate        DateTime?
+  equipmentType       String
+  commodity           String?
+  weight              Int?
+  specialRequirements String?
+  status              QuoteRequestStatus @default(NEW)
+  customerQuotes      CustomerQuote[]
+  loads               Load[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([status])
+  @@index([pickupDate])
+}
+
+model CustomerQuote {
+  id                   String       @id @default(cuid())
+  quoteRequestId       String
+  quoteRequest         QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  quotedRate           Decimal      @db.Decimal(12, 2)
+  targetCarrierCost    Decimal?     @db.Decimal(12, 2)
+  projectedGrossProfit Decimal?     @db.Decimal(12, 2)
+  marginPercent        Decimal?     @db.Decimal(5, 2)
+  status               QuoteStatus  @default(DRAFT)
+  validUntil           DateTime?
+  createdByUserId      String?
+  createdBy            User?        @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt            DateTime     @default(now())
+
+  @@index([status])
+}
+
+model Load {
+  id             String          @id @default(cuid())
+  quoteRequestId String?
+  quoteRequest   QuoteRequest?   @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  shipperId      String
+  shipper        Shipper         @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  carrierId      String?
+  carrier        Carrier?        @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  status         LoadStatus      @default(TENDERED)
+  customerRate   Decimal         @db.Decimal(12, 2)
+  carrierRate    Decimal?        @db.Decimal(12, 2)
+  grossProfit    Decimal?        @db.Decimal(12, 2)
+  pickupDate     DateTime?
+  deliveryDate   DateTime?
+  carrierQuotes  CarrierQuote[]
+  events         ShipmentEvent[]
+  documents      Document[]
+  invoice        Invoice?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([status])
+  @@index([pickupDate])
+}
+
+model Carrier {
+  id               String           @id @default(cuid())
+  companyName      String
+  mcNumber         String?
+  dotNumber        String?
+  contactName      String?
+  phone            String?
+  email            String?
+  complianceStatus ComplianceStatus @default(PENDING)
+  preferredLanes   Json?
+  notes            String?
+  loads            Load[]
+  carrierQuotes    CarrierQuote[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([companyName])
+  @@index([mcNumber])
+  @@index([dotNumber])
+  @@index([complianceStatus])
+}
+
+model CarrierQuote {
+  id         String             @id @default(cuid())
+  loadId     String
+  load       Load               @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  carrierId  String
+  carrier    Carrier            @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  quotedRate Decimal            @db.Decimal(12, 2)
+  status     CarrierQuoteStatus @default(REQUESTED)
+  notes      String?
+  createdAt  DateTime           @default(now())
+
+  @@index([loadId])
+  @@index([carrierId])
+  @@index([status])
+}
+
+model ShipmentEvent {
+  id         String            @id @default(cuid())
+  loadId     String
+  load       Load              @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  type       ShipmentEventType
+  message    String
+  location   String?
+  occurredAt DateTime
+  createdAt  DateTime          @default(now())
+
+  @@index([loadId])
+  @@index([occurredAt])
+}
+
+model Document {
+  id             String        @id @default(cuid())
+  shipperId      String?
+  shipper        Shipper?      @relation(fields: [shipperId], references: [id], onDelete: SetNull)
+  loadId         String?
+  load           Load?         @relation(fields: [loadId], references: [id], onDelete: SetNull)
+  savingsAuditId String?
+  savingsAudit   SavingsAudit? @relation(fields: [savingsAuditId], references: [id], onDelete: SetNull)
+  type           DocumentType
+  fileName       String
+  fileUrl        String
+  extractedText  String?
+  createdAt      DateTime      @default(now())
+
+  @@index([shipperId])
+  @@index([loadId])
+  @@index([savingsAuditId])
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  loadId    String        @unique
+  load      Load          @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  shipperId String
+  shipper   Shipper       @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  amount    Decimal       @db.Decimal(12, 2)
+  status    InvoiceStatus @default(DRAFT)
+  dueDate   DateTime?
+  paidAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([status])
+  @@index([dueDate])
+}
+
+model AiAgentRun {
+  id                String        @id @default(cuid())
+  agentName         String
+  relatedEntityType String?
+  relatedEntityId   String?
+  status            AiAgentStatus @default(STARTED)
+  prompt            String?
+  inputJson         Json?
+  outputJson        Json?
+  confidence        Decimal?      @db.Decimal(5, 2)
+  errorMessage      String?
+  createdAt         DateTime      @default(now())
+
+  @@index([agentName])
+  @@index([relatedEntityType, relatedEntityId])
+  @@index([createdAt])
+}

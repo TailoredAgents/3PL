@@ -250,6 +250,130 @@ export function ActivityCreateForm({ leadId }: { leadId: string }) {
   );
 }
 
+export function CarrierCreateForm() {
+  const { state, onSubmit } = useCrmSubmit("/api/carriers");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="companyName" label="Carrier company" required />
+        <Field name="contactName" label="Dispatch contact" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="mcNumber" label="MC number" />
+        <Field name="dotNumber" label="DOT number" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="email" label="Email" type="email" />
+        <Field name="phone" label="Phone" />
+      </div>
+      <Select
+        name="complianceStatus"
+        label="Compliance"
+        options={["PENDING", "APPROVED", "REJECTED", "EXPIRED"]}
+      />
+      <Field
+        name="preferredLanes"
+        label="Preferred lanes"
+        placeholder="Atlanta -> Dallas; Atlanta -> Orlando"
+      />
+      <Textarea name="notes" label="Carrier notes" />
+      <FormFooter state={state} buttonLabel="Create carrier" />
+    </form>
+  );
+}
+
+export function LoadCreateForm() {
+  const { state, onSubmit } = useCrmSubmit("/api/loads");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="shipperCompanyName" label="Shipper" required />
+        <Field name="carrierCompanyName" label="Carrier" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Field name="originCity" label="Origin city" required />
+        <Field name="originState" label="State" required placeholder="GA" />
+        <Field name="destinationCity" label="Destination city" required />
+        <Field name="destinationState" label="State" required placeholder="TX" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="equipmentType" label="Equipment" required />
+        <Field name="pickupDate" label="Pickup" type="date" />
+        <Field name="deliveryDate" label="Delivery" type="date" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="customerRate" label="Customer rate" type="number" required />
+        <Field name="carrierRate" label="Carrier rate" type="number" />
+      </div>
+      <Textarea name="notes" label="Load notes" />
+      <FormFooter state={state} buttonLabel="Create load" />
+    </form>
+  );
+}
+
+export function LoadUpdateForm({
+  loadId,
+  currentStatus,
+}: {
+  loadId: string;
+  currentStatus: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}`, "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Select
+          name="status"
+          label="Status"
+          options={[
+            "TENDERED",
+            "BOOKED",
+            "PICKED_UP",
+            "IN_TRANSIT",
+            "DELIVERED",
+            "POD_RECEIVED",
+            "INVOICED",
+            "PAID",
+          ]}
+          defaultValue={enumValue(currentStatus)}
+        />
+        <Field name="carrierRate" label="Carrier rate" type="number" />
+      </div>
+      <Textarea name="notes" label="Status note" />
+      <FormFooter state={state} buttonLabel="Update load" />
+    </form>
+  );
+}
+
+export function ShipmentEventCreateForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/events`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Select
+          name="type"
+          label="Type"
+          options={[
+            "PICKUP_CONFIRMED",
+            "LOCATION_UPDATE",
+            "DELAY",
+            "DELIVERED",
+            "POD_UPLOADED",
+          ]}
+        />
+        <Field name="location" label="Location" />
+        <Field name="occurredAt" label="Occurred at" type="datetime-local" />
+      </div>
+      <Textarea name="message" label="Tracking message" />
+      <FormFooter state={state} buttonLabel="Add event" />
+    </form>
+  );
+}
+
 function Field({
   label,
   name,

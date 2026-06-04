@@ -1,10 +1,20 @@
-import { activities, leads, quoteRequests, shippers } from "@/lib/data";
+import {
+  activities,
+  carriers,
+  leads,
+  loads,
+  quoteRequests,
+  shippers,
+} from "@/lib/data";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
 export type ShipperView = (typeof shippers)[number];
 export type QuoteRequestView = (typeof quoteRequests)[number];
+export type CarrierView = (typeof carriers)[number];
+export type LoadView = (typeof loads)[number];
+export type LoadDetailView = LoadView;
 
 export type LeadDetailView = LeadView & {
   source: string;
@@ -312,6 +322,105 @@ export async function getQuoteRequestViews(): Promise<QuoteRequestView[]> {
   }
 }
 
+export async function getCarrierViews(): Promise<CarrierView[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return carriers;
+  }
+
+  try {
+    const records = await prisma.carrier.findMany({
+      include: {
+        loads: {
+          select: { id: true },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    });
+
+    if (!records.length) {
+      return carriers;
+    }
+
+    return records.map((carrier) => ({
+      id: carrier.id,
+      company: carrier.companyName,
+      mcNumber: carrier.mcNumber ?? "MC needed",
+      dotNumber: carrier.dotNumber ?? "DOT needed",
+      contact: carrier.contactName ?? "Dispatch",
+      phone: carrier.phone ?? "No phone",
+      email: carrier.email ?? "No email",
+      complianceStatus: titleCaseEnum(carrier.complianceStatus),
+      preferredLanes: Array.isArray(carrier.preferredLanes)
+        ? carrier.preferredLanes.map(String)
+        : ["Lane history needed"],
+      notes: carrier.notes ?? "No notes yet.",
+      loadCount: carrier.loads.length,
+    }));
+  } catch {
+    return carriers;
+  }
+}
+
+export async function getLoadViews(): Promise<LoadView[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return loads;
+  }
+
+  try {
+    const records = await prisma.load.findMany({
+      include: {
+        shipper: true,
+        carrier: true,
+        events: {
+          orderBy: { occurredAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: [{ pickupDate: "asc" }, { updatedAt: "desc" }],
+      take: 100,
+    });
+
+    if (!records.length) {
+      return loads;
+    }
+
+    return records.map((load) => mapLoad(load));
+  } catch {
+    return loads;
+  }
+}
+
+export async function getLoadDetailView(
+  id: string,
+): Promise<LoadDetailView | null> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return loads.find((load) => load.id === id) ?? null;
+  }
+
+  try {
+    const load = await prisma.load.findUnique({
+      where: { id },
+      include: {
+        shipper: true,
+        carrier: true,
+        events: {
+          orderBy: { occurredAt: "desc" },
+          take: 50,
+        },
+      },
+    });
+
+    if (!load) {
+      return null;
+    }
+
+    return mapLoad(load);
+  } catch {
+    return loads.find((load) => load.id === id) ?? null;
+  }
+}
+
 function formatContactName(
   contact:
     | {
@@ -378,4 +487,60 @@ function splitList(value: string | undefined) {
     .split(";")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function mapLoad(load: {
+  id: string;
+  shipper: { companyName: string };
+  carrier?: { companyName: string } | null;
+  originCity: string;
+  originState: string;
+  destinationCity: string;
+  destinationState: string;
+  equipmentType: string;
+  status: string;
+  pickupDate?: Date | null;
+  deliveryDate?: Date | null;
+  customerRate: unknown;
+  carrierRate?: unknown | null;
+  grossProfit?: unknown | null;
+  events: Array<{
+    type: string;
+    message: string;
+    location?: string | null;
+    occurredAt: Date;
+  }>;
+}) {
+  const customerRate = Number(load.customerRate);
+  const carrierRate = load.carrierRate ? Number(load.carrierRate) : 0;
+  const margin =
+    load.grossProfit !== null && load.grossProfit !== undefined
+      ? Number(load.grossProfit)
+      : carrierRate
+        ? customerRate - carrierRate
+        : 0;
+
+  return {
+    id: load.id,
+    shipper: load.shipper.companyName,
+    carrier: load.carrier?.companyName ?? "Carrier needed",
+    lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
+    equipment: load.equipmentType,
+    status: titleCaseEnum(load.status),
+    pickup: load.pickupDate ? formatDate(load.pickupDate) : "Not set",
+    delivery: load.deliveryDate ? formatDate(load.deliveryDate) : "Not set",
+    customerRate,
+    carrierRate,
+    margin,
+    marginPercent: customerRate ? Number(((margin / customerRate) * 100).toFixed(1)) : 0,
+    risk:
+      load.events[0]?.message ??
+      "No recent tracking event. Add an update before contacting the shipper.",
+    events: load.events.map((event) => ({
+      type: titleCaseEnum(event.type),
+      message: event.message,
+      location: event.location ?? "Location not set",
+      time: formatFollowUp(event.occurredAt),
+    })),
+  };
 }

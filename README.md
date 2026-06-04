@@ -26,6 +26,9 @@ Included now:
 - Lead activity creation
 - Shippers and contacts page
 - Quote request queue page
+- Carrier management page
+- Load operations page
+- Load detail page with status updates and tracking events
 - Database-backed CRM read helpers with sample-data fallback
 - Create lead form and API
 - Create shipper/contact form and API
@@ -38,6 +41,7 @@ Included now:
 - Prisma schema for the core brokerage domain
 - API routes for audit intake and quote intake
 - API routes for CRM creation and contact import
+- API routes for carrier/load creation and load tracking
 - Health check endpoint at `/api/health`
 - Grok/xAI wrapper with local fallback behavior
 - Render/Postgres-oriented environment template
@@ -217,6 +221,9 @@ Useful local routes:
 /leads/[id]   Lead detail, update form, and activity logging
 /shippers     Shipper company and contact records
 /quote-requests Quote request queue and create form
+/carriers     Carrier management and create form
+/loads        Load operations and create form
+/loads/[id]   Load detail, status update, and shipment timeline
 /portal       Shipper portal shell
 ```
 
@@ -774,11 +781,22 @@ Remaining:
 
 ### Milestone 5: TMS Core
 
+Status: started.
+
+- Carrier management page
+- Create carrier API/form
+- Load operations page
+- Create load API/form
+- Load detail page
+- Load status update API/form
+- Shipment event API/form
+- Shipment timeline
+- Customer rate, carrier rate, margin, and margin percent views
+
+Remaining:
+
 - Convert accepted quote to load
-- Add carrier records
 - Add carrier quotes
-- Add load status workflow
-- Add shipment events
 - Add POD upload
 - Add invoice generation
 

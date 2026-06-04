@@ -123,6 +123,8 @@ After deploy, open:
 /leads
 /shippers
 /quote-requests
+/carriers
+/loads
 ```
 
 Expected behavior:
@@ -135,6 +137,10 @@ Expected behavior:
 - create lead works.
 - create shipper works.
 - create quote request works.
+- create carrier works.
+- create load works.
+- load status updates work.
+- shipment event timeline works.
 - CSV import parses `docs/sample-contacts.csv`.
 - records remain after page refresh.
 
@@ -151,11 +157,16 @@ Test in this order:
 7. Add activity
 8. Create shipper/contact
 9. Create quote request
-10. Upload CSV contacts
-11. Public savings audit form
-12. Public instant quote form
-13. Intake queue
-14. Health check
+10. Create carrier
+11. Create load
+12. Open load detail
+13. Update load status
+14. Add shipment event
+15. Upload CSV contacts
+16. Public savings audit form
+17. Public instant quote form
+18. Intake queue
+19. Health check
 
 ## 8. Known Temporary Choices
 

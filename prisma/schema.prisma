@@ -297,25 +297,32 @@ model CustomerQuote {
 }
 
 model Load {
-  id             String          @id @default(cuid())
-  quoteRequestId String?
-  quoteRequest   QuoteRequest?   @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
-  shipperId      String
-  shipper        Shipper         @relation(fields: [shipperId], references: [id], onDelete: Cascade)
-  carrierId      String?
-  carrier        Carrier?        @relation(fields: [carrierId], references: [id], onDelete: SetNull)
-  status         LoadStatus      @default(TENDERED)
-  customerRate   Decimal         @db.Decimal(12, 2)
-  carrierRate    Decimal?        @db.Decimal(12, 2)
-  grossProfit    Decimal?        @db.Decimal(12, 2)
-  pickupDate     DateTime?
-  deliveryDate   DateTime?
-  carrierQuotes  CarrierQuote[]
-  events         ShipmentEvent[]
-  documents      Document[]
-  invoice        Invoice?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id               String          @id @default(cuid())
+  quoteRequestId   String?
+  quoteRequest     QuoteRequest?   @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  shipperId        String
+  shipper          Shipper         @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  carrierId        String?
+  carrier          Carrier?        @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  status           LoadStatus      @default(TENDERED)
+  originCity       String          @default("Unknown")
+  originState      String          @default("NA")
+  destinationCity  String          @default("Unknown")
+  destinationState String          @default("NA")
+  equipmentType    String          @default("Dry van")
+  commodity        String?
+  weight           Int?
+  customerRate     Decimal         @db.Decimal(12, 2)
+  carrierRate      Decimal?        @db.Decimal(12, 2)
+  grossProfit      Decimal?        @db.Decimal(12, 2)
+  pickupDate       DateTime?
+  deliveryDate     DateTime?
+  carrierQuotes    CarrierQuote[]
+  events           ShipmentEvent[]
+  documents        Document[]
+  invoice          Invoice?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([status])
   @@index([pickupDate])

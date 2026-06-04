@@ -93,6 +93,63 @@ export const activityCreateSchema = z.object({
   outcome: z.string().trim().optional(),
 });
 
+export const carrierCreateSchema = z.object({
+  companyName: requiredString,
+  mcNumber: z.string().trim().optional(),
+  dotNumber: z.string().trim().optional(),
+  contactName: z.string().trim().optional(),
+  phone: z.string().trim().optional(),
+  email: z.email().optional().or(z.literal("")),
+  complianceStatus: z
+    .enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"])
+    .default("PENDING"),
+  preferredLanes: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const loadCreateSchema = z.object({
+  shipperCompanyName: requiredString,
+  carrierCompanyName: z.string().trim().optional(),
+  originCity: requiredString,
+  originState: requiredString,
+  destinationCity: requiredString,
+  destinationState: requiredString,
+  equipmentType: requiredString,
+  customerRate: z.coerce.number().nonnegative(),
+  carrierRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  pickupDate: z.string().trim().optional(),
+  deliveryDate: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const loadUpdateSchema = z.object({
+  status: z.enum([
+    "TENDERED",
+    "BOOKED",
+    "PICKED_UP",
+    "IN_TRANSIT",
+    "DELIVERED",
+    "POD_RECEIVED",
+    "INVOICED",
+    "PAID",
+  ]),
+  carrierRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  notes: z.string().trim().optional(),
+});
+
+export const shipmentEventCreateSchema = z.object({
+  type: z.enum([
+    "PICKUP_CONFIRMED",
+    "LOCATION_UPDATE",
+    "DELAY",
+    "DELIVERED",
+    "POD_UPLOADED",
+  ]),
+  message: requiredString,
+  location: z.string().trim().optional(),
+  occurredAt: z.string().trim().optional(),
+});
+
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
@@ -100,3 +157,7 @@ export type ShipperCreateInput = z.infer<typeof shipperCreateSchema>;
 export type InternalQuoteCreateInput = z.infer<typeof internalQuoteCreateSchema>;
 export type LeadUpdateInput = z.infer<typeof leadUpdateSchema>;
 export type ActivityCreateInput = z.infer<typeof activityCreateSchema>;
+export type CarrierCreateInput = z.infer<typeof carrierCreateSchema>;
+export type LoadCreateInput = z.infer<typeof loadCreateSchema>;
+export type LoadUpdateInput = z.infer<typeof loadUpdateSchema>;
+export type ShipmentEventCreateInput = z.infer<typeof shipmentEventCreateSchema>;

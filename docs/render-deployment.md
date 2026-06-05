@@ -157,6 +157,8 @@ Expected behavior:
 - carrier candidate quote-request status works.
 - shipment event timeline works.
 - customer update logging works.
+- generated rate confirmation draft works after an approved carrier is assigned.
+- printable rate confirmation opens.
 - rate confirmation status updates work.
 - load document/POD metadata logging works.
 - carrier compliance updates work and pending carriers cannot be accepted.
@@ -193,12 +195,14 @@ Test in this order:
 23. Update load status
 24. Add shipment event
 25. Add customer update
-26. Update rate confirmation status
-27. Add load document metadata
-28. Add POD document metadata and confirm POD event appears
-29. Update carrier compliance and confirm pending carriers cannot be accepted
-30. Save Settings call recording disclosure
-31. Upload CSV contacts
+26. Draft generated rate confirmation
+27. Open printable rate confirmation
+28. Update rate confirmation status
+29. Add load document metadata
+30. Add POD document metadata and confirm POD event appears
+31. Update carrier compliance and confirm pending carriers cannot be accepted
+32. Save Settings call recording disclosure
+33. Upload CSV contacts
 29. Public savings audit form
 30. Public instant quote form
 31. Intake queue

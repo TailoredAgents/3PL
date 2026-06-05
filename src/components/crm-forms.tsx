@@ -798,6 +798,18 @@ export function RateConfirmationForm({
   );
 }
 
+export function RateConfirmationGenerateForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/rate-confirmation/generate`,
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Draft rate confirmation" />
+    </form>
+  );
+}
+
 export function CarrierQuoteCreateForm({ loadId }: { loadId: string }) {
   const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/carrier-quotes`);
 

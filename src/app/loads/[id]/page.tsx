@@ -27,6 +27,7 @@ import {
   DocumentCreateForm,
   InvoiceCreateForm,
   LoadUpdateForm,
+  RateConfirmationGenerateForm,
   RateConfirmationForm,
   ShipmentEventCreateForm,
 } from "@/components/crm-forms";
@@ -47,6 +48,9 @@ export default async function LoadDetailPage({
   if (!load) {
     notFound();
   }
+  const latestRateConfirmation = load.documents.find(
+    (document) => document.type === "Rate Confirmation",
+  );
 
   return (
     <InternalShell
@@ -238,8 +242,20 @@ export default async function LoadDetailPage({
               <p>Status: {load.rateConfirmationStatus ?? "Not started"}</p>
               <p>Sent: {load.rateConfirmationSentAt ?? "Not sent"}</p>
               <p>Signed: {load.rateConfirmationSignedAt ?? "Not signed"}</p>
+              {latestRateConfirmation?.fileUrl ? (
+                <p>
+                  Document:{" "}
+                  <DocumentLink
+                    href={latestRateConfirmation.fileUrl}
+                    label={latestRateConfirmation.fileName}
+                  />
+                </p>
+              ) : null}
             </div>
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <RateConfirmationGenerateForm loadId={load.id} />
+            </div>
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
               <RateConfirmationForm
                 loadId={load.id}
                 currentStatus={load.rateConfirmationStatus ?? "Not started"}
@@ -584,9 +600,12 @@ export default async function LoadDetailPage({
                         {document.type} | {document.created}
                       </p>
                       {document.fileUrl ? (
-                        <p className="mt-2 break-all text-sm text-slate-500">
-                          {document.fileUrl}
-                        </p>
+                        <div className="mt-2 break-all text-sm">
+                          <DocumentLink
+                            href={document.fileUrl}
+                            label={document.fileUrl}
+                          />
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -601,6 +620,31 @@ export default async function LoadDetailPage({
         </article>
       </section>
     </InternalShell>
+  );
+}
+
+function DocumentLink({ href, label }: { href: string; label: string }) {
+  if (href.startsWith("/")) {
+    return (
+      <Link
+        href={href}
+        target="_blank"
+        className="font-semibold text-emerald-700 hover:text-emerald-900"
+      >
+        {label}
+      </Link>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="font-semibold text-emerald-700 hover:text-emerald-900"
+    >
+      {label}
+    </a>
   );
 }
 

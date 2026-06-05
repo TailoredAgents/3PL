@@ -33,7 +33,7 @@ Included now:
 - Carrier detail page with compliance context and related loads
 - Carrier compliance checklist for authority, insurance, safety, fraud risk, approval, and vetting notes
 - Load operations page
-- Load detail page with status updates, carrier sourcing candidates, carrier offers, carrier assignment, tracking events, customer update state, rate confirmation state, document records, POD status handling, and invoice records
+- Load detail page with status updates, carrier sourcing candidates, carrier offers, carrier assignment, tracking events, customer update state, generated rate confirmations, document records, POD status handling, and invoice records
 - Rich phone quote intake fields for pickup/delivery windows, addresses, reference numbers, pallet/piece counts, dimensions, hazmat, temperature, appointments, accessorials, urgency, target margin, and pricing notes
 - Pricing intelligence workspace with manual rate benchmarks, system buy/sell recommendations, projected margin, quote validity, risk notes, and same-lane history
 - Settings page with editable call recording disclosure message for future Twilio call handling
@@ -77,7 +77,7 @@ Not included yet:
 - Background job processing
 - Outbound click-to-call
 - Automated transcription worker for bridged calls
-- Generated/signed rate confirmation PDFs
+- Signed rate confirmation PDFs
 
 ## Product Vision
 
@@ -541,11 +541,12 @@ The current TMS workflow supports the first manual operating loop:
 10. Update load status as the shipment moves.
 11. Add tracking events for pickup, location updates, delays, delivery, and POD.
 12. Track customer update status so active loads do not go quiet.
-13. Track rate confirmation state from drafted to sent to signed.
-14. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
-15. Save invoice amount/status once POD and billing details are ready.
+13. Draft a printable carrier rate confirmation from the approved carrier, lane details, freight requirements, and carrier rate.
+14. Track rate confirmation state from drafted to sent to signed.
+15. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
+16. Save invoice amount/status once POD and billing details are ready.
 
-The document workflow is metadata-first. It records what document exists and where it should live later. Invoice records are also metadata-first. Durable upload storage, OCR, generated invoice PDFs, file previews, signed downloads, and payment collection are still future work.
+The document workflow is metadata-first. It records what document exists and where it should live later. Rate confirmations can be generated as printable HTML documents today. Durable upload storage, OCR, generated invoice PDFs, signed PDF downloads, email sending, and payment collection are still future work.
 
 ## Phone Intake and Call Intelligence Plan
 
@@ -867,6 +868,7 @@ Status: started.
 - Invoice amount/status records
 - Customer update status and timeline handling
 - Rate confirmation status tracking
+- Generated printable rate confirmation documents
 - Carrier compliance approval gate before accepting offers
 
 Remaining:
@@ -874,7 +876,7 @@ Remaining:
 - Add automated DAT/Truckstop carrier quote sync
 - Add durable POD upload and downloads
 - Add generated invoice PDFs and email sending
-- Add generated/signed rate confirmation PDFs
+- Add signed rate confirmation PDFs and email sending
 
 ### Milestone 6: DAT and Truckstop
 

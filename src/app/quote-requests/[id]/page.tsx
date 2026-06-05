@@ -5,11 +5,14 @@ import {
   ArrowLeft,
   Bot,
   CalendarDays,
+  CheckCircle2,
   DollarSign,
+  Mail,
   MapPinned as MapPinIcon,
   Package,
   Phone,
   Truck,
+  XCircle,
 } from "lucide-react";
 
 import {
@@ -18,12 +21,15 @@ import {
   MarketRateFetchForm,
   PricingRecommendationCreateForm,
   PricingRecommendationGenerateForm,
+  QuoteEmailSendForm,
   QuoteConvertForm,
   QuoteRequestEditForm,
+  QuoteStatusUpdateForm,
   RateBenchmarkCreateForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getQuoteRequestDetailView } from "@/lib/crm";
+import { buildQuoteEmailDraft } from "@/lib/quote-email";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +53,7 @@ export default async function QuoteRequestDetailPage({
     latestRecommendation?.recommendedCustomerRate ??
     quote.latestQuote?.quotedRate ??
     undefined;
+  const quoteEmailDraft = buildQuoteEmailDraft(quote);
   const quoteDefaults = {
     companyName: quote.company,
     contactName: quote.contact === "No contact" ? undefined : quote.contact,
@@ -290,6 +297,78 @@ export default async function QuoteRequestDetailPage({
           </div>
 
           <div className="mt-6 border-t border-slate-100 pt-6">
+            <div className="flex items-center gap-3">
+              <Mail className="h-6 w-6 text-emerald-600" />
+              <h3 className="text-lg font-semibold">Quote email draft</h3>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Review the drafted customer email before sending it to the
+              shipper and logging it to the timeline.
+            </p>
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              {quoteEmailDraft ? (
+                <QuoteEmailSendForm
+                  quoteId={quote.id}
+                  toEmail={quoteEmailDraft.toEmail}
+                  subject={quoteEmailDraft.subject}
+                  body={quoteEmailDraft.body}
+                />
+              ) : (
+                <p className="rounded-md border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+                  Save a customer quote first. The email draft will use the
+                  latest quoted rate, lane, equipment, timing, and validity.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-slate-100 pt-6">
+            <h3 className="text-lg font-semibold">Customer decision</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Update the quote state after the shipper responds. Accepted
+              quotes can be converted to loads from the section below.
+            </p>
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+              <div className="rounded-lg bg-emerald-50 p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-900">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Accepted
+                </div>
+                <QuoteStatusUpdateForm
+                  quoteId={quote.id}
+                  status="ACCEPTED"
+                  label="Mark accepted"
+                  notePlaceholder="Customer approved the quoted rate."
+                />
+              </div>
+              <div className="rounded-lg bg-red-50 p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-red-900">
+                  <XCircle className="h-4 w-4" />
+                  Rejected
+                </div>
+                <QuoteStatusUpdateForm
+                  quoteId={quote.id}
+                  status="REJECTED"
+                  label="Mark rejected"
+                  notePlaceholder="Customer rejected or declined this quote."
+                />
+              </div>
+              <div className="rounded-lg bg-slate-50 p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <DollarSign className="h-4 w-4" />
+                  Reprice
+                </div>
+                <QuoteStatusUpdateForm
+                  quoteId={quote.id}
+                  status="PRICING"
+                  label="Move to pricing"
+                  notePlaceholder="Needs updated DAT/Truckstop rate work."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-slate-100 pt-6">
             <h3 className="text-lg font-semibold">Convert accepted quote</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Use this only after the shipper says yes. The latest quoted rate
@@ -518,7 +597,7 @@ export default async function QuoteRequestDetailPage({
             quote.customerQuotes.map((customerQuote) => (
               <div
                 key={customerQuote.id}
-                className="grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 md:grid-cols-5"
+                className="grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 md:grid-cols-6"
               >
                 <QuoteMetric
                   label="Customer quote"
@@ -548,7 +627,8 @@ export default async function QuoteRequestDetailPage({
                       : `${customerQuote.marginPercent}%`
                   }
                 />
-                <QuoteMetric label="Saved" value={customerQuote.created} />
+                <QuoteMetric label="Status" value={customerQuote.status} />
+                <QuoteMetric label="Valid until" value={customerQuote.validUntil} />
               </div>
             ))
           ) : (

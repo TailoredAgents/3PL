@@ -635,6 +635,67 @@ export function CustomerQuoteCreateForm({
   );
 }
 
+export function QuoteStatusUpdateForm({
+  quoteId,
+  status,
+  label,
+  notePlaceholder,
+}: {
+  quoteId: string;
+  status: "NEW" | "PRICING" | "QUOTED" | "ACCEPTED" | "REJECTED";
+  label: string;
+  notePlaceholder?: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/status`,
+    "PATCH",
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="status" value={status} />
+      <Textarea
+        name="note"
+        label="Status note"
+        placeholder={notePlaceholder}
+        rows={2}
+      />
+      <FormFooter state={state} buttonLabel={label} />
+    </form>
+  );
+}
+
+export function QuoteEmailSendForm({
+  quoteId,
+  toEmail,
+  subject,
+  body,
+}: {
+  quoteId: string;
+  toEmail: string;
+  subject: string;
+  body: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/quote-email`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field
+        name="toEmail"
+        label="To"
+        type="email"
+        required
+        defaultValue={toEmail}
+      />
+      <Field name="subject" label="Subject" required defaultValue={subject} />
+      <Textarea name="body" label="Email body" defaultValue={body} rows={10} />
+      <FormFooter state={state} buttonLabel="Send / log quote email" />
+    </form>
+  );
+}
+
 export function RateBenchmarkCreateForm({ quoteId }: { quoteId: string }) {
   const { state, onSubmit } = useCrmSubmit(
     `/api/quote-requests/${quoteId}/rate-benchmarks`,
@@ -1274,11 +1335,13 @@ function Field({
 function Textarea({
   label,
   name,
+  placeholder,
   defaultValue,
   rows = 3,
 }: {
   label: string;
   name: string;
+  placeholder?: string;
   defaultValue?: string;
   rows?: number;
 }) {
@@ -1288,6 +1351,7 @@ function Textarea({
       <textarea
         name={name}
         rows={rows}
+        placeholder={placeholder}
         defaultValue={defaultValue}
         className={inputClass}
       />

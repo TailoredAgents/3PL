@@ -120,6 +120,7 @@ TRUCKSTOP_POST_LOAD_API_URL
 INTERNAL_APP_PASSWORD
 INTERNAL_AUTH_COOKIE
 RESEND_API_KEY
+RESEND_FROM_EMAIL
 STRIPE_SECRET_KEY
 ```
 
@@ -168,6 +169,9 @@ Expected behavior:
 - rate benchmark save works.
 - system pricing recommendation generation works after a benchmark exists.
 - final customer quote save works with recommendation defaults.
+- quote email draft renders after a customer quote exists.
+- quote email send logs activity and sends through Resend when configured.
+- customer quote accepted/rejected/reprice actions update status.
 - quote request converts to a load.
 - create carrier works.
 - carrier detail opens.

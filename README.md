@@ -74,7 +74,7 @@ Not included yet:
 - PDF parsing/OCR
 - Final DAT provider payload mapping
 - Final Truckstop provider payload mapping
-- Email sending
+- General email automation beyond quote emails
 - Payment processing
 - Background job processing
 - Automated transcription worker for bridged calls
@@ -287,6 +287,7 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
 NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
 RESEND_API_KEY
+RESEND_FROM_EMAIL
 STRIPE_SECRET_KEY
 ```
 
@@ -492,8 +493,7 @@ Current behavior:
 Future behavior:
 
 1. Normalize origin/destination with geocoding.
-2. Draft shipper quote email.
-3. Queue carrier outreach.
+2. Queue carrier outreach.
 
 Current pricing workspace behavior:
 
@@ -504,6 +504,9 @@ Current pricing workspace behavior:
 5. Generate a system pricing recommendation with target carrier buy rate, customer sell rate, projected margin, risk level, and quote validity.
 6. Save manual pricing recommendations when the broker overrides the system recommendation.
 7. Record the final customer quote and preserve quote history.
+8. Draft a shipper quote email from the latest saved customer quote.
+9. Send and log quote emails when Resend credentials are configured.
+10. Mark customer quote decisions as accepted, rejected, or needing reprice.
 
 ## Internal Dashboard
 
@@ -863,11 +866,12 @@ Remaining:
 - Add system buy/sell pricing recommendations
 - Add same-lane internal history in quote detail
 - Add quote validity and risk notes
+- Add quote email draft
+- Add quote email send/log workflow
+- Add accepted/rejected status flow
 
 Remaining:
 
-- Add quote email draft
-- Add accepted/rejected status flow
 - Add DAT/Truckstop pricing lookup
 
 ### Milestone 5: TMS Core
@@ -1002,6 +1006,24 @@ Remaining:
 - Add Clerk webhook sync for profile/email/metadata changes
 - Add invitation workflow for new internal users
 - Add audit logs for permission-sensitive actions
+
+### Milestone 12: Quote Status and Email Workflow
+
+- Draft customer quote emails from saved pricing recommendations
+- Send quote emails through Resend when `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured
+- Log quote email attempts to the customer activity timeline
+- Avoid marking quote emails as sent when email credentials are missing or provider delivery fails
+- Mark quote requests and customer quotes as accepted or rejected from the quote detail page
+- Move quotes back to pricing when the customer requests changes
+- Include Resend readiness in `/api/health`
+
+Remaining:
+
+- Add reusable quote email templates
+- Add quote email version history
+- Add inbound reply tracking
+- Add Resend webhook handling for delivered, bounced, and complained events
+- Add owner/admin controls for quote email sender domains
 
 ## Design Principles
 

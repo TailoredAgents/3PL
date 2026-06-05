@@ -234,6 +234,17 @@ export const customerQuoteCreateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+export const quoteStatusUpdateSchema = z.object({
+  status: z.enum(["NEW", "PRICING", "QUOTED", "ACCEPTED", "REJECTED"]),
+  note: z.string().trim().optional(),
+});
+
+export const quoteEmailSendSchema = z.object({
+  toEmail: z.email(),
+  subject: requiredString,
+  body: requiredString,
+});
+
 export const rateBenchmarkCreateSchema = z.object({
   source: z
     .enum([
@@ -369,6 +380,8 @@ export type LoadUpdateInput = z.infer<typeof loadUpdateSchema>;
 export type ShipmentEventCreateInput = z.infer<typeof shipmentEventCreateSchema>;
 export type QuoteConvertInput = z.infer<typeof quoteConvertSchema>;
 export type CustomerQuoteCreateInput = z.infer<typeof customerQuoteCreateSchema>;
+export type QuoteStatusUpdateInput = z.infer<typeof quoteStatusUpdateSchema>;
+export type QuoteEmailSendInput = z.infer<typeof quoteEmailSendSchema>;
 export type RateBenchmarkCreateInput = z.infer<typeof rateBenchmarkCreateSchema>;
 export type PricingRecommendationCreateInput = z.infer<typeof pricingRecommendationCreateSchema>;
 export type MarketRateFetchInput = z.infer<typeof marketRateFetchSchema>;

@@ -104,6 +104,7 @@ Needed for:
 
 ```txt
 RESEND_API_KEY
+RESEND_FROM_EMAIL
 ```
 
 Needed for:

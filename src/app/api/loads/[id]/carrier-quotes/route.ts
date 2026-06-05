@@ -52,6 +52,24 @@ export async function POST(
         notes: nullableString(input.notes),
       },
     }),
+    prisma.carrierSourcingCandidate.updateMany({
+      where: {
+        loadId: load.id,
+        OR: [
+          { carrierId: carrier.id },
+          {
+            companyName: {
+              equals: carrier.companyName,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+      data: {
+        carrierId: carrier.id,
+        status: "OFFER_RECEIVED",
+      },
+    }),
     prisma.shipmentEvent.create({
       data: {
         loadId: load.id,

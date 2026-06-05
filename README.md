@@ -33,7 +33,7 @@ Included now:
 - Carrier detail page with compliance context and related loads
 - Carrier compliance checklist for authority, insurance, safety, fraud risk, approval, and vetting notes
 - Load operations page
-- Load detail page with status updates, carrier offers, carrier assignment, tracking events, customer update state, rate confirmation state, document records, POD status handling, and invoice records
+- Load detail page with status updates, carrier sourcing candidates, carrier offers, carrier assignment, tracking events, customer update state, rate confirmation state, document records, POD status handling, and invoice records
 - Rich phone quote intake fields for pickup/delivery windows, addresses, reference numbers, pallet/piece counts, dimensions, hazmat, temperature, appointments, accessorials, urgency, target margin, and pricing notes
 - Pricing intelligence workspace with manual rate benchmarks, system buy/sell recommendations, projected margin, quote validity, risk notes, and same-lane history
 - Settings page with editable call recording disclosure message for future Twilio call handling
@@ -534,12 +534,16 @@ The current TMS workflow supports the first manual operating loop:
 3. Convert the accepted quote into a load.
 4. Assign a carrier during conversion or leave the load tendered until coverage is found.
 5. Open the load detail page.
-6. Update load status as the shipment moves.
-7. Add tracking events for pickup, location updates, delays, delivery, and POD.
-8. Track customer update status so active loads do not go quiet.
-9. Track rate confirmation state from drafted to sent to signed.
-10. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
-11. Save invoice amount/status once POD and billing details are ready.
+6. Generate internal carrier candidates or add candidates from DAT, Truckstop, relationships, texts, or dispatch calls.
+7. Request quotes from candidate carriers and preserve sourcing status.
+8. Save received carrier offers.
+9. Accept the best approved carrier offer, which books the load and updates margin.
+10. Update load status as the shipment moves.
+11. Add tracking events for pickup, location updates, delays, delivery, and POD.
+12. Track customer update status so active loads do not go quiet.
+13. Track rate confirmation state from drafted to sent to signed.
+14. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
+15. Save invoice amount/status once POD and billing details are ready.
 
 The document workflow is metadata-first. It records what document exists and where it should live later. Invoice records are also metadata-first. Durable upload storage, OCR, generated invoice PDFs, file previews, signed downloads, and payment collection are still future work.
 
@@ -853,6 +857,10 @@ Status: started.
 - Convert accepted quote to load
 - Add document/POD metadata records
 - Carrier assignment from load detail
+- Carrier sourcing candidate pipeline
+- Internal carrier candidate generation from carrier history
+- Manual carrier candidate entry for DAT, Truckstop, relationships, texts, and dispatch calls
+- Candidate quote-request status tracking
 - Carrier offer entry and accept-to-book workflow
 - POD document updates load status
 - Billing readiness state

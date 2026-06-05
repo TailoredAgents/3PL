@@ -813,6 +813,82 @@ export function CarrierQuoteCreateForm({ loadId }: { loadId: string }) {
   );
 }
 
+export function CarrierCandidateCreateForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/carrier-candidates`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Select
+          name="source"
+          label="Source"
+          options={[
+            "MANUAL",
+            "INTERNAL_HISTORY",
+            "DAT",
+            "TRUCKSTOP",
+            "CARRIER_NETWORK",
+            "OTHER",
+          ]}
+        />
+        <Field name="companyName" label="Carrier" required />
+        <Field name="suggestedRate" label="Target rate" type="number" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="contactName" label="Dispatch contact" />
+        <Field name="phone" label="Phone" />
+        <Field name="email" label="Email" type="email" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="mcNumber" label="MC number" />
+        <Field name="dotNumber" label="DOT number" />
+        <Field name="matchScore" label="Match 0-1" type="number" />
+      </div>
+      <Textarea
+        name="complianceSnapshot"
+        label="Compliance snapshot"
+        rows={2}
+      />
+      <Textarea name="notes" label="Sourcing notes" rows={2} />
+      <FormFooter state={state} buttonLabel="Save carrier candidate" />
+    </form>
+  );
+}
+
+export function CarrierCandidateGenerateForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/carrier-candidates/generate`,
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <input type="hidden" name="source" value="INTERNAL_HISTORY" />
+      <FormFooter state={state} buttonLabel="Generate internal candidates" />
+    </form>
+  );
+}
+
+export function CarrierCandidateRequestQuoteForm({
+  loadId,
+  candidateId,
+}: {
+  loadId: string;
+  candidateId: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/carrier-candidates/${candidateId}/request-quote`,
+  );
+
+  return (
+    <form className="grid gap-2" onSubmit={onSubmit}>
+      <Field name="notes" label="Request note" />
+      <FormFooter state={state} buttonLabel="Request quote" />
+    </form>
+  );
+}
+
 export function CarrierQuoteAcceptForm({
   loadId,
   carrierQuoteId,

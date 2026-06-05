@@ -67,6 +67,13 @@ export async function POST(
         status: "BOOKED",
       },
     }),
+    prisma.carrierSourcingCandidate.updateMany({
+      where: {
+        loadId: id,
+        carrierId: carrierQuote.carrierId,
+      },
+      data: { status: "CONVERTED" },
+    }),
     prisma.shipmentEvent.create({
       data: {
         loadId: id,

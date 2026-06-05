@@ -71,6 +71,24 @@ export type CarrierQuoteView = {
   notes: string;
   created: string;
 };
+export type CarrierSourcingCandidateView = {
+  id: string;
+  carrierId: string | null;
+  companyName: string;
+  contactName: string;
+  phone: string;
+  email: string;
+  mcNumber: string;
+  dotNumber: string;
+  source: string;
+  status: string;
+  suggestedRate: number | null;
+  matchScore: number | null;
+  complianceStatus: string;
+  complianceSnapshot: string;
+  notes: string;
+  created: string;
+};
 export type LoadEventView = {
   type: string;
   message: string;
@@ -113,6 +131,7 @@ export type LoadView = {
   hasPod: boolean;
   billingReadiness: string;
   invoice: InvoiceView | null;
+  carrierCandidates: CarrierSourcingCandidateView[];
   carrierQuotes: CarrierQuoteView[];
   events: LoadEventView[];
   documents: LoadDocumentView[];
@@ -872,6 +891,10 @@ export async function getLoadViews(): Promise<LoadView[]> {
           include: { carrier: true },
           orderBy: { createdAt: "desc" },
         },
+        sourcingCandidates: {
+          include: { carrier: true },
+          orderBy: [{ status: "asc" }, { matchScore: "desc" }, { createdAt: "desc" }],
+        },
         events: {
           orderBy: { occurredAt: "desc" },
           take: 1,
@@ -908,6 +931,10 @@ export async function getLoadDetailView(
         carrierQuotes: {
           include: { carrier: true },
           orderBy: { createdAt: "desc" },
+        },
+        sourcingCandidates: {
+          include: { carrier: true },
+          orderBy: [{ status: "asc" }, { matchScore: "desc" }, { createdAt: "desc" }],
         },
         events: {
           orderBy: { occurredAt: "desc" },
@@ -1261,6 +1288,26 @@ function mapLoad(load: {
     notes?: string | null;
     createdAt: Date;
   }>;
+  sourcingCandidates?: Array<{
+    id: string;
+    carrierId?: string | null;
+    carrier?: {
+      complianceStatus: string;
+    } | null;
+    companyName: string;
+    contactName?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    mcNumber?: string | null;
+    dotNumber?: string | null;
+    source: string;
+    status: string;
+    suggestedRate?: unknown | null;
+    matchScore?: unknown | null;
+    complianceSnapshot?: string | null;
+    notes?: string | null;
+    createdAt: Date;
+  }>;
   events: Array<{
     type: string;
     message: string;
@@ -1320,6 +1367,33 @@ function mapLoad(load: {
       created: formatFollowUp(quote.createdAt),
     };
   }) ?? [];
+  const carrierCandidates = load.sourcingCandidates?.map((candidate) => ({
+    id: candidate.id,
+    carrierId: candidate.carrierId ?? null,
+    companyName: candidate.companyName,
+    contactName: candidate.contactName ?? "Dispatch",
+    phone: candidate.phone ?? "No phone",
+    email: candidate.email ?? "No email",
+    mcNumber: candidate.mcNumber ?? "MC needed",
+    dotNumber: candidate.dotNumber ?? "DOT needed",
+    source: titleCaseEnum(candidate.source),
+    status: titleCaseEnum(candidate.status),
+    suggestedRate:
+      candidate.suggestedRate === null || candidate.suggestedRate === undefined
+        ? null
+        : Number(candidate.suggestedRate),
+    matchScore:
+      candidate.matchScore === null || candidate.matchScore === undefined
+        ? null
+        : Number(candidate.matchScore),
+    complianceStatus: candidate.carrier
+      ? titleCaseEnum(candidate.carrier.complianceStatus)
+      : "Pending",
+    complianceSnapshot:
+      candidate.complianceSnapshot ?? "Compliance review not completed.",
+    notes: candidate.notes ?? "No sourcing notes.",
+    created: formatFollowUp(candidate.createdAt),
+  })) ?? [];
 
   return {
     id: load.id,
@@ -1384,6 +1458,7 @@ function mapLoad(load: {
       ),
     }),
     invoice,
+    carrierCandidates,
     carrierQuotes,
     events: load.events.map((event) => ({
       type: titleCaseEnum(event.type),

@@ -152,6 +152,9 @@ Expected behavior:
 - carrier detail opens.
 - create load works.
 - load status updates work.
+- internal carrier candidate generation works.
+- manual carrier candidate save works.
+- carrier candidate quote-request status works.
 - shipment event timeline works.
 - customer update logging works.
 - rate confirmation status updates work.
@@ -184,15 +187,18 @@ Test in this order:
 17. Open carrier detail
 18. Create load manually
 19. Open load detail
-20. Update load status
-21. Add shipment event
-22. Add customer update
-23. Update rate confirmation status
-24. Add load document metadata
-25. Add POD document metadata and confirm POD event appears
-26. Update carrier compliance and confirm pending carriers cannot be accepted
-27. Save Settings call recording disclosure
-28. Upload CSV contacts
+20. Generate internal carrier candidates
+21. Add manual carrier candidate
+22. Request quote from a carrier candidate
+23. Update load status
+24. Add shipment event
+25. Add customer update
+26. Update rate confirmation status
+27. Add load document metadata
+28. Add POD document metadata and confirm POD event appears
+29. Update carrier compliance and confirm pending carriers cannot be accepted
+30. Save Settings call recording disclosure
+31. Upload CSV contacts
 29. Public savings audit form
 30. Public instant quote form
 31. Intake queue

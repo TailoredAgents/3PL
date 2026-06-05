@@ -18,6 +18,9 @@ import {
 
 import {
   AiAgentRunForm,
+  CarrierCandidateCreateForm,
+  CarrierCandidateGenerateForm,
+  CarrierCandidateRequestQuoteForm,
   CarrierQuoteAcceptForm,
   CarrierQuoteCreateForm,
   CustomerUpdateForm,
@@ -207,10 +210,17 @@ export default async function LoadDetailPage({
               <h2 className="text-2xl font-semibold">Carrier coverage</h2>
             </div>
             <p className="mt-3 leading-7 text-slate-600">
-              Record carrier offers from DAT, Truckstop, texts, or dispatch
-              calls. Accepting an offer books the carrier and updates margin.
+              Build a candidate list from internal history, DAT, Truckstop,
+              carrier relationships, or dispatch notes before recording actual
+              carrier offers.
             </p>
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <CarrierCandidateGenerateForm loadId={load.id} />
+            </div>
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <CarrierCandidateCreateForm loadId={load.id} />
+            </div>
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
               <CarrierQuoteCreateForm loadId={load.id} />
             </div>
           </article>
@@ -315,6 +325,115 @@ export default async function LoadDetailPage({
               />
             </div>
           </article>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Coverage pipeline
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Carrier candidates</h2>
+          </div>
+          <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+            {load.carrierCandidates.length} candidates
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-4">
+          {load.carrierCandidates.length ? (
+            load.carrierCandidates.map((candidate) => (
+              <div
+                key={candidate.id}
+                className="grid gap-4 rounded-md border border-slate-100 bg-slate-50 p-4 xl:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-lg font-semibold">
+                      {candidate.companyName}
+                    </h3>
+                    <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
+                      {candidate.source}
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        candidate.complianceStatus === "Approved"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {candidate.complianceStatus}
+                    </span>
+                    <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+                      {candidate.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {candidate.notes}
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                    <OfferMetric
+                      label="Target rate"
+                      value={
+                        candidate.suggestedRate === null
+                          ? "Not set"
+                          : toCurrency(candidate.suggestedRate)
+                      }
+                    />
+                    <OfferMetric
+                      label="Match"
+                      value={
+                        candidate.matchScore === null
+                          ? "Not set"
+                          : `${Math.round(candidate.matchScore * 100)}%`
+                      }
+                    />
+                    <OfferMetric label="Contact" value={candidate.contactName} />
+                    <OfferMetric label="Created" value={candidate.created} />
+                  </div>
+                  <div className="mt-4 grid gap-3 text-sm leading-6 text-slate-600 sm:grid-cols-2">
+                    <p>{candidate.phone}</p>
+                    <p>{candidate.email}</p>
+                    <p>{candidate.mcNumber}</p>
+                    <p>{candidate.dotNumber}</p>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    {candidate.complianceSnapshot}
+                  </p>
+                </div>
+
+                <div className="flex flex-col justify-between gap-3 xl:w-56">
+                  {candidate.carrierId ? (
+                    <Link
+                      href={`/carriers/${candidate.carrierId}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      Carrier file
+                    </Link>
+                  ) : null}
+                  {candidate.status === "Quote Requested" ||
+                  candidate.status === "Converted" ? (
+                    <p className="rounded-md bg-emerald-50 px-4 py-2 text-center text-sm font-semibold text-emerald-800">
+                      Quote requested
+                    </p>
+                  ) : (
+                    <CarrierCandidateRequestQuoteForm
+                      loadId={load.id}
+                      candidateId={candidate.id}
+                    />
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+              No carrier candidates yet. Generate internal candidates or add
+              carriers found through DAT, Truckstop, relationships, texts, or
+              dispatch calls before requesting quotes.
+            </p>
+          )}
         </div>
       </section>
 

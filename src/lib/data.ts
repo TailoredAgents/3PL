@@ -430,6 +430,27 @@ export const loads = [
     hasPod: false,
     billingReadiness: "Not ready",
     invoice: null,
+    carrierCandidates: [
+      {
+        id: "candidate-blue-ridge-001",
+        carrierId: "blue-ridge-transport",
+        companyName: "Blue Ridge Transport",
+        contactName: "Ray Collins",
+        phone: "(404) 555-0190",
+        email: "dispatch@blueridge.example",
+        mcNumber: "MC-482913",
+        dotNumber: "DOT-1849201",
+        source: "Internal History",
+        status: "Converted",
+        suggestedRate: 1980,
+        matchScore: 0.9,
+        complianceStatus: "Approved",
+        complianceSnapshot:
+          "Compliance: APPROVED | Authority: Active | Insurance: Current",
+        notes: "Internal dry van carrier with prior Atlanta outbound history.",
+        created: "Today, 8:45 AM",
+      },
+    ],
     carrierQuotes: [
       {
         id: "carrier-quote-blue-ridge-001",
@@ -471,6 +492,27 @@ export const loads = [
     hasPod: false,
     billingReadiness: "Not ready",
     invoice: null,
+    carrierCandidates: [
+      {
+        id: "candidate-magnolia-002",
+        carrierId: "magnolia-reefer-lines",
+        companyName: "Magnolia Reefer Lines",
+        contactName: "Tina Morales",
+        phone: "(678) 555-0177",
+        email: "ops@magnoliareefer.example",
+        mcNumber: "MC-771204",
+        dotNumber: "DOT-2091844",
+        source: "Internal History",
+        status: "Quote Requested",
+        suggestedRate: 1610,
+        matchScore: 0.68,
+        complianceStatus: "Pending",
+        complianceSnapshot:
+          "Compliance: PENDING | Insurance verification required",
+        notes: "Reefer candidate. Verify insurance before accepting any offer.",
+        created: "Today, 8:45 AM",
+      },
+    ],
     carrierQuotes: [
       {
         id: "carrier-quote-magnolia-002",

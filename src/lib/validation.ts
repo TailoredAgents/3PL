@@ -279,6 +279,37 @@ export const carrierQuoteCreateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+export const carrierSourcingCandidateCreateSchema = z.object({
+  source: z
+    .enum([
+      "MANUAL",
+      "INTERNAL_HISTORY",
+      "DAT",
+      "TRUCKSTOP",
+      "CARRIER_NETWORK",
+      "OTHER",
+    ])
+    .default("MANUAL"),
+  companyName: requiredString,
+  contactName: z.string().trim().optional(),
+  phone: z.string().trim().optional(),
+  email: z.email().optional().or(z.literal("")),
+  mcNumber: z.string().trim().optional(),
+  dotNumber: z.string().trim().optional(),
+  suggestedRate: z.coerce.number().positive().optional().or(z.literal("")),
+  matchScore: z.coerce.number().min(0).max(1).optional().or(z.literal("")),
+  complianceSnapshot: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const carrierSourcingGenerateSchema = z.object({
+  source: z.enum(["INTERNAL_HISTORY"]).default("INTERNAL_HISTORY"),
+});
+
+export const carrierCandidateRequestQuoteSchema = z.object({
+  notes: z.string().trim().optional(),
+});
+
 export const customerUpdateSchema = z.object({
   customerUpdateStatus: z.enum(["NOT_NEEDED", "NEEDED", "SENT"]),
   message: requiredString,
@@ -330,6 +361,15 @@ export type MarketRateFetchInput = z.infer<typeof marketRateFetchSchema>;
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;
 export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
 export type CarrierQuoteCreateInput = z.infer<typeof carrierQuoteCreateSchema>;
+export type CarrierSourcingCandidateCreateInput = z.infer<
+  typeof carrierSourcingCandidateCreateSchema
+>;
+export type CarrierSourcingGenerateInput = z.infer<
+  typeof carrierSourcingGenerateSchema
+>;
+export type CarrierCandidateRequestQuoteInput = z.infer<
+  typeof carrierCandidateRequestQuoteSchema
+>;
 export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
 export type RateConfirmationUpdateInput = z.infer<typeof rateConfirmationUpdateSchema>;
 export type AiAgentRunRequestInput = z.infer<typeof aiAgentRunRequestSchema>;

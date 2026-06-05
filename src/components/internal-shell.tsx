@@ -96,7 +96,7 @@ export function InternalShell({
         </div>
 
         <header className="border-b border-white/60 bg-white/75 px-5 py-7 shadow-sm backdrop-blur">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mx-auto flex max-w-[1500px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
                 {eyebrow}
@@ -120,7 +120,7 @@ export function InternalShell({
           </div>
         </header>
 
-        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8">
+        <div className="mx-auto grid max-w-[1500px] gap-6 px-5 py-8">
           {children}
         </div>
       </section>

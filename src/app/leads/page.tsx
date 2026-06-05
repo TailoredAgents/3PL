@@ -120,28 +120,30 @@ export default async function LeadsPage() {
       </section>
 
       <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-                Pipeline board
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                Move prospects toward booked freight
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Each card should move through a clear sales action: call,
-                qualify, quote, or close.
-              </p>
-            </div>
-            <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
-              {leadViews.length} leads
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Pipeline board
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              Move prospects toward booked freight
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              Each card should move through a clear sales action: call, qualify,
+              quote, or close.
             </p>
           </div>
+          <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+            {leadViews.length} leads
+          </p>
+        </div>
 
-          <div className="mt-6 overflow-x-auto pb-2">
-            <div className="grid min-w-[1260px] grid-cols-6 gap-4">
+        <div className="mt-6 overflow-x-auto pb-2">
+          <div className="grid min-w-[1260px] grid-cols-6 gap-4">
             {leadStages.map((stage) => {
-              const stageLeads = leadViews.filter((lead) => lead.stage === stage);
+              const stageLeads = leadViews.filter(
+                (lead) => lead.stage === stage,
+              );
 
               return (
                 <div
@@ -209,8 +211,8 @@ export default async function LeadsPage() {
                 </div>
               );
             })}
-            </div>
           </div>
+        </div>
       </section>
 
       <section className="grid items-start gap-6 xl:grid-cols-[1fr_360px]">

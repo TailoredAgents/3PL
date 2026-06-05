@@ -10,7 +10,11 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { ActivityCreateForm, LeadUpdateForm } from "@/components/crm-forms";
+import {
+  ActivityCreateForm,
+  AiAgentRunForm,
+  LeadUpdateForm,
+} from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getLeadDetailView } from "@/lib/crm";
 
@@ -116,6 +120,25 @@ export default async function LeadDetailPage({
         </article>
 
         <div className="grid gap-6">
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Bot className="h-6 w-6 text-emerald-600" />
+              <h2 className="text-2xl font-semibold">Run sales agent</h2>
+            </div>
+            <p className="mt-3 leading-7 text-slate-600">
+              Generate an approval-first sales recommendation from the current
+              lead context. The run is logged for review.
+            </p>
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <AiAgentRunForm
+                relatedEntityType="Lead"
+                relatedEntityId={lead.id}
+                defaultAgent="Sales Follow-Up Agent"
+                agentOptions={["Sales Follow-Up Agent"]}
+              />
+            </div>
+          </article>
+
           <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-2xl font-semibold">Update lead</h2>
             <p className="mt-3 leading-7 text-slate-600">

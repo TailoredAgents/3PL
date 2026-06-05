@@ -9,6 +9,12 @@ type FormState = {
   message?: string;
 };
 
+type AgentResult = {
+  summary: string;
+  confidence: number;
+  nextAction: string;
+};
+
 async function submit(endpoint: string, form: HTMLFormElement, method: string) {
   const response = await fetch(endpoint, {
     method,
@@ -18,6 +24,7 @@ async function submit(endpoint: string, form: HTMLFormElement, method: string) {
     message?: string;
     error?: string;
     redirectTo?: string;
+    agentResult?: AgentResult;
   };
 
   if (!response.ok) {
@@ -27,6 +34,7 @@ async function submit(endpoint: string, form: HTMLFormElement, method: string) {
   return {
     message: payload.message ?? "Saved.",
     redirectTo: payload.redirectTo,
+    agentResult: payload.agentResult,
   };
 }
 
@@ -562,6 +570,64 @@ export function CarrierQuoteAcceptForm({
   return (
     <form onSubmit={onSubmit}>
       <FormFooter state={state} buttonLabel="Accept offer" />
+    </form>
+  );
+}
+
+export function AiAgentRunForm({
+  relatedEntityType,
+  relatedEntityId,
+  defaultAgent,
+  agentOptions,
+}: {
+  relatedEntityType: "Lead" | "QuoteRequest" | "Load" | "Carrier";
+  relatedEntityId: string;
+  defaultAgent: string;
+  agentOptions: string[];
+}) {
+  const [state, setState] = useState<FormState>({ status: "idle" });
+  const [agentResult, setAgentResult] = useState<AgentResult | null>(null);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setState({ status: "loading" });
+    setAgentResult(null);
+
+    try {
+      const response = await submit("/api/agents/run", form, "POST");
+      setState({ status: "success", message: response.message });
+      setAgentResult(response.agentResult ?? null);
+    } catch (error) {
+      setState({
+        status: "error",
+        message: error instanceof Error ? error.message : "AI agent failed.",
+      });
+    }
+  }
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="relatedEntityType" value={relatedEntityType} />
+      <input type="hidden" name="relatedEntityId" value={relatedEntityId} />
+      <Select
+        name="agentName"
+        label="Agent"
+        options={agentOptions}
+        defaultValue={defaultAgent}
+      />
+      <FormFooter state={state} buttonLabel="Run AI agent" />
+      {agentResult ? (
+        <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
+          <p className="font-semibold">Agent result</p>
+          <p className="mt-2">{agentResult.summary}</p>
+          <p className="mt-3 font-semibold">Next action</p>
+          <p className="mt-1">{agentResult.nextAction}</p>
+          <p className="mt-3 text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">
+            Confidence {Math.round(agentResult.confidence * 100)}%
+          </p>
+        </div>
+      ) : null}
     </form>
   );
 }

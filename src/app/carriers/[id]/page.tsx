@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { ComponentType } from "react";
 import {
   ArrowLeft,
+  Bot,
   CircleDollarSign,
   Mail,
   MapPinned,
@@ -12,6 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { AiAgentRunForm } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getCarrierDetailView } from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
@@ -120,6 +122,25 @@ export default async function CarrierDetailPage({
             icon={ShieldCheck}
             label="Compliance"
             value={carrier.complianceStatus}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-3">
+          <Bot className="h-6 w-6 text-emerald-600" />
+          <h2 className="text-2xl font-semibold">Run compliance agent</h2>
+        </div>
+        <p className="mt-3 leading-7 text-slate-600">
+          Review this carrier file for missing compliance details and the next
+          approval step before tendering.
+        </p>
+        <div className="mt-5 rounded-lg bg-slate-50 p-4">
+          <AiAgentRunForm
+            relatedEntityType="Carrier"
+            relatedEntityId={carrier.id}
+            defaultAgent="Carrier Compliance Agent"
+            agentOptions={["Carrier Compliance Agent"]}
           />
         </div>
       </section>

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import {
+  AiAgentRunForm,
   CustomerQuoteCreateForm,
   QuoteConvertForm,
 } from "@/components/crm-forms";
@@ -104,6 +105,27 @@ export default async function QuoteRequestDetailPage({
         </article>
 
         <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4">
+            <div className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-emerald-700" />
+              <p className="text-sm font-semibold text-emerald-900">
+                Run pricing agent
+              </p>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-emerald-900">
+              Ask Grok to review this quote request before the rate is sent.
+            </p>
+            <div className="mt-4 rounded-md bg-white/70 p-3">
+              <AiAgentRunForm
+                relatedEntityType="QuoteRequest"
+                relatedEntityId={quote.id}
+                defaultAgent="Quote Pricing Agent"
+                agentOptions={["Quote Pricing Agent"]}
+              />
+            </div>
+          </div>
+
+          <div className="mt-6" />
           <h2 className="text-2xl font-semibold">Record customer quote</h2>
           <p className="mt-3 leading-7 text-slate-600">
             Save the sell rate you gave the shipper. This moves the request to

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { ComponentType } from "react";
 import {
   ArrowLeft,
+  Bot,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 
 import {
+  AiAgentRunForm,
   CarrierQuoteAcceptForm,
   CarrierQuoteCreateForm,
   DocumentCreateForm,
@@ -135,6 +137,29 @@ export default async function LoadDetailPage({
         </article>
 
         <div className="grid gap-6">
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Bot className="h-6 w-6 text-emerald-600" />
+              <h2 className="text-2xl font-semibold">Run operations agent</h2>
+            </div>
+            <p className="mt-3 leading-7 text-slate-600">
+              Generate the next best operating move from this load, carrier
+              offers, timeline, POD state, margin, and invoice state.
+            </p>
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <AiAgentRunForm
+                relatedEntityType="Load"
+                relatedEntityId={load.id}
+                defaultAgent="Load Tracking Agent"
+                agentOptions={[
+                  "Load Tracking Agent",
+                  "Carrier Coverage Agent",
+                  "Billing Readiness Agent",
+                ]}
+              />
+            </div>
+          </article>
+
           <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <Truck className="h-6 w-6 text-emerald-600" />

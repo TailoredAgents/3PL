@@ -13,13 +13,14 @@ import {
 } from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
-import { getDashboardMetrics } from "@/lib/crm";
+import { getDashboardMetrics, getRecentAiAgentRunViews } from "@/lib/crm";
 import { agentBriefs } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();
+  const recentAgentRuns = await getRecentAiAgentRunViews();
   const dashboardCards = [
     {
       icon: Headphones,
@@ -218,6 +219,62 @@ export default async function DashboardPage() {
         </article>
       </section>
 
+      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Agent run log
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              Recent AI recommendations
+            </h2>
+          </div>
+          <p className="text-sm leading-6 text-slate-600">
+            Every AI action is logged before it becomes automation.
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-4">
+          {recentAgentRuns.length ? (
+            recentAgentRuns.map((run) => (
+              <Link
+                key={run.id}
+                href={getAgentRunHref(run.relatedEntityType, run.relatedEntityId)}
+                className="grid gap-4 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md lg:grid-cols-[220px_1fr_auto]"
+              >
+                <div>
+                  <p className="font-semibold">{run.agentName}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {run.relatedEntityType} | {run.created}
+                  </p>
+                  <p className="mt-2 w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">
+                    {run.status}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm leading-6 text-slate-700">
+                    {run.summary}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-emerald-800">
+                    Next: {run.nextAction}
+                  </p>
+                </div>
+                <div className="text-sm font-bold text-slate-600 lg:text-right">
+                  {run.confidence === null
+                    ? "Confidence n/a"
+                    : `${Math.round(run.confidence * 100)}% confidence`}
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+              No AI agent runs have been logged yet. Open a lead, quote, load,
+              or carrier and run an agent from that detail page.
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <article
           id="loads"
@@ -289,4 +346,24 @@ export default async function DashboardPage() {
       </section>
     </InternalShell>
   );
+}
+
+function getAgentRunHref(entityType: string, id: string) {
+  if (entityType === "Lead") {
+    return `/leads/${id}`;
+  }
+
+  if (entityType === "QuoteRequest") {
+    return `/quote-requests/${id}`;
+  }
+
+  if (entityType === "Load") {
+    return `/loads/${id}`;
+  }
+
+  if (entityType === "Carrier") {
+    return `/carriers/${id}`;
+  }
+
+  return "/dashboard";
 }

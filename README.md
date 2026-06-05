@@ -41,7 +41,8 @@ Included now:
 - CSV contact import form and API
 - Sample contact import CSV at `docs/sample-contacts.csv`
 - Activity timeline and follow-up views
-- AI sales assistant placeholders
+- AI agent run forms on lead, quote, load, and carrier detail pages
+- Recent AI agent run log on the dashboard
 - Prisma schema for the core brokerage domain
 - API routes for audit intake and quote intake
 - API routes for CRM creation and contact import
@@ -519,6 +520,12 @@ Current agents implemented as wrappers:
 
 - `Savings Audit Agent`
 - `Quote Structuring Agent`
+- `Sales Follow-Up Agent`
+- `Quote Pricing Agent`
+- `Carrier Coverage Agent`
+- `Load Tracking Agent`
+- `Billing Readiness Agent`
+- `Carrier Compliance Agent`
 
 The wrapper lives at:
 
@@ -544,15 +551,16 @@ Default:
 grok-4.3
 ```
 
+Internal agents are approval-first. They generate recommendations and write to
+`AiAgentRun`, but they do not send messages, post loads, alter statuses, or
+commit customer/carrier actions without a separate human-approved workflow.
+
 Future agents:
 
 - Lead Research Agent
-- Sales Follow-Up Agent
-- Rate Intelligence Agent
-- Carrier Match Agent
-- Tracking Agent
-- Billing Agent
-- Compliance Agent
+- DAT/Truckstop Rate Intelligence Agent
+- Automated Carrier Match Agent
+- Twilio Call/SMS Follow-Up Agent
 - CEO Daily Brief Agent
 
 Every agent run should write to `AiAgentRun`.
@@ -815,8 +823,14 @@ Remaining:
 
 ### Milestone 8: AI Command Center
 
+- Approval-first agent run endpoint
+- Entity-level agent forms
+- Dashboard agent run visibility
+
+Remaining:
+
 - Add prompt template management
-- Add agent run explorer
+- Add full agent run explorer
 - Add approval queues
 - Add failed-agent retry
 - Add daily brief

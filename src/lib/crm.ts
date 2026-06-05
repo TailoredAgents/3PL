@@ -74,6 +74,17 @@ export type ShipperDetailView = ShipperView & {
 export type CarrierDetailView = CarrierView & {
   loads: LoadView[];
 };
+export type AiAgentRunView = {
+  id: string;
+  agentName: string;
+  relatedEntityType: string;
+  relatedEntityId: string;
+  status: string;
+  confidence: number | null;
+  summary: string;
+  nextAction: string;
+  created: string;
+};
 export type QuoteRequestDetailView = QuoteRequestView & {
   id: string;
   contact: string;
@@ -735,6 +746,57 @@ export async function getLoadDetailView(
   }
 }
 
+export async function getRecentAiAgentRunViews(): Promise<AiAgentRunView[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return [
+      {
+        id: "sample-agent-run",
+        agentName: "Sales Follow-Up Agent",
+        relatedEntityType: "Lead",
+        relatedEntityId: "peachtree-building-supply",
+        status: "Completed",
+        confidence: 0.5,
+        summary:
+          "Sample agent run. Connect XAI_API_KEY and DATABASE_URL to log real agent output.",
+        nextAction: "Call the lead, confirm lane details, and log the result.",
+        created: "Demo",
+      },
+    ];
+  }
+
+  try {
+    const runs = await prisma.aiAgentRun.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    });
+
+    if (!runs.length) {
+      return [];
+    }
+
+    return runs.map((run) => {
+      const output = parseAgentOutput(run.outputJson);
+
+      return {
+        id: run.id,
+        agentName: run.agentName,
+        relatedEntityType: run.relatedEntityType ?? "Unknown",
+        relatedEntityId: run.relatedEntityId ?? "",
+        status: titleCaseEnum(run.status),
+        confidence: run.confidence === null ? null : Number(run.confidence),
+        summary:
+          output.summary ??
+          run.errorMessage ??
+          "Agent run did not return a summary.",
+        nextAction: output.nextAction ?? "Review manually.",
+        created: formatFollowUp(run.createdAt),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 function getSampleLeadDetailView(id: string): LeadDetailView | null {
   const sample = leads.find((lead) => lead.id === id);
 
@@ -1044,4 +1106,21 @@ function getBillingReadiness(
   }
 
   return "Not ready";
+}
+
+function parseAgentOutput(outputJson: unknown) {
+  if (!outputJson || typeof outputJson !== "object") {
+    return {};
+  }
+
+  const output = outputJson as {
+    summary?: unknown;
+    nextAction?: unknown;
+  };
+
+  return {
+    summary: typeof output.summary === "string" ? output.summary : undefined,
+    nextAction:
+      typeof output.nextAction === "string" ? output.nextAction : undefined,
+  };
 }

@@ -185,6 +185,19 @@ export const carrierQuoteCreateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+export const aiAgentRunRequestSchema = z.object({
+  agentName: z.enum([
+    "Sales Follow-Up Agent",
+    "Quote Pricing Agent",
+    "Carrier Coverage Agent",
+    "Load Tracking Agent",
+    "Billing Readiness Agent",
+    "Carrier Compliance Agent",
+  ]),
+  relatedEntityType: z.enum(["Lead", "QuoteRequest", "Load", "Carrier"]),
+  relatedEntityId: requiredString,
+});
+
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
@@ -201,3 +214,4 @@ export type CustomerQuoteCreateInput = z.infer<typeof customerQuoteCreateSchema>
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;
 export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
 export type CarrierQuoteCreateInput = z.infer<typeof carrierQuoteCreateSchema>;
+export type AiAgentRunRequestInput = z.infer<typeof aiAgentRunRequestSchema>;

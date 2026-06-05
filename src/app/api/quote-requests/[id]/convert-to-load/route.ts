@@ -85,7 +85,10 @@ export async function POST(
   revalidatePath(`/loads/${load.id}`);
   revalidatePath("/dashboard");
 
-  return Response.json({ message: "Quote converted to load." });
+  return Response.json({
+    message: "Quote converted to load.",
+    redirectTo: `/loads/${load.id}`,
+  });
 }
 
 async function findOrCreateCarrier(companyName: string) {

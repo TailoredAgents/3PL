@@ -56,7 +56,21 @@ export type QuoteRequestDetailView = QuoteRequestView & {
   id: string;
   contact: string;
   email: string;
+  phone: string;
   specialRequirements: string;
+  latestQuote: CustomerQuoteView | null;
+  customerQuotes: CustomerQuoteView[];
+};
+
+export type CustomerQuoteView = {
+  id: string;
+  quotedRate: number;
+  targetCarrierCost: number | null;
+  projectedGrossProfit: number | null;
+  marginPercent: number | null;
+  status: string;
+  validUntil: string;
+  created: string;
 };
 
 export type LeadDetailView = LeadView & {
@@ -499,19 +513,44 @@ export async function getQuoteRequestDetailView(
   try {
     const request = await prisma.quoteRequest.findUnique({
       where: { id },
-      include: { shipper: true, contact: true },
+      include: {
+        shipper: true,
+        contact: true,
+        customerQuotes: {
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
 
     if (!request) {
       return getSampleQuoteRequestDetailView(id);
     }
 
+    const customerQuotes = request.customerQuotes.map((quote) => ({
+      id: quote.id,
+      quotedRate: Number(quote.quotedRate),
+      targetCarrierCost:
+        quote.targetCarrierCost === null ? null : Number(quote.targetCarrierCost),
+      projectedGrossProfit:
+        quote.projectedGrossProfit === null
+          ? null
+          : Number(quote.projectedGrossProfit),
+      marginPercent:
+        quote.marginPercent === null ? null : Number(quote.marginPercent),
+      status: titleCaseEnum(quote.status),
+      validUntil: quote.validUntil ? formatFollowUp(quote.validUntil) : "Not set",
+      created: formatFollowUp(quote.createdAt),
+    }));
+
     return {
       ...mapQuoteRequest(request, request.shipper.companyName),
       contact: formatContactName(request.contact),
       email: request.contact?.email ?? "No email",
+      phone: request.contact?.phone ?? "No phone",
       specialRequirements:
         request.specialRequirements ?? request.commodity ?? "No details yet.",
+      latestQuote: customerQuotes[0] ?? null,
+      customerQuotes,
     };
   } catch {
     return getSampleQuoteRequestDetailView(id);
@@ -703,7 +742,10 @@ function getSampleQuoteRequestDetailView(
         ...sample,
         contact: "Primary contact",
         email: "No email",
+        phone: "No phone",
         specialRequirements: sample.details,
+        latestQuote: null,
+        customerQuotes: [],
       }
     : null;
 }

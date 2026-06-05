@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     companyName: formValue(formData, "companyName"),
     contactName: formValue(formData, "contactName"),
     email: formValue(formData, "email") ?? "",
+    phone: formValue(formData, "phone"),
     originCity: formValue(formData, "originCity"),
     originState: formValue(formData, "originState"),
     destinationCity: formValue(formData, "destinationCity"),
@@ -46,27 +47,62 @@ export async function POST(request: Request) {
     : { firstName: "Shipping", lastName: null };
   const weight = typeof input.weight === "number" ? input.weight : null;
 
-  const shipper = await prisma.shipper.create({
-    data: {
-      companyName: input.companyName,
-      status: "LEAD",
-      source: "MANUAL",
-      notes: nullableString(input.specialRequirements),
-      contacts: {
-        create: {
-          ...contactName,
-          email: nullableString(input.email),
-          isPrimary: true,
-        },
+  const existingShipper = await prisma.shipper.findFirst({
+    where: {
+      companyName: {
+        equals: input.companyName,
+        mode: "insensitive",
       },
     },
     include: { contacts: true },
   });
 
+  const shipper =
+    existingShipper ??
+    (await prisma.shipper.create({
+      data: {
+        companyName: input.companyName,
+        status: "LEAD",
+        source: "MANUAL",
+        notes: nullableString(input.specialRequirements),
+        contacts: {
+          create: {
+            ...contactName,
+            email: nullableString(input.email),
+            phone: nullableString(input.phone),
+            isPrimary: true,
+          },
+        },
+      },
+      include: { contacts: true },
+    }));
+
+  const contact =
+    shipper.contacts.find((candidate) => {
+      const sameEmail =
+        input.email &&
+        candidate.email?.toLowerCase() === input.email.toLowerCase();
+      const samePhone = input.phone && candidate.phone === input.phone;
+      const sameName =
+        candidate.firstName.toLowerCase() === contactName.firstName.toLowerCase() &&
+        (candidate.lastName ?? null) === contactName.lastName;
+
+      return sameEmail || samePhone || sameName;
+    }) ??
+    (await prisma.contact.create({
+      data: {
+        shipperId: shipper.id,
+        ...contactName,
+        email: nullableString(input.email),
+        phone: nullableString(input.phone),
+        isPrimary: shipper.contacts.length === 0,
+      },
+    }));
+
   const quoteRequest = await prisma.quoteRequest.create({
     data: {
       shipperId: shipper.id,
-      contactId: shipper.contacts[0]?.id,
+      contactId: contact.id,
       originCity: input.originCity,
       originState: input.originState.toUpperCase(),
       destinationCity: input.destinationCity,
@@ -83,7 +119,7 @@ export async function POST(request: Request) {
   await prisma.lead.create({
     data: {
       shipperId: shipper.id,
-      contactId: shipper.contacts[0]?.id,
+      contactId: contact.id,
       source: "MANUAL",
       stage: "QUALIFIED",
       priority: 2,

@@ -14,13 +14,20 @@ async function submit(endpoint: string, form: HTMLFormElement, method: string) {
     method,
     body: new FormData(form),
   });
-  const payload = (await response.json()) as { message?: string; error?: string };
+  const payload = (await response.json()) as {
+    message?: string;
+    error?: string;
+    redirectTo?: string;
+  };
 
   if (!response.ok) {
     throw new Error(payload.error ?? "Request failed.");
   }
 
-  return payload.message ?? "Saved.";
+  return {
+    message: payload.message ?? "Saved.",
+    redirectTo: payload.redirectTo,
+  };
 }
 
 function Status({ state }: { state: FormState }) {
@@ -59,10 +66,14 @@ function useCrmSubmit(endpoint: string, method = "POST") {
     setState({ status: "loading" });
 
     try {
-      const message = await submit(endpoint, form, method);
+      const { message, redirectTo } = await submit(endpoint, form, method);
       form.reset();
       setState({ status: "success", message });
-      router.refresh();
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.refresh();
+      }
     } catch (error) {
       setState({
         status: "error",
@@ -174,7 +185,10 @@ export function QuoteRequestCreateForm() {
         <Field name="companyName" label="Company" required />
         <Field name="contactName" label="Contact" />
       </div>
-      <Field name="email" label="Email" type="email" />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="email" label="Email" type="email" />
+        <Field name="phone" label="Phone" />
+      </div>
       <div className="grid gap-3 sm:grid-cols-4">
         <Field name="originCity" label="Origin city" required />
         <Field name="originState" label="State" required placeholder="GA" />
@@ -374,7 +388,15 @@ export function ShipmentEventCreateForm({ loadId }: { loadId: string }) {
   );
 }
 
-export function QuoteConvertForm({ quoteId }: { quoteId: string }) {
+export function QuoteConvertForm({
+  quoteId,
+  defaultCustomerRate,
+  defaultCarrierRate,
+}: {
+  quoteId: string;
+  defaultCustomerRate?: number;
+  defaultCarrierRate?: number;
+}) {
   const { state, onSubmit } = useCrmSubmit(
     `/api/quote-requests/${quoteId}/convert-to-load`,
   );
@@ -382,11 +404,59 @@ export function QuoteConvertForm({ quoteId }: { quoteId: string }) {
   return (
     <form className="grid gap-3" onSubmit={onSubmit}>
       <div className="grid gap-3 sm:grid-cols-3">
-        <Field name="customerRate" label="Customer rate" type="number" required />
+        <Field
+          name="customerRate"
+          label="Customer rate"
+          type="number"
+          required
+          defaultValue={defaultCustomerRate?.toString()}
+        />
         <Field name="carrierCompanyName" label="Carrier" />
-        <Field name="carrierRate" label="Carrier rate" type="number" />
+        <Field
+          name="carrierRate"
+          label="Carrier rate"
+          type="number"
+          defaultValue={defaultCarrierRate?.toString()}
+        />
       </div>
       <FormFooter state={state} buttonLabel="Convert to load" />
+    </form>
+  );
+}
+
+export function CustomerQuoteCreateForm({
+  quoteId,
+  defaultQuotedRate,
+  defaultTargetCarrierCost,
+}: {
+  quoteId: string;
+  defaultQuotedRate?: number;
+  defaultTargetCarrierCost?: number;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/customer-quotes`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field
+          name="quotedRate"
+          label="Customer quote"
+          type="number"
+          required
+          defaultValue={defaultQuotedRate?.toString()}
+        />
+        <Field
+          name="targetCarrierCost"
+          label="Target carrier cost"
+          type="number"
+          defaultValue={defaultTargetCarrierCost?.toString()}
+        />
+        <Field name="validUntil" label="Valid until" type="datetime-local" />
+      </div>
+      <Textarea name="notes" label="Quote notes / customer response" />
+      <FormFooter state={state} buttonLabel="Save customer quote" />
     </form>
   );
 }
@@ -417,12 +487,14 @@ function Field({
   type = "text",
   required = false,
   placeholder,
+  defaultValue,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
   placeholder?: string;
+  defaultValue?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-800">
@@ -432,6 +504,7 @@ function Field({
         type={type}
         required={required}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         className={inputClass}
       />
     </label>

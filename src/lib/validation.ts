@@ -65,6 +65,7 @@ export const internalQuoteCreateSchema = z.object({
   companyName: requiredString,
   contactName: z.string().trim().optional(),
   email: z.email().optional().or(z.literal("")),
+  phone: z.string().trim().optional(),
   originCity: requiredString,
   originState: requiredString,
   destinationCity: requiredString,
@@ -156,6 +157,13 @@ export const quoteConvertSchema = z.object({
   carrierRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
 });
 
+export const customerQuoteCreateSchema = z.object({
+  quotedRate: z.coerce.number().positive(),
+  targetCarrierCost: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  validUntil: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
 export const documentCreateSchema = z.object({
   type: z.enum(["INVOICE", "POD", "RATE_CONFIRMATION", "AUDIT_UPLOAD", "OTHER"]),
   fileName: requiredString,
@@ -175,4 +183,5 @@ export type LoadCreateInput = z.infer<typeof loadCreateSchema>;
 export type LoadUpdateInput = z.infer<typeof loadUpdateSchema>;
 export type ShipmentEventCreateInput = z.infer<typeof shipmentEventCreateSchema>;
 export type QuoteConvertInput = z.infer<typeof quoteConvertSchema>;
+export type CustomerQuoteCreateInput = z.infer<typeof customerQuoteCreateSchema>;
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;

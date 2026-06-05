@@ -32,7 +32,7 @@ Included now:
 - Carrier management page
 - Carrier detail page with compliance context and related loads
 - Carrier compliance checklist for authority, insurance, safety, fraud risk, approval, and vetting notes
-- Load operations page
+- Load board page with KPI filters, search, equipment filtering, sorting, dense row data, and quick actions
 - Load detail page with status updates, carrier sourcing candidates, carrier offers, carrier assignment, tracking events, customer update state, generated rate confirmations, document records, POD status handling, and invoice records
 - Rich phone quote intake fields for pickup/delivery windows, addresses, reference numbers, pallet/piece counts, dimensions, hazmat, temperature, appointments, accessorials, urgency, target margin, and pricing notes
 - Pricing intelligence workspace with manual rate benchmarks, system buy/sell recommendations, projected margin, quote validity, risk notes, and same-lane history
@@ -243,7 +243,7 @@ Useful local routes:
 /calls/[id]   Call transcript, AI extraction, and quote draft review
 /carriers     Carrier management and create form
 /carriers/[id] Carrier profile and related load history
-/loads        Load operations and create form
+/loads        Internal load board with filters, search, coverage, posting, margin, tracking, POD, and billing status
 /loads/[id]   Load detail, status update, shipment timeline, documents, and invoice records
 /settings     Internal operating settings, including call recording disclosure copy
 ```
@@ -875,6 +875,9 @@ Status: started.
 - Carrier management page
 - Create carrier API/form
 - Load operations page
+- Internal load board with dense operational rows
+- Load board KPI filters, search, equipment filter, and sorting
+- Load board quick actions into coverage and marketplace workspaces
 - Create load API/form
 - Load detail page
 - Load status update API/form
@@ -960,6 +963,22 @@ Remaining:
 - Add scheduled daily brief delivery
 - Add exception assignment/ownership
 - Add prompt version history
+
+### Milestone 10: Internal Load Board
+
+- Convert `/loads` from summary cards to a broker load board
+- Add KPI filters for needs carrier, posted, customer update, POD, ready invoice, and exceptions
+- Add board search, equipment filter, and pickup/margin/shipper/status sorting
+- Add dense load rows for lane, dates, freight details, coverage, rates, DAT/Truckstop post state, tracking, documents, and billing readiness
+- Add mobile load-board rows for smaller screens
+- Add quick actions to open, cover, or post a load from the board
+
+Remaining:
+
+- Add saved board views per user
+- Add column toggles
+- Add server-side pagination for high load volume
+- Add carrier response sync from DAT/Truckstop
 
 ## Design Principles
 

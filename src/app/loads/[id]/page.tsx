@@ -210,7 +210,10 @@ export default async function LoadDetailPage({
             </div>
           </article>
 
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <article
+            id="coverage"
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+          >
             <div className="flex items-center gap-3">
               <Truck className="h-6 w-6 text-emerald-600" />
               <h2 className="text-2xl font-semibold">Carrier coverage</h2>
@@ -357,7 +360,10 @@ export default async function LoadDetailPage({
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section
+        id="marketplace"
+        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">

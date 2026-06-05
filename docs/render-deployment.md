@@ -162,6 +162,7 @@ Expected behavior:
 - create carrier works.
 - carrier detail opens.
 - create load works.
+- load board filters, search, equipment filter, sorting, and quick actions render.
 - load status updates work.
 - internal carrier candidate generation works.
 - DAT/Truckstop capacity search validates or saves candidates when endpoints are configured.
@@ -209,28 +210,30 @@ Test in this order:
 23. Create carrier
 24. Open carrier detail
 25. Create load manually
-26. Open load detail
-27. Generate internal carrier candidates
-28. Search DAT/Truckstop capacity
-29. Post load to DAT/Truckstop
-30. Confirm marketplace audit log updates
-31. Add manual carrier candidate
-32. Request quote from a carrier candidate
-33. Update load status
-34. Add shipment event
-35. Add customer update
-36. Draft generated rate confirmation
-37. Open printable rate confirmation
-38. Update rate confirmation status
-39. Add load document metadata
-40. Add POD document metadata and confirm POD event appears
-41. Update carrier compliance and confirm pending carriers cannot be accepted
-42. Save Settings call recording disclosure
-43. Upload CSV contacts
-44. Public savings audit form
-45. Public instant quote form
-46. Intake queue
-47. Health check
+26. Open load board and test filters/search/sort
+27. Use load board quick actions to jump to coverage and marketplace sections
+28. Open load detail
+29. Generate internal carrier candidates
+30. Search DAT/Truckstop capacity
+31. Post load to DAT/Truckstop
+32. Confirm marketplace audit log updates
+33. Add manual carrier candidate
+34. Request quote from a carrier candidate
+35. Update load status
+36. Add shipment event
+37. Add customer update
+38. Draft generated rate confirmation
+39. Open printable rate confirmation
+40. Update rate confirmation status
+41. Add load document metadata
+42. Add POD document metadata and confirm POD event appears
+43. Update carrier compliance and confirm pending carriers cannot be accepted
+44. Save Settings call recording disclosure
+45. Upload CSV contacts
+46. Public savings audit form
+47. Public instant quote form
+48. Intake queue
+49. Health check
 
 ## 8. Known Temporary Choices
 

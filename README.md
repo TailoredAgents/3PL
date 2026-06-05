@@ -32,7 +32,7 @@ Included now:
 - Carrier management page
 - Carrier detail page with compliance context and related loads
 - Load operations page
-- Load detail page with status updates, carrier assignment, tracking events, document records, POD status handling, and invoice records
+- Load detail page with status updates, carrier offers, carrier assignment, tracking events, document records, POD status handling, and invoice records
 - Database-backed dashboard metrics with sample-data fallback
 - Database-backed CRM read helpers with sample-data fallback
 - Create lead form and API
@@ -783,13 +783,14 @@ Status: started.
 - Convert accepted quote to load
 - Add document/POD metadata records
 - Carrier assignment from load detail
+- Carrier offer entry and accept-to-book workflow
 - POD document updates load status
 - Billing readiness state
 - Invoice amount/status records
 
 Remaining:
 
-- Add carrier quotes
+- Add automated DAT/Truckstop carrier quote sync
 - Add durable POD upload and downloads
 - Add generated invoice PDFs and email sending
 

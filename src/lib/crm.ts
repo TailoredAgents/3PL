@@ -26,6 +26,18 @@ export type InvoiceView = {
   dueDate: string;
   paidAt: string;
 };
+export type CarrierQuoteView = {
+  id: string;
+  carrierId: string;
+  carrier: string;
+  complianceStatus: string;
+  quotedRate: number;
+  projectedMargin: number;
+  projectedMarginPercent: number;
+  status: string;
+  notes: string;
+  created: string;
+};
 export type LoadEventView = {
   type: string;
   message: string;
@@ -49,6 +61,7 @@ export type LoadView = {
   hasPod: boolean;
   billingReadiness: string;
   invoice: InvoiceView | null;
+  carrierQuotes: CarrierQuoteView[];
   events: LoadEventView[];
   documents: LoadDocumentView[];
 };
@@ -661,6 +674,10 @@ export async function getLoadViews(): Promise<LoadView[]> {
         carrier: true,
         invoice: true,
         documents: true,
+        carrierQuotes: {
+          include: { carrier: true },
+          orderBy: { createdAt: "desc" },
+        },
         events: {
           orderBy: { occurredAt: "desc" },
           take: 1,
@@ -694,6 +711,10 @@ export async function getLoadDetailView(
         shipper: true,
         carrier: true,
         invoice: true,
+        carrierQuotes: {
+          include: { carrier: true },
+          orderBy: { createdAt: "desc" },
+        },
         events: {
           orderBy: { occurredAt: "desc" },
           take: 50,
@@ -899,6 +920,18 @@ function mapLoad(load: {
     dueDate?: Date | null;
     paidAt?: Date | null;
   } | null;
+  carrierQuotes?: Array<{
+    id: string;
+    carrierId: string;
+    carrier: {
+      companyName: string;
+      complianceStatus: string;
+    };
+    quotedRate: unknown;
+    status: string;
+    notes?: string | null;
+    createdAt: Date;
+  }>;
   events: Array<{
     type: string;
     message: string;
@@ -939,6 +972,25 @@ function mapLoad(load: {
         paidAt: load.invoice.paidAt ? formatFollowUp(load.invoice.paidAt) : "",
       }
     : null;
+  const carrierQuotes = load.carrierQuotes?.map((quote) => {
+    const quotedRate = Number(quote.quotedRate);
+    const projectedMargin = customerRate - quotedRate;
+
+    return {
+      id: quote.id,
+      carrierId: quote.carrierId,
+      carrier: quote.carrier.companyName,
+      complianceStatus: titleCaseEnum(quote.carrier.complianceStatus),
+      quotedRate,
+      projectedMargin,
+      projectedMarginPercent: customerRate
+        ? Number(((projectedMargin / customerRate) * 100).toFixed(1))
+        : 0,
+      status: titleCaseEnum(quote.status),
+      notes: quote.notes ?? "No offer notes.",
+      created: formatFollowUp(quote.createdAt),
+    };
+  }) ?? [];
 
   return {
     id: load.id,
@@ -959,6 +1011,7 @@ function mapLoad(load: {
     hasPod,
     billingReadiness: getBillingReadiness(titleCaseEnum(load.status), hasPod, invoice),
     invoice,
+    carrierQuotes,
     events: load.events.map((event) => ({
       type: titleCaseEnum(event.type),
       message: event.message,

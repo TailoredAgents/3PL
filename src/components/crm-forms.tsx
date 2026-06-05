@@ -533,6 +533,39 @@ export function InvoiceCreateForm({
   );
 }
 
+export function CarrierQuoteCreateForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/carrier-quotes`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="carrierCompanyName" label="Carrier" required />
+        <Field name="quotedRate" label="Carrier offer" type="number" required />
+      </div>
+      <Textarea name="notes" label="Offer notes / dispatch terms" />
+      <FormFooter state={state} buttonLabel="Save carrier offer" />
+    </form>
+  );
+}
+
+export function CarrierQuoteAcceptForm({
+  loadId,
+  carrierQuoteId,
+}: {
+  loadId: string;
+  carrierQuoteId: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/carrier-quotes/${carrierQuoteId}/accept`,
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Accept offer" />
+    </form>
+  );
+}
+
 function Field({
   label,
   name,

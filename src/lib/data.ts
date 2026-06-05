@@ -429,6 +429,20 @@ export const loads = [
     hasPod: false,
     billingReadiness: "Not ready",
     invoice: null,
+    carrierQuotes: [
+      {
+        id: "carrier-quote-blue-ridge-001",
+        carrierId: "blue-ridge-transport",
+        carrier: "Blue Ridge Transport",
+        complianceStatus: "Approved",
+        quotedRate: 1980,
+        projectedMargin: 470,
+        projectedMarginPercent: 19.2,
+        status: "Accepted",
+        notes: "Booked dry van with afternoon pickup confirmation needed.",
+        created: "Today, 9:00 AM",
+      },
+    ],
     events: [
       {
         type: "Location Update",
@@ -456,6 +470,20 @@ export const loads = [
     hasPod: false,
     billingReadiness: "Not ready",
     invoice: null,
+    carrierQuotes: [
+      {
+        id: "carrier-quote-magnolia-002",
+        carrierId: "magnolia-reefer-lines",
+        carrier: "Magnolia Reefer Lines",
+        complianceStatus: "Pending",
+        quotedRate: 1610,
+        projectedMargin: 240,
+        projectedMarginPercent: 13,
+        status: "Received",
+        notes: "Confirm reefer temp and insurance before accepting.",
+        created: "Today, 8:50 AM",
+      },
+    ],
     events: [
       {
         type: "Location Update",

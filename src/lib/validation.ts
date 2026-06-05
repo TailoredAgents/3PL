@@ -179,6 +179,12 @@ export const invoiceCreateSchema = z.object({
   dueDate: z.string().trim().optional(),
 });
 
+export const carrierQuoteCreateSchema = z.object({
+  carrierCompanyName: requiredString,
+  quotedRate: z.coerce.number().positive(),
+  notes: z.string().trim().optional(),
+});
+
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
@@ -194,3 +200,4 @@ export type QuoteConvertInput = z.infer<typeof quoteConvertSchema>;
 export type CustomerQuoteCreateInput = z.infer<typeof customerQuoteCreateSchema>;
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;
 export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
+export type CarrierQuoteCreateInput = z.infer<typeof carrierQuoteCreateSchema>;

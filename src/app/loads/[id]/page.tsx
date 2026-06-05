@@ -11,10 +11,13 @@ import {
   MapPinned,
   Package,
   ReceiptText,
+  ShieldCheck,
   Truck,
 } from "lucide-react";
 
 import {
+  CarrierQuoteAcceptForm,
+  CarrierQuoteCreateForm,
   DocumentCreateForm,
   InvoiceCreateForm,
   LoadUpdateForm,
@@ -133,6 +136,20 @@ export default async function LoadDetailPage({
 
         <div className="grid gap-6">
           <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Truck className="h-6 w-6 text-emerald-600" />
+              <h2 className="text-2xl font-semibold">Carrier coverage</h2>
+            </div>
+            <p className="mt-3 leading-7 text-slate-600">
+              Record carrier offers from DAT, Truckstop, texts, or dispatch
+              calls. Accepting an offer books the carrier and updates margin.
+            </p>
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <CarrierQuoteCreateForm loadId={load.id} />
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-2xl font-semibold">Update load</h2>
             <p className="mt-3 leading-7 text-slate-600">
               Move the load through the operating workflow and update carrier
@@ -192,6 +209,104 @@ export default async function LoadDetailPage({
               />
             </div>
           </article>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Coverage desk
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Carrier offers</h2>
+          </div>
+          <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+            {load.carrierQuotes.length} offers
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-4">
+          {load.carrierQuotes.length ? (
+            load.carrierQuotes.map((quote) => (
+              <div
+                key={quote.id}
+                className="grid gap-4 rounded-md border border-slate-100 bg-slate-50 p-4 xl:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-lg font-semibold">{quote.carrier}</h3>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        quote.complianceStatus === "Approved"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {quote.complianceStatus}
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        quote.status === "Accepted"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : quote.status === "Rejected"
+                            ? "bg-slate-200 text-slate-600"
+                            : "bg-sky-100 text-sky-800"
+                      }`}
+                    >
+                      {quote.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {quote.notes}
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                    <OfferMetric
+                      label="Carrier rate"
+                      value={toCurrency(quote.quotedRate)}
+                    />
+                    <OfferMetric
+                      label="Projected margin"
+                      value={toCurrency(quote.projectedMargin)}
+                    />
+                    <OfferMetric
+                      label="Margin percent"
+                      value={`${quote.projectedMarginPercent}%`}
+                    />
+                    <OfferMetric label="Received" value={quote.created} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-between gap-3 xl:w-52">
+                  <Link
+                    href={`/carriers/${quote.carrierId}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Carrier file
+                  </Link>
+                  {quote.status === "Accepted" ? (
+                    <p className="rounded-md bg-emerald-50 px-4 py-2 text-center text-sm font-semibold text-emerald-800">
+                      Booked carrier
+                    </p>
+                  ) : quote.status === "Rejected" ? (
+                    <p className="rounded-md bg-slate-100 px-4 py-2 text-center text-sm font-semibold text-slate-500">
+                      Not selected
+                    </p>
+                  ) : (
+                    <CarrierQuoteAcceptForm
+                      loadId={load.id}
+                      carrierQuoteId={quote.id}
+                    />
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+              No carrier offers yet. Add offers as dispatchers call back, then
+              accept the best compliant option.
+            </p>
+          )}
         </div>
       </section>
 
@@ -261,6 +376,17 @@ export default async function LoadDetailPage({
         </article>
       </section>
     </InternalShell>
+  );
+}
+
+function OfferMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white p-3">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-1 font-semibold text-slate-950">{value}</p>
+    </div>
   );
 }
 

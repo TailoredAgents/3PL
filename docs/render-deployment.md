@@ -101,16 +101,20 @@ TWILIO_PHONE_NUMBER
 DAT_CLIENT_ID
 DAT_CLIENT_SECRET
 DAT_RATE_API_URL
+DAT_CAPACITY_API_URL
+DAT_POST_LOAD_API_URL
 TRUCKSTOP_CLIENT_ID
 TRUCKSTOP_CLIENT_SECRET
 TRUCKSTOP_RATE_API_URL
+TRUCKSTOP_CAPACITY_API_URL
+TRUCKSTOP_POST_LOAD_API_URL
 CLERK_SECRET_KEY
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 RESEND_API_KEY
 STRIPE_SECRET_KEY
 ```
 
-Missing optional credentials should not block the first deploy. The quote pricing workspace still supports manual benchmarks when DAT/Truckstop rate endpoints are not configured.
+Missing optional credentials should not block the first deploy. The quote pricing workspace still supports manual benchmarks and the load coverage desk still supports manual carrier candidates when DAT/Truckstop endpoints are not configured.
 
 ## 6. First Live Checks
 
@@ -153,6 +157,9 @@ Expected behavior:
 - create load works.
 - load status updates work.
 - internal carrier candidate generation works.
+- DAT/Truckstop capacity search validates or saves candidates when endpoints are configured.
+- DAT/Truckstop load posting validates or records provider post logs when endpoints are configured.
+- marketplace audit log appears on the load detail page.
 - manual carrier candidate save works.
 - carrier candidate quote-request status works.
 - shipment event timeline works.
@@ -190,15 +197,18 @@ Test in this order:
 18. Create load manually
 19. Open load detail
 20. Generate internal carrier candidates
-21. Add manual carrier candidate
-22. Request quote from a carrier candidate
-23. Update load status
-24. Add shipment event
-25. Add customer update
-26. Draft generated rate confirmation
-27. Open printable rate confirmation
-28. Update rate confirmation status
-29. Add load document metadata
+21. Search DAT/Truckstop capacity
+22. Post load to DAT/Truckstop
+23. Confirm marketplace audit log updates
+24. Add manual carrier candidate
+25. Request quote from a carrier candidate
+26. Update load status
+27. Add shipment event
+28. Add customer update
+29. Draft generated rate confirmation
+30. Open printable rate confirmation
+31. Update rate confirmation status
+32. Add load document metadata
 30. Add POD document metadata and confirm POD event appears
 31. Update carrier compliance and confirm pending carriers cannot be accepted
 32. Save Settings call recording disclosure

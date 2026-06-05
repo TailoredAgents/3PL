@@ -65,14 +65,13 @@ Needed for:
 DAT_CLIENT_ID
 DAT_CLIENT_SECRET
 DAT_RATE_API_URL
+DAT_CAPACITY_API_URL
+DAT_POST_LOAD_API_URL
 ```
 
 Needed for:
 
 - rate lookup
-
-Future DAT capabilities:
-
 - carrier capacity
 - load posting
 
@@ -82,14 +81,13 @@ Future DAT capabilities:
 TRUCKSTOP_CLIENT_ID
 TRUCKSTOP_CLIENT_SECRET
 TRUCKSTOP_RATE_API_URL
+TRUCKSTOP_CAPACITY_API_URL
+TRUCKSTOP_POST_LOAD_API_URL
 ```
 
 Needed for:
 
 - rate lookup
-
-Future Truckstop capabilities:
-
 - carrier capacity
 - load posting
 

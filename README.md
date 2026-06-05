@@ -266,9 +266,13 @@ TWILIO_FORWARD_TO_PHONE_NUMBER
 DAT_CLIENT_ID
 DAT_CLIENT_SECRET
 DAT_RATE_API_URL
+DAT_CAPACITY_API_URL
+DAT_POST_LOAD_API_URL
 TRUCKSTOP_CLIENT_ID
 TRUCKSTOP_CLIENT_SECRET
 TRUCKSTOP_RATE_API_URL
+TRUCKSTOP_CAPACITY_API_URL
+TRUCKSTOP_POST_LOAD_API_URL
 CLERK_SECRET_KEY
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 RESEND_API_KEY
@@ -636,7 +640,7 @@ This is important because AI automation needs traceability.
 
 ## DAT and Truckstop Integration Plan
 
-The first rate-intelligence adapter boundary is implemented. It can call configured DAT and Truckstop rate endpoints, normalize the response into internal benchmark records, and keep the rest of the app independent from provider-specific payloads.
+The DAT/Truckstop adapter boundary is implemented for rate lookup, capacity search, and load posting. These calls use configured endpoint URLs from the brokerage's provider accounts, normalize useful data into internal records, and log provider payloads for audit/debugging.
 
 Recommended abstraction:
 
@@ -644,20 +648,22 @@ Recommended abstraction:
 src/lib/integrations/dat.ts
 src/lib/integrations/truckstop.ts
 src/lib/rating/rate-intelligence.ts
+src/lib/marketplace/marketplace-workflow.ts
 ```
 
 Current capability:
 
 - Rate lookup by lane
 - Normalize rate data into `RateBenchmark`
+- Capacity search by load
+- Normalize capacity matches into `CarrierSourcingCandidate`
+- Post load to configured provider endpoints
+- Store provider request/response logs in `IntegrationLog`
 
 Future capabilities:
 
-- Capacity search by lane
-- Post load
 - Pull carrier responses
-- Normalize carrier/rate data
-- Store integration payloads for audit/debugging
+- Automated carrier quote sync
 
 Data should flow into:
 
@@ -667,6 +673,7 @@ Data should flow into:
 - `CarrierQuote`
 - `Load`
 - `AiAgentRun`
+- `IntegrationLog`
 
 Do not let API-specific payload shapes leak across the app. Normalize them into internal objects.
 
@@ -884,9 +891,13 @@ Remaining:
 - Add rate lookup
 - Add capacity search
 - Add load posting
-- Add carrier response sync
 - Add payload logging
 - Add rate intelligence agent
+
+Remaining:
+
+- Add carrier response sync
+- Map final provider-specific equipment IDs and payload fields from account documentation
 
 ### Milestone 7: Twilio and Outreach
 

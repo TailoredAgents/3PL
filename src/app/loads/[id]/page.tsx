@@ -27,6 +27,8 @@ import {
   DocumentCreateForm,
   InvoiceCreateForm,
   LoadUpdateForm,
+  MarketplaceCapacitySearchForm,
+  MarketplaceLoadPostForm,
   RateConfirmationGenerateForm,
   RateConfirmationForm,
   ShipmentEventCreateForm,
@@ -220,6 +222,17 @@ export default async function LoadDetailPage({
             </p>
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
               <CarrierCandidateGenerateForm loadId={load.id} />
+            </div>
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <MarketplaceCapacitySearchForm loadId={load.id} />
+                <MarketplaceLoadPostForm loadId={load.id} />
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                These actions use configured DAT/Truckstop endpoint URLs and
+                log each provider request for auditability. Manual candidates
+                stay available when provider endpoints are not connected.
+              </p>
             </div>
             <div className="mt-4 rounded-lg bg-slate-50 p-4">
               <CarrierCandidateCreateForm loadId={load.id} />
@@ -448,6 +461,50 @@ export default async function LoadDetailPage({
               No carrier candidates yet. Generate internal candidates or add
               carriers found through DAT, Truckstop, relationships, texts, or
               dispatch calls before requesting quotes.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Marketplace audit
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              DAT / Truckstop activity
+            </h2>
+          </div>
+          <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+            {load.integrationLogs.length} logs
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {load.integrationLogs.length ? (
+            load.integrationLogs.map((log) => (
+              <div
+                key={log.id}
+                className="grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 md:grid-cols-[0.8fr_0.8fr_1.3fr_0.8fr]"
+              >
+                <OfferMetric label="Provider" value={log.provider} />
+                <OfferMetric label="Action" value={log.action} />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                    Result
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-950">
+                    {log.status}: {log.error ?? log.message}
+                  </p>
+                </div>
+                <OfferMetric label="Time" value={log.created} />
+              </div>
+            ))
+          ) : (
+            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+              No marketplace activity yet. Search capacity or post this load to
+              DAT/Truckstop to create an audit log.
             </p>
           )}
         </div>

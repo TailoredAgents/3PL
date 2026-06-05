@@ -465,6 +465,17 @@ export const loads = [
         created: "Today, 9:00 AM",
       },
     ],
+    integrationLogs: [
+      {
+        id: "integration-log-dat-capacity-001",
+        provider: "Dat",
+        action: "Capacity Search",
+        status: "Skipped",
+        message: "DAT capacity endpoint not configured in sample mode.",
+        error: null,
+        created: "Today, 8:55 AM",
+      },
+    ],
     events: [
       {
         type: "Location Update",
@@ -525,6 +536,17 @@ export const loads = [
         status: "Received",
         notes: "Confirm reefer temp and insurance before accepting.",
         created: "Today, 8:50 AM",
+      },
+    ],
+    integrationLogs: [
+      {
+        id: "integration-log-truckstop-post-002",
+        provider: "Truckstop",
+        action: "Load Post",
+        status: "Skipped",
+        message: "Truckstop posting endpoint not configured in sample mode.",
+        error: null,
+        created: "Today, 8:44 AM",
       },
     ],
     events: [

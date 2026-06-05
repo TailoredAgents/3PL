@@ -882,6 +882,30 @@ export function CarrierCandidateGenerateForm({ loadId }: { loadId: string }) {
   );
 }
 
+export function MarketplaceCapacitySearchForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/marketplace-capacity`,
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Search DAT / Truckstop capacity" />
+    </form>
+  );
+}
+
+export function MarketplaceLoadPostForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/marketplace-posts`,
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Post load to DAT / Truckstop" />
+    </form>
+  );
+}
+
 export function CarrierCandidateRequestQuoteForm({
   loadId,
   candidateId,

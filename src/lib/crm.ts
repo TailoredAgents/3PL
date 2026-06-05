@@ -53,6 +53,15 @@ export type LoadDocumentView = {
   fileUrl: string;
   created: string;
 };
+export type IntegrationLogView = {
+  id: string;
+  provider: string;
+  action: string;
+  status: string;
+  message: string;
+  error: string | null;
+  created: string;
+};
 export type InvoiceView = {
   amount: number;
   status: string;
@@ -133,6 +142,7 @@ export type LoadView = {
   invoice: InvoiceView | null;
   carrierCandidates: CarrierSourcingCandidateView[];
   carrierQuotes: CarrierQuoteView[];
+  integrationLogs: IntegrationLogView[];
   events: LoadEventView[];
   documents: LoadDocumentView[];
 };
@@ -895,6 +905,10 @@ export async function getLoadViews(): Promise<LoadView[]> {
           include: { carrier: true },
           orderBy: [{ status: "asc" }, { matchScore: "desc" }, { createdAt: "desc" }],
         },
+        integrationLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 6,
+        },
         events: {
           orderBy: { occurredAt: "desc" },
           take: 1,
@@ -935,6 +949,10 @@ export async function getLoadDetailView(
         sourcingCandidates: {
           include: { carrier: true },
           orderBy: [{ status: "asc" }, { matchScore: "desc" }, { createdAt: "desc" }],
+        },
+        integrationLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 10,
         },
         events: {
           orderBy: { occurredAt: "desc" },
@@ -1308,6 +1326,15 @@ function mapLoad(load: {
     notes?: string | null;
     createdAt: Date;
   }>;
+  integrationLogs?: Array<{
+    id: string;
+    provider: string;
+    action: string;
+    status: string;
+    message?: string | null;
+    error?: string | null;
+    createdAt: Date;
+  }>;
   events: Array<{
     type: string;
     message: string;
@@ -1394,6 +1421,15 @@ function mapLoad(load: {
     notes: candidate.notes ?? "No sourcing notes.",
     created: formatFollowUp(candidate.createdAt),
   })) ?? [];
+  const integrationLogs = load.integrationLogs?.map((log) => ({
+    id: log.id,
+    provider: titleCaseEnum(log.provider),
+    action: titleCaseEnum(log.action),
+    status: titleCaseEnum(log.status),
+    message: log.message ?? "No provider message.",
+    error: log.error ?? null,
+    created: formatFollowUp(log.createdAt),
+  })) ?? [];
 
   return {
     id: load.id,
@@ -1460,6 +1496,7 @@ function mapLoad(load: {
     invoice,
     carrierCandidates,
     carrierQuotes,
+    integrationLogs,
     events: load.events.map((event) => ({
       type: titleCaseEnum(event.type),
       message: event.message,

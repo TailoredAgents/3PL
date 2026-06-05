@@ -211,6 +211,25 @@ enum CarrierSourcingStatus {
   CONVERTED
 }
 
+enum IntegrationProvider {
+  DAT
+  TRUCKSTOP
+  OTHER
+}
+
+enum IntegrationAction {
+  RATE_LOOKUP
+  CAPACITY_SEARCH
+  LOAD_POST
+  CARRIER_RESPONSE_SYNC
+}
+
+enum IntegrationStatus {
+  SKIPPED
+  SUCCESS
+  FAILED
+}
+
 model User {
   id         String          @id @default(cuid())
   name       String
@@ -477,6 +496,7 @@ model Load {
   rateConfirmationSentAt DateTime?
   rateConfirmationSignedAt DateTime?
   sourcingCandidates CarrierSourcingCandidate[]
+  integrationLogs   IntegrationLog[]
   carrierQuotes    CarrierQuote[]
   events           ShipmentEvent[]
   documents        Document[]
@@ -559,6 +579,29 @@ model CarrierSourcingCandidate {
   @@index([carrierId])
   @@index([source])
   @@index([status])
+}
+
+model IntegrationLog {
+  id             String              @id @default(cuid())
+  provider       IntegrationProvider
+  action         IntegrationAction
+  status         IntegrationStatus
+  loadId         String?
+  load           Load?               @relation(fields: [loadId], references: [id], onDelete: SetNull)
+  quoteRequestId String?
+  requestJson    Json?
+  responseJson   Json?
+  externalId     String?
+  message        String?
+  error          String?
+  createdAt      DateTime            @default(now())
+
+  @@index([provider])
+  @@index([action])
+  @@index([status])
+  @@index([loadId])
+  @@index([quoteRequestId])
+  @@index([createdAt])
 }
 
 model ShipmentEvent {

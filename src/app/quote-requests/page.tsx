@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   FilePlus2,
   Gauge,
+  PhoneCall,
   Package,
   Truck,
 } from "lucide-react";
@@ -42,13 +43,19 @@ export default async function QuoteRequestsPage() {
   const pricingWork = quoteRequestViews.filter((request) =>
     ["Pricing", "New", "Quoted"].includes(request.status),
   );
+  const phoneChecklist = [
+    "Origin, destination, pickup, and delivery timing",
+    "Equipment, weight, commodity, and pallet count",
+    "Appointment windows, accessorials, and special requirements",
+    "Target rate, current carrier issue, and urgency",
+  ];
 
   return (
     <InternalShell
       active="Quote Requests"
       eyebrow="Pricing desk"
       title="Quote request queue"
-      description="Every quote request should be structured, prioritized, priced, and followed up from one place before it becomes a booked load."
+      description="Most quotes start with a phone conversation. Capture the shipper's details fast, then price, follow up, and convert accepted quotes into booked loads."
       action={{ label: "Public quote form", href: "/#quote" }}
     >
       <section className="grid gap-4 md:grid-cols-3">
@@ -89,7 +96,69 @@ export default async function QuoteRequestsPage() {
         ))}
       </section>
 
+      <section className="grid items-start gap-6 xl:grid-cols-[1fr_380px]">
+        <details
+          open
+          className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+                <PhoneCall className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                  Phone quote intake
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold">
+                  Create quote while the shipper is on the phone
+                </h2>
+                <p className="mt-1 leading-7 text-slate-600">
+                  Use this for relationship-driven quote calls, emails, and
+                  texts from existing or warm shippers.
+                </p>
+              </div>
+            </div>
+            <span className="flex-none rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white group-open:bg-slate-700">
+              <span className="group-open:hidden">Open form</span>
+              <span className="hidden group-open:inline">Hide form</span>
+            </span>
+          </summary>
+          <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <QuoteRequestCreateForm />
+          </div>
+        </details>
+
+        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+          <div className="flex items-center gap-3">
+            <ClipboardCheck className="h-6 w-6 text-emerald-600" />
+            <h2 className="text-2xl font-semibold">Call checklist</h2>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Ask these before hanging up so pricing does not stall later.
+          </p>
+          <div className="mt-5 grid gap-3">
+            {phoneChecklist.map((item) => (
+              <div
+                key={item}
+                className="rounded-md border border-slate-100 bg-slate-50 p-4 text-sm font-medium leading-6 text-slate-700"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+          <Link
+            href="#pricing-work"
+            className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-emerald-700"
+          >
+            Review pricing queue
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </article>
+      </section>
+
       <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+        <div id="pricing-work" className="scroll-mt-24" />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -219,30 +288,6 @@ export default async function QuoteRequestsPage() {
           </article>
         ))}
       </section>
-
-      <details className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <FilePlus2 className="h-6 w-6" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-semibold">Create quote request</h2>
-              <p className="mt-1 leading-7 text-slate-600">
-                Capture a quote from a phone call or email before rate work
-                starts.
-              </p>
-            </div>
-          </div>
-          <span className="flex-none rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white group-open:bg-slate-700">
-            <span className="group-open:hidden">Open form</span>
-            <span className="hidden group-open:inline">Hide form</span>
-          </span>
-        </summary>
-        <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <QuoteRequestCreateForm />
-        </div>
-      </details>
     </InternalShell>
   );
 }

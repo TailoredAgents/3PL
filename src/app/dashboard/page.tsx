@@ -1,10 +1,15 @@
+import Link from "next/link";
 import {
+  AlertTriangle,
+  ArrowRight,
   Bot,
+  CheckCircle2,
   ClipboardList,
   FileText,
   Headphones,
   MapPinned,
   ReceiptText,
+  Truck,
 } from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
@@ -21,25 +26,72 @@ export default async function DashboardPage() {
       label: "Leads needing follow-up",
       value: metrics.leadsDue,
       note: "Call qualified leads and new audit submissions first.",
+      href: "/leads",
     },
     {
       icon: FileText,
       label: "Open quote requests",
       value: metrics.openQuotes,
       note: "Review service details before rate work starts.",
+      href: "/quote-requests",
     },
     {
       icon: MapPinned,
       label: "Active loads",
       value: metrics.activeLoads,
       note: "Watch pickup, delivery, POD, and customer update needs.",
+      href: "/loads",
     },
     {
       icon: ReceiptText,
       label: "Projected margin",
       value: metrics.projectedMargin,
-      note: "Business margin from loads with carrier costs entered.",
+      note: "Margin from loads with carrier costs entered.",
+      href: "/loads",
     },
+  ];
+  const priorityWork = [
+    {
+      icon: Headphones,
+      title: "Work today's calls",
+      body: "Start with high-priority follow-ups and audit-driven leads.",
+      href: "/leads",
+      action: "Open leads",
+    },
+    {
+      icon: FileText,
+      title: "Price quote requests",
+      body: "Validate service details, lane, equipment, and timing before quoting.",
+      href: "/quote-requests",
+      action: "Open quotes",
+    },
+    {
+      icon: Truck,
+      title: "Check active loads",
+      body: "Confirm pickup, watch exceptions, and keep shipper updates moving.",
+      href: "/loads",
+      action: "Open loads",
+    },
+    {
+      icon: ReceiptText,
+      title: "Collect POD / billing",
+      body: "Find delivered loads that need POD, invoice, or payment follow-up.",
+      href: "/loads",
+      action: "Review loads",
+    },
+  ];
+  const operatingChecklist = [
+    "Confirm pickup",
+    "Update shipper",
+    "Check carrier status",
+    "Collect POD",
+    "Mark ready for invoice",
+  ];
+  const workQueues = [
+    { label: "Lead pipeline", href: "/leads", detail: "Calls, stages, AI next actions" },
+    { label: "Quote queue", href: "/quote-requests", detail: "Price work and quote-to-load" },
+    { label: "Load board", href: "/loads", detail: "Tracking, POD, margin" },
+    { label: "Carrier desk", href: "/carriers", detail: "Compliance and coverage" },
   ];
 
   return (
@@ -52,9 +104,10 @@ export default async function DashboardPage() {
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardCards.map((card) => (
-          <article
+          <Link
             key={card.label}
-            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+            href={card.href}
+            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/10"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
               <card.icon className="h-5 w-5" />
@@ -64,19 +117,54 @@ export default async function DashboardPage() {
             </p>
             <p className="mt-2 text-3xl font-semibold">{card.value}</p>
             <p className="mt-3 text-sm leading-6 text-slate-600">{card.note}</p>
-          </article>
+          </Link>
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Priority work
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              What should happen first today
+            </h2>
+          </div>
+          <p className="text-sm leading-6 text-slate-600">
+            Sales, pricing, load execution, and billing readiness in one view.
+          </p>
+        </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-4">
+          {priorityWork.map((item) => (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+            >
+              <item.icon className="h-5 w-5 text-emerald-600" />
+              <h3 className="mt-4 font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {item.body}
+              </p>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700">
+                {item.action}
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                Lead pipeline
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                Sales snapshot
               </p>
               <h2 className="mt-2 text-2xl font-semibold">
-                First sales operating view
+                Pipeline health
               </h2>
             </div>
             <Bot className="h-6 w-6 text-slate-400" />
@@ -85,30 +173,44 @@ export default async function DashboardPage() {
             {metrics.leadPipeline.map((stage) => (
               <div
                 key={stage.stage}
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
+                className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
               >
-                <p className="font-medium">{stage.stage}</p>
-                <p className="text-sm text-slate-600">{stage.count} leads</p>
-                <p className="text-sm font-semibold">{stage.amount}</p>
+                <div>
+                  <p className="font-semibold">{stage.stage}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {stage.count} leads in stage
+                  </p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-700 shadow-sm">
+                  {stage.count}
+                </span>
               </div>
             ))}
           </div>
         </article>
 
-        <article id="ai" className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            AI brief
+        <article
+          id="ai"
+          className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+        >
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+            Operator brief
           </p>
-          <h2 className="mt-2 text-2xl font-semibold">Today&apos;s agent notes</h2>
+          <h2 className="mt-2 text-2xl font-semibold">AI-assisted next moves</h2>
           <div className="mt-6 grid gap-4">
             {agentBriefs.map((brief) => (
-              <div key={brief.title} className="flex gap-3">
-                <brief.icon className="mt-1 h-5 w-5 flex-none text-emerald-600" />
-                <div>
-                  <p className="font-semibold">{brief.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    {brief.body}
-                  </p>
+              <div
+                key={brief.title}
+                className="rounded-md border border-slate-100 bg-slate-50 p-4"
+              >
+                <div className="flex gap-3">
+                  <brief.icon className="mt-1 h-5 w-5 flex-none text-emerald-600" />
+                  <div>
+                    <p className="font-semibold">{brief.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {brief.body}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -116,45 +218,72 @@ export default async function DashboardPage() {
         </article>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <article id="loads" className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <article
+          id="loads"
+          className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+        >
           <div className="flex items-center gap-3">
             <ClipboardList className="h-6 w-6 text-emerald-600" />
             <h2 className="text-2xl font-semibold">Operating checklist</h2>
           </div>
           <p className="mt-3 leading-7 text-slate-600">
-            Keep each load moving through pickup, tracking, delivery, POD,
+            Keep every load moving through pickup, tracking, delivery, POD,
             invoice, and customer follow-up without losing context.
           </p>
           <div className="mt-6 grid gap-3">
-            {["Confirm pickup", "Update shipper", "Collect POD"].map((item) => (
-              <div key={item} className="rounded-md bg-slate-50 px-4 py-3">
-                {item}
+            {operatingChecklist.map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
+              >
+                <CheckCircle2 className="h-5 w-5 flex-none text-emerald-600" />
+                <span className="font-medium">{item}</span>
               </div>
             ))}
           </div>
         </article>
 
-        <article id="carriers" className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Next build modules
+        <article
+          id="queues"
+          className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+        >
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+            Open work queues
           </p>
           <h2 className="mt-2 text-2xl font-semibold">
-            What plugs into this shell next
+            Jump into the active work
           </h2>
           <div className="mt-6 grid gap-3 md:grid-cols-2">
-            {[
-              "Lead/contact import",
-              "Grok prompt templates",
-              "Quote request queue",
-              "DAT and Truckstop rate lookups",
-              "Twilio call and SMS logging",
-              "POD and invoice workflow",
-            ].map((item) => (
-              <div key={item} className="rounded-md bg-slate-50 px-4 py-3">
-                {item}
-              </div>
+            {workQueues.map((queue) => (
+              <Link
+                key={queue.href}
+                href={queue.href}
+                className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-semibold">{queue.label}</p>
+                  <ArrowRight className="h-4 w-4 text-emerald-700" />
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {queue.detail}
+                </p>
+              </Link>
             ))}
+          </div>
+          <div className="mt-5 rounded-md border border-amber-100 bg-amber-50 p-4">
+            <div className="flex gap-3">
+              <AlertTriangle className="mt-1 h-5 w-5 flex-none text-amber-700" />
+              <div>
+                <p className="font-semibold text-amber-950">
+                  Watch exceptions first
+                </p>
+                <p className="mt-1 text-sm leading-6 text-amber-900">
+                  Any late pickup, missing POD, carrier compliance hold, or
+                  margin gap should move ahead of routine admin work.
+                </p>
+              </div>
+            </div>
           </div>
         </article>
       </section>

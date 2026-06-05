@@ -242,19 +242,7 @@ export async function getIntakeViews() {
 
 export async function getDashboardMetrics() {
   if (!hasDatabaseUrl() || !prisma) {
-    return {
-      leadsDue: leads.length.toString(),
-      openQuotes: quoteRequests.length.toString(),
-      activeLoads: loads.length.toString(),
-      projectedMargin: `$${loads.reduce((sum, load) => sum + load.margin, 0).toLocaleString()}`,
-      leadPipeline: ["New", "Contacted", "Qualified", "Quoted", "Won"].map(
-        (stage) => ({
-          stage,
-          count: leads.filter((lead) => lead.stage === stage).length,
-          amount: "-",
-        }),
-      ),
-    };
+    return getSampleDashboardMetrics();
   }
 
   try {
@@ -290,6 +278,15 @@ export async function getDashboardMetrics() {
       (sum, load) => sum + Number(load.grossProfit ?? 0),
       0,
     );
+    const databaseIsEmpty =
+      leadsDue === 0 &&
+      openQuotes === 0 &&
+      activeLoads === 0 &&
+      leadGroups.length === 0;
+
+    if (databaseIsEmpty) {
+      return getSampleDashboardMetrics();
+    }
 
     return {
       leadsDue: leadsDue.toString(),
@@ -306,14 +303,24 @@ export async function getDashboardMetrics() {
       ),
     };
   } catch {
-    return {
-      leadsDue: leads.length.toString(),
-      openQuotes: quoteRequests.length.toString(),
-      activeLoads: loads.length.toString(),
-      projectedMargin: `$${loads.reduce((sum, load) => sum + load.margin, 0).toLocaleString()}`,
-      leadPipeline: [],
-    };
+    return getSampleDashboardMetrics();
   }
+}
+
+function getSampleDashboardMetrics() {
+  return {
+    leadsDue: leads.length.toString(),
+    openQuotes: quoteRequests.length.toString(),
+    activeLoads: loads.length.toString(),
+    projectedMargin: `$${loads.reduce((sum, load) => sum + load.margin, 0).toLocaleString()}`,
+    leadPipeline: ["New", "Contacted", "Qualified", "Quoted", "Won"].map(
+      (stage) => ({
+        stage,
+        count: leads.filter((lead) => lead.stage === stage).length,
+        amount: "-",
+      }),
+    ),
+  };
 }
 
 export async function getActivityViews(): Promise<ActivityView[]> {

@@ -32,6 +32,16 @@ export async function POST(
     return Response.json({ error: "Carrier offer not found." }, { status: 404 });
   }
 
+  if (carrierQuote.carrier.complianceStatus !== "APPROVED") {
+    return Response.json(
+      {
+        error:
+          "Carrier must be approved before accepting the offer. Update the carrier compliance checklist first.",
+      },
+      { status: 400 },
+    );
+  }
+
   const carrierRate = Number(carrierQuote.quotedRate);
   const grossProfit = Number(carrierQuote.load.customerRate) - carrierRate;
 

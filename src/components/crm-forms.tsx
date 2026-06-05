@@ -189,6 +189,7 @@ export function QuoteRequestCreateForm() {
 
   return (
     <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="intakeChannel" value="PHONE" />
       <div className="grid gap-3 sm:grid-cols-2">
         <Field name="companyName" label="Company" required />
         <Field name="contactName" label="Contact" />
@@ -203,12 +204,38 @@ export function QuoteRequestCreateForm() {
         <Field name="destinationCity" label="Destination city" required />
         <Field name="destinationState" label="State" required placeholder="TX" />
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="originAddress" label="Pickup address" />
+        <Field name="destinationAddress" label="Delivery address" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
         <Field name="pickupDate" label="Pickup" type="date" />
+        <Field name="pickupWindow" label="Pickup window" placeholder="0800-1200" />
+        <Field name="deliveryDate" label="Delivery" type="date" />
+        <Field name="deliveryWindow" label="Delivery window" placeholder="By appointment" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
         <Field name="equipmentType" label="Equipment" required />
         <Field name="weight" label="Weight" type="number" />
+        <Field name="palletCount" label="Pallets" type="number" />
+        <Field name="pieceCount" label="Pieces" type="number" />
       </div>
-      <Field name="commodity" label="Commodity" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="commodity" label="Commodity" />
+        <Field name="dimensions" label="Dimensions" placeholder="48x40 pallets" />
+        <Field name="temperatureRequirement" label="Temperature" placeholder="Frozen, 34-38F, none" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="customerReference" label="Customer ref / PO" />
+        <Field name="urgency" label="Urgency" placeholder="Same day, this week" />
+        <Field name="targetMarginPercent" label="Target margin %" type="number" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Checkbox name="hazmat" label="Hazmat" />
+        <Checkbox name="appointmentRequired" label="Appointment required" />
+      </div>
+      <Textarea name="accessorials" label="Accessorials" rows={2} />
+      <Textarea name="pricingNotes" label="Pricing notes" rows={2} />
       <Textarea name="specialRequirements" label="Special requirements" />
       <FormFooter state={state} buttonLabel="Create quote request" />
     </form>
@@ -294,6 +321,17 @@ export function CarrierCreateForm() {
         label="Compliance"
         options={["PENDING", "APPROVED", "REJECTED", "EXPIRED"]}
       />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="authorityStatus" label="Authority status" />
+        <Field name="insuranceStatus" label="Insurance status" />
+        <Field name="safetyRating" label="Safety rating" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="fraudRiskLevel" label="Fraud risk" />
+        <Field name="lastVettedAt" label="Last vetted" type="date" />
+        <Field name="approvedBy" label="Approved by" />
+      </div>
+      <Textarea name="complianceNotes" label="Compliance notes" rows={2} />
       <Field
         name="preferredLanes"
         label="Preferred lanes"
@@ -320,15 +358,37 @@ export function LoadCreateForm() {
         <Field name="destinationCity" label="Destination city" required />
         <Field name="destinationState" label="State" required placeholder="TX" />
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="originAddress" label="Pickup address" />
+        <Field name="destinationAddress" label="Delivery address" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
         <Field name="equipmentType" label="Equipment" required />
         <Field name="pickupDate" label="Pickup" type="date" />
+        <Field name="pickupWindow" label="Pickup window" />
         <Field name="deliveryDate" label="Delivery" type="date" />
+        <Field name="deliveryWindow" label="Delivery window" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Field name="commodity" label="Commodity" />
+        <Field name="weight" label="Weight" type="number" />
+        <Field name="palletCount" label="Pallets" type="number" />
+        <Field name="pieceCount" label="Pieces" type="number" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="dimensions" label="Dimensions" />
+        <Field name="temperatureRequirement" label="Temperature" />
+        <Field name="customerReference" label="Customer ref / PO" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Checkbox name="hazmat" label="Hazmat" />
+        <Checkbox name="appointmentRequired" label="Appointment required" />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field name="customerRate" label="Customer rate" type="number" required />
         <Field name="carrierRate" label="Carrier rate" type="number" />
       </div>
+      <Textarea name="accessorials" label="Accessorials" rows={2} />
       <Textarea name="notes" label="Load notes" />
       <FormFooter state={state} buttonLabel="Create load" />
     </form>
@@ -541,6 +601,61 @@ export function InvoiceCreateForm({
   );
 }
 
+export function CustomerUpdateForm({
+  loadId,
+  currentStatus,
+}: {
+  loadId: string;
+  currentStatus: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/customer-update`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Select
+          name="customerUpdateStatus"
+          label="Customer update status"
+          options={["NOT_NEEDED", "NEEDED", "SENT"]}
+          defaultValue={enumValue(currentStatus)}
+        />
+        <Field name="sentAt" label="Sent at" type="datetime-local" />
+      </div>
+      <Textarea name="message" label="Customer update note" />
+      <FormFooter state={state} buttonLabel="Save customer update" />
+    </form>
+  );
+}
+
+export function RateConfirmationForm({
+  loadId,
+  currentStatus,
+}: {
+  loadId: string;
+  currentStatus: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/rate-confirmation`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Select
+        name="rateConfirmationStatus"
+        label="Rate confirmation status"
+        options={["NOT_STARTED", "DRAFTED", "SENT", "SIGNED"]}
+        defaultValue={enumValue(currentStatus)}
+      />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="fileName" label="Document name" />
+        <Field name="fileUrl" label="Document URL" />
+      </div>
+      <Textarea name="notes" label="Rate confirmation notes" rows={2} />
+      <FormFooter state={state} buttonLabel="Update rate confirmation" />
+    </form>
+  );
+}
+
 export function CarrierQuoteCreateForm({ loadId }: { loadId: string }) {
   const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/carrier-quotes`);
 
@@ -570,6 +685,59 @@ export function CarrierQuoteAcceptForm({
   return (
     <form onSubmit={onSubmit}>
       <FormFooter state={state} buttonLabel="Accept offer" />
+    </form>
+  );
+}
+
+export function CarrierComplianceForm({
+  carrierId,
+  currentStatus,
+}: {
+  carrierId: string;
+  currentStatus: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/carriers/${carrierId}`, "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Select
+        name="complianceStatus"
+        label="Compliance"
+        options={["PENDING", "APPROVED", "REJECTED", "EXPIRED"]}
+        defaultValue={enumValue(currentStatus)}
+      />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="authorityStatus" label="Authority status" />
+        <Field name="insuranceStatus" label="Insurance status" />
+        <Field name="safetyRating" label="Safety rating" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="fraudRiskLevel" label="Fraud risk" />
+        <Field name="lastVettedAt" label="Last vetted" type="date" />
+        <Field name="approvedBy" label="Approved by" />
+      </div>
+      <Textarea name="complianceNotes" label="Compliance notes" />
+      <FormFooter state={state} buttonLabel="Update compliance" />
+    </form>
+  );
+}
+
+export function SettingsForm({
+  callRecordingDisclosure,
+}: {
+  callRecordingDisclosure: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit("/api/settings", "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Textarea
+        name="callRecordingDisclosure"
+        label="Call recording disclosure"
+        defaultValue={callRecordingDisclosure}
+        rows={5}
+      />
+      <FormFooter state={state} buttonLabel="Save settings" />
     </form>
   );
 }
@@ -662,11 +830,40 @@ function Field({
   );
 }
 
-function Textarea({ label, name }: { label: string; name: string }) {
+function Textarea({
+  label,
+  name,
+  defaultValue,
+  rows = 3,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: string;
+  rows?: number;
+}) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-800">
       {label}
-      <textarea name={name} rows={3} className={inputClass} />
+      <textarea
+        name={name}
+        rows={rows}
+        defaultValue={defaultValue}
+        className={inputClass}
+      />
+    </label>
+  );
+}
+
+function Checkbox({ label, name }: { label: string; name: string }) {
+  return (
+    <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm">
+      <input
+        name={name}
+        type="checkbox"
+        value="true"
+        className="h-4 w-4 rounded border-slate-300 text-emerald-600"
+      />
+      {label}
     </label>
   );
 }

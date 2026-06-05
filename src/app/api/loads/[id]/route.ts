@@ -53,6 +53,16 @@ export async function PATCH(
     : null;
   const deliveryDate = optionalDate(input.deliveryDate);
 
+  if (carrier && input.status === "BOOKED" && carrier.complianceStatus !== "APPROVED") {
+    return Response.json(
+      {
+        error:
+          "Carrier must be approved before the load can be marked booked.",
+      },
+      { status: 400 },
+    );
+  }
+
   await prisma.load.update({
     where: { id },
     data: {

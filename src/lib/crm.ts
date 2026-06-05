@@ -11,8 +11,34 @@ import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
 export type ShipperView = (typeof shippers)[number];
-export type QuoteRequestView = (typeof quoteRequests)[number];
-export type CarrierView = (typeof carriers)[number];
+export type QuoteRequestView = (typeof quoteRequests)[number] & {
+  pickupWindow?: string;
+  delivery?: string;
+  deliveryWindow?: string;
+  originAddress?: string;
+  destinationAddress?: string;
+  commodity?: string;
+  palletCount?: string;
+  pieceCount?: string;
+  dimensions?: string;
+  hazmat?: string;
+  temperatureRequirement?: string;
+  appointmentRequired?: string;
+  accessorials?: string;
+  customerReference?: string;
+  urgency?: string;
+  targetMarginPercent?: string;
+  pricingNotes?: string;
+};
+export type CarrierView = (typeof carriers)[number] & {
+  authorityStatus?: string;
+  insuranceStatus?: string;
+  safetyRating?: string;
+  fraudRiskLevel?: string;
+  lastVettedAt?: string;
+  approvedBy?: string;
+  complianceNotes?: string;
+};
 export type LoadDocumentView = {
   id: string;
   type: string;
@@ -49,10 +75,29 @@ export type LoadView = {
   shipper: string;
   carrier: string;
   lane: string;
+  originAddress?: string;
+  destinationAddress?: string;
   equipment: string;
+  commodity?: string;
+  weight?: string;
+  palletCount?: string;
+  pieceCount?: string;
+  dimensions?: string;
+  hazmat?: string;
+  temperatureRequirement?: string;
+  appointmentRequired?: string;
+  accessorials?: string;
+  customerReference?: string;
   status: string;
   pickup: string;
+  pickupWindow?: string;
   delivery: string;
+  deliveryWindow?: string;
+  customerUpdateStatus?: string;
+  lastCustomerUpdateAt?: string;
+  rateConfirmationStatus?: string;
+  rateConfirmationSentAt?: string;
+  rateConfirmationSignedAt?: string;
   customerRate: number;
   carrierRate: number;
   margin: number;
@@ -619,6 +664,15 @@ export async function getCarrierViews(): Promise<CarrierView[]> {
       phone: carrier.phone ?? "No phone",
       email: carrier.email ?? "No email",
       complianceStatus: titleCaseEnum(carrier.complianceStatus),
+      authorityStatus: carrier.authorityStatus ?? "Authority check needed",
+      insuranceStatus: carrier.insuranceStatus ?? "Insurance check needed",
+      safetyRating: carrier.safetyRating ?? "Safety rating needed",
+      fraudRiskLevel: carrier.fraudRiskLevel ?? "Fraud check needed",
+      lastVettedAt: carrier.lastVettedAt
+        ? formatDate(carrier.lastVettedAt)
+        : "Not vetted",
+      approvedBy: carrier.approvedBy ?? "Not approved",
+      complianceNotes: carrier.complianceNotes ?? "No compliance notes yet.",
       preferredLanes: Array.isArray(carrier.preferredLanes)
         ? carrier.preferredLanes.map(String)
         : ["Lane history needed"],
@@ -661,6 +715,15 @@ export async function getCarrierDetailView(
       phone: carrier.phone ?? "No phone",
       email: carrier.email ?? "No email",
       complianceStatus: titleCaseEnum(carrier.complianceStatus),
+      authorityStatus: carrier.authorityStatus ?? "Authority check needed",
+      insuranceStatus: carrier.insuranceStatus ?? "Insurance check needed",
+      safetyRating: carrier.safetyRating ?? "Safety rating needed",
+      fraudRiskLevel: carrier.fraudRiskLevel ?? "Fraud check needed",
+      lastVettedAt: carrier.lastVettedAt
+        ? formatDate(carrier.lastVettedAt)
+        : "Not vetted",
+      approvedBy: carrier.approvedBy ?? "Not approved",
+      complianceNotes: carrier.complianceNotes ?? "No compliance notes yet.",
       preferredLanes: Array.isArray(carrier.preferredLanes)
         ? carrier.preferredLanes.map(String)
         : ["Lane history needed"],
@@ -933,14 +996,30 @@ function mapQuoteRequest(
     id: string;
     originCity: string;
     originState: string;
+    originAddress?: string | null;
     destinationCity: string;
     destinationState: string;
+    destinationAddress?: string | null;
     equipmentType: string;
     pickupDate?: Date | null;
+    pickupWindow?: string | null;
+    deliveryDate?: Date | null;
+    deliveryWindow?: string | null;
     weight?: number | null;
+    palletCount?: number | null;
+    pieceCount?: number | null;
     status: string;
     specialRequirements?: string | null;
     commodity?: string | null;
+    dimensions?: string | null;
+    hazmat?: boolean;
+    temperatureRequirement?: string | null;
+    appointmentRequired?: boolean;
+    accessorials?: string | null;
+    customerReference?: string | null;
+    urgency?: string | null;
+    targetMarginPercent?: unknown | null;
+    pricingNotes?: string | null;
   },
   companyName: string,
 ) {
@@ -949,8 +1028,35 @@ function mapQuoteRequest(
     company: companyName,
     lane: `${request.originCity}, ${request.originState} -> ${request.destinationCity}, ${request.destinationState}`,
     equipment: request.equipmentType,
+    originAddress: request.originAddress ?? "Pickup address needed",
+    destinationAddress: request.destinationAddress ?? "Delivery address needed",
     pickup: request.pickupDate ? formatDate(request.pickupDate) : "Not set",
+    pickupWindow: request.pickupWindow ?? "Window needed",
+    delivery: request.deliveryDate ? formatDate(request.deliveryDate) : "Not set",
+    deliveryWindow: request.deliveryWindow ?? "Window needed",
     weight: request.weight ? `${request.weight.toLocaleString()} lbs` : "Not set",
+    commodity: request.commodity ?? "Commodity needed",
+    palletCount:
+      request.palletCount === null || request.palletCount === undefined
+        ? "Not set"
+        : request.palletCount.toString(),
+    pieceCount:
+      request.pieceCount === null || request.pieceCount === undefined
+        ? "Not set"
+        : request.pieceCount.toString(),
+    dimensions: request.dimensions ?? "Not set",
+    hazmat: request.hazmat ? "Yes" : "No",
+    temperatureRequirement: request.temperatureRequirement ?? "None",
+    appointmentRequired: request.appointmentRequired ? "Yes" : "No",
+    accessorials: request.accessorials ?? "None",
+    customerReference: request.customerReference ?? "Not set",
+    urgency: request.urgency ?? "Normal",
+    targetMarginPercent:
+      request.targetMarginPercent === null ||
+      request.targetMarginPercent === undefined
+        ? "Not set"
+        : `${Number(request.targetMarginPercent)}%`,
+    pricingNotes: request.pricingNotes ?? "No pricing notes yet.",
     status: titleCaseEnum(request.status),
     details:
       request.specialRequirements ??
@@ -967,12 +1073,31 @@ function mapLoad(load: {
   carrier?: { companyName: string } | null;
   originCity: string;
   originState: string;
+  originAddress?: string | null;
   destinationCity: string;
   destinationState: string;
+  destinationAddress?: string | null;
   equipmentType: string;
+  commodity?: string | null;
+  weight?: number | null;
+  palletCount?: number | null;
+  pieceCount?: number | null;
+  dimensions?: string | null;
+  hazmat?: boolean;
+  temperatureRequirement?: string | null;
+  appointmentRequired?: boolean;
+  accessorials?: string | null;
+  customerReference?: string | null;
   status: string;
   pickupDate?: Date | null;
+  pickupWindow?: string | null;
   deliveryDate?: Date | null;
+  deliveryWindow?: string | null;
+  customerUpdateStatus?: string;
+  lastCustomerUpdateAt?: Date | null;
+  rateConfirmationStatus?: string;
+  rateConfirmationSentAt?: Date | null;
+  rateConfirmationSignedAt?: Date | null;
   customerRate: unknown;
   carrierRate?: unknown | null;
   grossProfit?: unknown | null;
@@ -1059,10 +1184,45 @@ function mapLoad(load: {
     shipper: load.shipper.companyName,
     carrier: load.carrier?.companyName ?? "Carrier needed",
     lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
+    originAddress: load.originAddress ?? "Pickup address needed",
+    destinationAddress: load.destinationAddress ?? "Delivery address needed",
     equipment: load.equipmentType,
+    commodity: load.commodity ?? "Commodity needed",
+    weight: load.weight ? `${load.weight.toLocaleString()} lbs` : "Not set",
+    palletCount:
+      load.palletCount === null || load.palletCount === undefined
+        ? "Not set"
+        : load.palletCount.toString(),
+    pieceCount:
+      load.pieceCount === null || load.pieceCount === undefined
+        ? "Not set"
+        : load.pieceCount.toString(),
+    dimensions: load.dimensions ?? "Not set",
+    hazmat: load.hazmat ? "Yes" : "No",
+    temperatureRequirement: load.temperatureRequirement ?? "None",
+    appointmentRequired: load.appointmentRequired ? "Yes" : "No",
+    accessorials: load.accessorials ?? "None",
+    customerReference: load.customerReference ?? "Not set",
     status: titleCaseEnum(load.status),
     pickup: load.pickupDate ? formatDate(load.pickupDate) : "Not set",
+    pickupWindow: load.pickupWindow ?? "Window needed",
     delivery: load.deliveryDate ? formatDate(load.deliveryDate) : "Not set",
+    deliveryWindow: load.deliveryWindow ?? "Window needed",
+    customerUpdateStatus: titleCaseEnum(
+      load.customerUpdateStatus ?? "NOT_NEEDED",
+    ),
+    lastCustomerUpdateAt: load.lastCustomerUpdateAt
+      ? formatFollowUp(load.lastCustomerUpdateAt)
+      : "No customer update logged",
+    rateConfirmationStatus: titleCaseEnum(
+      load.rateConfirmationStatus ?? "NOT_STARTED",
+    ),
+    rateConfirmationSentAt: load.rateConfirmationSentAt
+      ? formatFollowUp(load.rateConfirmationSentAt)
+      : "Not sent",
+    rateConfirmationSignedAt: load.rateConfirmationSignedAt
+      ? formatFollowUp(load.rateConfirmationSignedAt)
+      : "Not signed",
     customerRate,
     carrierRate,
     margin,
@@ -1071,7 +1231,16 @@ function mapLoad(load: {
       load.events[0]?.message ??
       "No recent tracking event. Add an update before contacting the shipper.",
     hasPod,
-    billingReadiness: getBillingReadiness(titleCaseEnum(load.status), hasPod, invoice),
+    billingReadiness: getBillingReadiness({
+      status: titleCaseEnum(load.status),
+      hasPod,
+      invoice,
+      hasCarrier: Boolean(load.carrier),
+      hasCarrierRate: carrierRate > 0,
+      rateConfirmationStatus: titleCaseEnum(
+        load.rateConfirmationStatus ?? "NOT_STARTED",
+      ),
+    }),
     invoice,
     carrierQuotes,
     events: load.events.map((event) => ({
@@ -1084,11 +1253,23 @@ function mapLoad(load: {
   };
 }
 
-function getBillingReadiness(
-  status: string,
-  hasPod: boolean,
-  invoice: InvoiceView | null,
-) {
+function getBillingReadiness(input: {
+  status: string;
+  hasPod: boolean;
+  invoice: InvoiceView | null;
+  hasCarrier: boolean;
+  hasCarrierRate: boolean;
+  rateConfirmationStatus: string;
+}) {
+  const {
+    status,
+    hasPod,
+    invoice,
+    hasCarrier,
+    hasCarrierRate,
+    rateConfirmationStatus,
+  } = input;
+
   if (invoice?.status === "Paid") {
     return "Paid";
   }
@@ -1099,6 +1280,18 @@ function getBillingReadiness(
 
   if (status === "Delivered" && !hasPod) {
     return "Needs POD";
+  }
+
+  if (!hasCarrier) {
+    return "Needs carrier";
+  }
+
+  if (!hasCarrierRate) {
+    return "Needs carrier rate";
+  }
+
+  if (rateConfirmationStatus !== "Signed") {
+    return "Needs signed rate confirmation";
   }
 
   if (hasPod || status === "Pod Received") {

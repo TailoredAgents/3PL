@@ -34,7 +34,7 @@ export const internalNavItems = [
   { label: "Loads", href: "/loads" },
   { label: "Carriers", href: "/carriers" },
   { label: "AI Command Center", href: "/dashboard#ai" },
-  { label: "Settings", href: "/dashboard#settings" },
+  { label: "Settings", href: "/settings" },
 ];
 
 export const stats = [

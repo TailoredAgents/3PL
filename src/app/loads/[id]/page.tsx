@@ -20,9 +20,11 @@ import {
   AiAgentRunForm,
   CarrierQuoteAcceptForm,
   CarrierQuoteCreateForm,
+  CustomerUpdateForm,
   DocumentCreateForm,
   InvoiceCreateForm,
   LoadUpdateForm,
+  RateConfirmationForm,
   ShipmentEventCreateForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
@@ -82,7 +84,9 @@ export default async function LoadDetailPage({
             <MetricCard
               icon={CalendarDays}
               label="Pickup / Delivery"
-              value={`${load.pickup} -> ${load.delivery}`}
+              value={`${load.pickup} ${load.pickupWindow ?? ""} -> ${
+                load.delivery
+              } ${load.deliveryWindow ?? ""}`}
             />
             <MetricCard
               icon={CircleDollarSign}
@@ -100,6 +104,39 @@ export default async function LoadDetailPage({
               value={`${toCurrency(load.margin)} (${load.marginPercent}%)`}
             />
             <MetricCard icon={Package} label="Equipment" value={load.equipment} />
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <MetricCard
+              icon={MapPinned}
+              label="Pickup address"
+              value={load.originAddress ?? "Pickup address needed"}
+            />
+            <MetricCard
+              icon={MapPinned}
+              label="Delivery address"
+              value={load.destinationAddress ?? "Delivery address needed"}
+            />
+          </div>
+
+          <div className="mt-4 rounded-md bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-700">
+              Freight requirements
+            </p>
+            <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+              <p>Commodity: {load.commodity ?? "Commodity needed"}</p>
+              <p>Weight: {load.weight ?? "Not set"}</p>
+              <p>Pallets: {load.palletCount ?? "Not set"}</p>
+              <p>Pieces: {load.pieceCount ?? "Not set"}</p>
+              <p>Dimensions: {load.dimensions ?? "Not set"}</p>
+              <p>Hazmat: {load.hazmat ?? "No"}</p>
+              <p>Temperature: {load.temperatureRequirement ?? "None"}</p>
+              <p>Appointment: {load.appointmentRequired ?? "No"}</p>
+              <p>Customer ref: {load.customerReference ?? "Not set"}</p>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Accessorials: {load.accessorials ?? "None"}
+            </p>
           </div>
 
           <div className="mt-6 rounded-md bg-amber-50 p-4">
@@ -125,6 +162,10 @@ export default async function LoadDetailPage({
                 complete={load.carrierRate > 0}
               />
               <ReadinessItem label="POD received" complete={load.hasPod} />
+              <ReadinessItem
+                label="Rate confirmation signed"
+                complete={load.rateConfirmationStatus === "Signed"}
+              />
               <ReadinessItem
                 label="Invoice created"
                 complete={Boolean(load.invoice)}
@@ -175,6 +216,28 @@ export default async function LoadDetailPage({
           </article>
 
           <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <FileText className="h-6 w-6 text-emerald-600" />
+              <h2 className="text-2xl font-semibold">Rate confirmation</h2>
+            </div>
+            <p className="mt-3 leading-7 text-slate-600">
+              Track whether the carrier rate confirmation has been drafted,
+              sent, and signed before dispatch.
+            </p>
+            <div className="mt-4 rounded-md bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+              <p>Status: {load.rateConfirmationStatus ?? "Not started"}</p>
+              <p>Sent: {load.rateConfirmationSentAt ?? "Not sent"}</p>
+              <p>Signed: {load.rateConfirmationSignedAt ?? "Not signed"}</p>
+            </div>
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <RateConfirmationForm
+                loadId={load.id}
+                currentStatus={load.rateConfirmationStatus ?? "Not started"}
+              />
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-2xl font-semibold">Update load</h2>
             <p className="mt-3 leading-7 text-slate-600">
               Move the load through the operating workflow and update carrier
@@ -198,6 +261,24 @@ export default async function LoadDetailPage({
             </p>
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
               <ShipmentEventCreateForm loadId={load.id} />
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-2xl font-semibold">Customer update</h2>
+            <p className="mt-3 leading-7 text-slate-600">
+              Log customer-facing updates separately so active loads do not go
+              quiet after pickup, delay, or delivery events.
+            </p>
+            <div className="mt-4 rounded-md bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+              <p>Status: {load.customerUpdateStatus ?? "Not needed"}</p>
+              <p>Last update: {load.lastCustomerUpdateAt ?? "No update logged"}</p>
+            </div>
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <CustomerUpdateForm
+                loadId={load.id}
+                currentStatus={load.customerUpdateStatus ?? "Not needed"}
+              />
             </div>
           </article>
 

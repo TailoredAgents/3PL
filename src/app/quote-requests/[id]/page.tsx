@@ -6,6 +6,7 @@ import {
   Bot,
   CalendarDays,
   DollarSign,
+  MapPinned as MapPinIcon,
   Package,
   Phone,
   Truck,
@@ -77,8 +78,48 @@ export default async function QuoteRequestDetailPage({
               value={
                 quote.latestQuote
                   ? `$${quote.latestQuote.quotedRate.toLocaleString()}`
-                  : "Not quoted yet"
+                : "Not quoted yet"
               }
+            />
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Metric
+              icon={MapPinIcon}
+              label="Pickup address"
+              value={quote.originAddress ?? "Pickup address needed"}
+            />
+            <Metric
+              icon={MapPinIcon}
+              label="Delivery address"
+              value={quote.destinationAddress ?? "Delivery address needed"}
+            />
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-4">
+            <Metric
+              icon={CalendarDays}
+              label="Pickup window"
+              value={quote.pickupWindow ?? "Window needed"}
+            />
+            <Metric
+              icon={CalendarDays}
+              label="Delivery"
+              value={`${quote.delivery ?? "Not set"} / ${
+                quote.deliveryWindow ?? "Window needed"
+              }`}
+            />
+            <Metric
+              icon={Package}
+              label="Pieces / pallets"
+              value={`${quote.pieceCount ?? "Not set"} / ${
+                quote.palletCount ?? "Not set"
+              }`}
+            />
+            <Metric
+              icon={Package}
+              label="Customer ref"
+              value={quote.customerReference ?? "Not set"}
             />
           </div>
 
@@ -88,6 +129,20 @@ export default async function QuoteRequestDetailPage({
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               {quote.specialRequirements}
+            </p>
+            <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+              <p>Commodity: {quote.commodity ?? "Commodity needed"}</p>
+              <p>Dimensions: {quote.dimensions ?? "Not set"}</p>
+              <p>Hazmat: {quote.hazmat ?? "No"}</p>
+              <p>Temperature: {quote.temperatureRequirement ?? "None"}</p>
+              <p>Appointment: {quote.appointmentRequired ?? "No"}</p>
+              <p>Urgency: {quote.urgency ?? "Normal"}</p>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Accessorials: {quote.accessorials ?? "None"}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Pricing notes: {quote.pricingNotes ?? "No pricing notes yet."}
             </p>
           </div>
 

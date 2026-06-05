@@ -8,12 +8,14 @@ const protectedPrefixes = [
   "/carriers",
   "/loads",
   "/intake",
+  "/settings",
   "/api/leads",
   "/api/shippers",
   "/api/quote-requests",
   "/api/contact-import",
   "/api/carriers",
   "/api/loads",
+  "/api/settings",
 ];
 
 export function proxy(request: NextRequest) {
@@ -64,12 +66,14 @@ export const config = {
     "/carriers/:path*",
     "/loads/:path*",
     "/intake/:path*",
+    "/settings/:path*",
     "/api/leads/:path*",
     "/api/shippers/:path*",
     "/api/quote-requests/:path*",
     "/api/contact-import/:path*",
     "/api/carriers/:path*",
     "/api/loads/:path*",
+    "/api/settings/:path*",
   ],
 };
 

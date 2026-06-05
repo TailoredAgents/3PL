@@ -130,6 +130,19 @@ enum AiAgentStatus {
   NEEDS_HUMAN_APPROVAL
 }
 
+enum CustomerUpdateStatus {
+  NOT_NEEDED
+  NEEDED
+  SENT
+}
+
+enum RateConfirmationStatus {
+  NOT_STARTED
+  DRAFTED
+  SENT
+  SIGNED
+}
+
 model User {
   id         String          @id @default(cuid())
   name       String
@@ -261,13 +274,30 @@ model QuoteRequest {
   contact             Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
   originCity          String
   originState         String
+  originAddress       String?
   destinationCity     String
   destinationState    String
+  destinationAddress  String?
   pickupDate          DateTime?
+  pickupWindow        String?
   deliveryDate        DateTime?
+  deliveryWindow      String?
   equipmentType       String
   commodity           String?
   weight              Int?
+  palletCount         Int?
+  pieceCount          Int?
+  dimensions          String?
+  hazmat              Boolean            @default(false)
+  temperatureRequirement String?
+  appointmentRequired Boolean            @default(false)
+  accessorials        String?
+  customerReference   String?
+  urgency             String?
+  intakeChannel       String             @default("PHONE")
+  quotedByPhone       Boolean            @default(false)
+  targetMarginPercent Decimal?           @db.Decimal(5, 2)
+  pricingNotes        String?
   specialRequirements String?
   status              QuoteRequestStatus @default(NEW)
   customerQuotes      CustomerQuote[]
@@ -307,16 +337,33 @@ model Load {
   status           LoadStatus      @default(TENDERED)
   originCity       String          @default("Unknown")
   originState      String          @default("NA")
+  originAddress    String?
   destinationCity  String          @default("Unknown")
   destinationState String          @default("NA")
+  destinationAddress String?
   equipmentType    String          @default("Dry van")
   commodity        String?
   weight           Int?
+  palletCount      Int?
+  pieceCount       Int?
+  dimensions       String?
+  hazmat           Boolean         @default(false)
+  temperatureRequirement String?
+  appointmentRequired Boolean      @default(false)
+  accessorials     String?
+  customerReference String?
+  pickupWindow     String?
+  deliveryWindow   String?
   customerRate     Decimal         @db.Decimal(12, 2)
   carrierRate      Decimal?        @db.Decimal(12, 2)
   grossProfit      Decimal?        @db.Decimal(12, 2)
   pickupDate       DateTime?
   deliveryDate     DateTime?
+  customerUpdateStatus CustomerUpdateStatus @default(NOT_NEEDED)
+  lastCustomerUpdateAt DateTime?
+  rateConfirmationStatus RateConfirmationStatus @default(NOT_STARTED)
+  rateConfirmationSentAt DateTime?
+  rateConfirmationSignedAt DateTime?
   carrierQuotes    CarrierQuote[]
   events           ShipmentEvent[]
   documents        Document[]
@@ -337,6 +384,13 @@ model Carrier {
   phone            String?
   email            String?
   complianceStatus ComplianceStatus @default(PENDING)
+  authorityStatus  String?
+  insuranceStatus  String?
+  safetyRating     String?
+  fraudRiskLevel   String?
+  lastVettedAt     DateTime?
+  approvedBy       String?
+  complianceNotes  String?
   preferredLanes   Json?
   notes            String?
   loads            Load[]
@@ -431,4 +485,14 @@ model AiAgentRun {
   @@index([agentName])
   @@index([relatedEntityType, relatedEntityId])
   @@index([createdAt])
+}
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
 }

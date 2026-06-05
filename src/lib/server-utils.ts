@@ -17,6 +17,10 @@ export function formValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : undefined;
 }
 
+export function checkboxValue(formData: FormData, key: string) {
+  return formData.get(key) === "true";
+}
+
 export function optionalDate(value: string | undefined) {
   if (!value) {
     return null;

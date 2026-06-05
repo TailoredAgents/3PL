@@ -126,6 +126,7 @@ After deploy, open:
 /carriers
 /loads
 /loads/[id]
+/settings
 ```
 
 Expected behavior:
@@ -145,7 +146,11 @@ Expected behavior:
 - create load works.
 - load status updates work.
 - shipment event timeline works.
+- customer update logging works.
+- rate confirmation status updates work.
 - load document/POD metadata logging works.
+- carrier compliance updates work and pending carriers cannot be accepted.
+- settings save the call recording disclosure.
 - CSV import parses `docs/sample-contacts.csv`.
 - records remain after page refresh.
 
@@ -170,13 +175,17 @@ Test in this order:
 15. Open load detail
 16. Update load status
 17. Add shipment event
-18. Add load document metadata
-19. Add POD document metadata and confirm POD event appears
-20. Upload CSV contacts
-21. Public savings audit form
-22. Public instant quote form
-23. Intake queue
-24. Health check
+18. Add customer update
+19. Update rate confirmation status
+20. Add load document metadata
+21. Add POD document metadata and confirm POD event appears
+22. Update carrier compliance and confirm pending carriers cannot be accepted
+23. Save Settings call recording disclosure
+24. Upload CSV contacts
+25. Public savings audit form
+26. Public instant quote form
+27. Intake queue
+28. Health check
 
 ## 8. Known Temporary Choices
 

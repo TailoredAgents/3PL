@@ -31,8 +31,11 @@ Included now:
 - Convert accepted quote request to operational load
 - Carrier management page
 - Carrier detail page with compliance context and related loads
+- Carrier compliance checklist for authority, insurance, safety, fraud risk, approval, and vetting notes
 - Load operations page
-- Load detail page with status updates, carrier offers, carrier assignment, tracking events, document records, POD status handling, and invoice records
+- Load detail page with status updates, carrier offers, carrier assignment, tracking events, customer update state, rate confirmation state, document records, POD status handling, and invoice records
+- Rich phone quote intake fields for pickup/delivery windows, addresses, reference numbers, pallet/piece counts, dimensions, hazmat, temperature, appointments, accessorials, urgency, target margin, and pricing notes
+- Settings page with editable call recording disclosure message for future Twilio call handling
 - Database-backed dashboard metrics with sample-data fallback
 - Database-backed CRM read helpers with sample-data fallback
 - Create lead form and API
@@ -69,6 +72,8 @@ Not included yet:
 - Payment processing
 - Production role-based permissions
 - Background job processing
+- Actual call recording, transcription, and AI autofill from transcripts
+- Generated/signed rate confirmation PDFs
 
 ## Product Vision
 
@@ -231,6 +236,7 @@ Useful local routes:
 /carriers/[id] Carrier profile and related load history
 /loads        Load operations and create form
 /loads/[id]   Load detail, status update, shipment timeline, documents, and invoice records
+/settings     Internal operating settings, including call recording disclosure copy
 ```
 
 ## Environment Variables
@@ -428,8 +434,10 @@ Current form fields:
 - Origin
 - Destination
 - Pickup date
+- Pickup/delivery windows and addresses
 - Equipment type
 - Weight
+- Commodity, pallets, pieces, dimensions, hazmat, temperature, appointments, accessorials, urgency, and customer reference
 - Freight details
 
 Current endpoint:
@@ -487,6 +495,7 @@ Current internal CRM routes:
 - Quote requests
 - Carriers
 - Loads
+- Settings
 - Record detail pages for leads, shippers, quotes, carriers, and loads
 
 Planned modules:
@@ -494,7 +503,6 @@ Planned modules:
 - Documents
 - Invoices
 - AI command center
-- Settings
 
 The dashboard should become the main operating workspace for sales and brokerage operations.
 
@@ -509,10 +517,18 @@ The current TMS workflow supports the first manual operating loop:
 5. Open the load detail page.
 6. Update load status as the shipment moves.
 7. Add tracking events for pickup, location updates, delays, delivery, and POD.
-8. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
-9. Save invoice amount/status once POD and billing details are ready.
+8. Track customer update status so active loads do not go quiet.
+9. Track rate confirmation state from drafted to sent to signed.
+10. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
+11. Save invoice amount/status once POD and billing details are ready.
 
 The document workflow is metadata-first. It records what document exists and where it should live later. Invoice records are also metadata-first. Durable upload storage, OCR, generated invoice PDFs, file previews, signed downloads, and payment collection are still future work.
+
+## Phone Intake and Call Intelligence Plan
+
+Phase 1 now treats phone quote intake as the primary sales workflow. The quote request record stores the detailed load facts needed for a live pricing call, and those facts copy forward when an accepted quote becomes a load.
+
+The Settings page includes editable call recording disclosure copy. Future Twilio call handling should play that message before recording starts, then store the call, transcript, matched shipper/contact context, and Grok-filled quote request draft for salesperson approval.
 
 ## Grok Agent Architecture
 
@@ -746,6 +762,7 @@ Status: mostly complete for V1.
 - Shipper detail page
 - Quote request detail page
 - Carrier detail page
+- Settings page
 
 Remaining:
 
@@ -769,11 +786,15 @@ Remaining:
 - Add quote request queue
 - Add quote detail page
 - Convert accepted quote request to load
+- Add rich phone quote intake fields
+- Preserve detailed intake data through quote-to-load conversion
+- Add pricing notes, urgency, target margin, accessorials, and customer reference fields
 
 Remaining:
 
 - Add quote email draft
 - Add accepted/rejected status flow
+- Add DAT/Truckstop pricing lookup
 
 ### Milestone 5: TMS Core
 
@@ -795,12 +816,16 @@ Status: started.
 - POD document updates load status
 - Billing readiness state
 - Invoice amount/status records
+- Customer update status and timeline handling
+- Rate confirmation status tracking
+- Carrier compliance approval gate before accepting offers
 
 Remaining:
 
 - Add automated DAT/Truckstop carrier quote sync
 - Add durable POD upload and downloads
 - Add generated invoice PDFs and email sending
+- Add generated/signed rate confirmation PDFs
 
 ### Milestone 6: DAT and Truckstop
 
@@ -815,6 +840,10 @@ Remaining:
 ### Milestone 7: Twilio and Outreach
 
 - Add Twilio client
+- Play configurable call recording disclosure from Settings
+- Add call recording and transcription records
+- Match calls to shipper/contact/recent activity
+- Add Grok autofill for quote request drafts from call transcripts
 - Add click-to-call
 - Add SMS sending
 - Add call/SMS activity logging

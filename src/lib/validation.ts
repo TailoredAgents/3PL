@@ -68,12 +68,30 @@ export const internalQuoteCreateSchema = z.object({
   phone: z.string().trim().optional(),
   originCity: requiredString,
   originState: requiredString,
+  originAddress: z.string().trim().optional(),
   destinationCity: requiredString,
   destinationState: requiredString,
+  destinationAddress: z.string().trim().optional(),
   pickupDate: z.string().trim().optional(),
+  pickupWindow: z.string().trim().optional(),
+  deliveryDate: z.string().trim().optional(),
+  deliveryWindow: z.string().trim().optional(),
   equipmentType: requiredString,
   commodity: z.string().trim().optional(),
   weight: z.coerce.number().int().positive().optional().or(z.literal("")),
+  palletCount: z.coerce.number().int().nonnegative().optional().or(z.literal("")),
+  pieceCount: z.coerce.number().int().nonnegative().optional().or(z.literal("")),
+  dimensions: z.string().trim().optional(),
+  hazmat: z.coerce.boolean().default(false),
+  temperatureRequirement: z.string().trim().optional(),
+  appointmentRequired: z.coerce.boolean().default(false),
+  accessorials: z.string().trim().optional(),
+  customerReference: z.string().trim().optional(),
+  urgency: z.string().trim().optional(),
+  intakeChannel: z.string().trim().default("PHONE"),
+  quotedByPhone: z.coerce.boolean().default(false),
+  targetMarginPercent: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  pricingNotes: z.string().trim().optional(),
   specialRequirements: z.string().trim().optional(),
 });
 
@@ -104,8 +122,26 @@ export const carrierCreateSchema = z.object({
   complianceStatus: z
     .enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"])
     .default("PENDING"),
+  authorityStatus: z.string().trim().optional(),
+  insuranceStatus: z.string().trim().optional(),
+  safetyRating: z.string().trim().optional(),
+  fraudRiskLevel: z.string().trim().optional(),
+  lastVettedAt: z.string().trim().optional(),
+  approvedBy: z.string().trim().optional(),
+  complianceNotes: z.string().trim().optional(),
   preferredLanes: z.string().trim().optional(),
   notes: z.string().trim().optional(),
+});
+
+export const carrierComplianceUpdateSchema = z.object({
+  complianceStatus: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"]),
+  authorityStatus: z.string().trim().optional(),
+  insuranceStatus: z.string().trim().optional(),
+  safetyRating: z.string().trim().optional(),
+  fraudRiskLevel: z.string().trim().optional(),
+  lastVettedAt: z.string().trim().optional(),
+  approvedBy: z.string().trim().optional(),
+  complianceNotes: z.string().trim().optional(),
 });
 
 export const loadCreateSchema = z.object({
@@ -113,13 +149,27 @@ export const loadCreateSchema = z.object({
   carrierCompanyName: z.string().trim().optional(),
   originCity: requiredString,
   originState: requiredString,
+  originAddress: z.string().trim().optional(),
   destinationCity: requiredString,
   destinationState: requiredString,
+  destinationAddress: z.string().trim().optional(),
   equipmentType: requiredString,
+  commodity: z.string().trim().optional(),
+  weight: z.coerce.number().int().positive().optional().or(z.literal("")),
+  palletCount: z.coerce.number().int().nonnegative().optional().or(z.literal("")),
+  pieceCount: z.coerce.number().int().nonnegative().optional().or(z.literal("")),
+  dimensions: z.string().trim().optional(),
+  hazmat: z.coerce.boolean().default(false),
+  temperatureRequirement: z.string().trim().optional(),
+  appointmentRequired: z.coerce.boolean().default(false),
+  accessorials: z.string().trim().optional(),
+  customerReference: z.string().trim().optional(),
   customerRate: z.coerce.number().nonnegative(),
   carrierRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
   pickupDate: z.string().trim().optional(),
+  pickupWindow: z.string().trim().optional(),
   deliveryDate: z.string().trim().optional(),
+  deliveryWindow: z.string().trim().optional(),
   notes: z.string().trim().optional(),
 });
 
@@ -185,6 +235,23 @@ export const carrierQuoteCreateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+export const customerUpdateSchema = z.object({
+  customerUpdateStatus: z.enum(["NOT_NEEDED", "NEEDED", "SENT"]),
+  message: requiredString,
+  sentAt: z.string().trim().optional(),
+});
+
+export const rateConfirmationUpdateSchema = z.object({
+  rateConfirmationStatus: z.enum(["NOT_STARTED", "DRAFTED", "SENT", "SIGNED"]),
+  fileName: z.string().trim().optional(),
+  fileUrl: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const appSettingsSchema = z.object({
+  callRecordingDisclosure: requiredString,
+});
+
 export const aiAgentRunRequestSchema = z.object({
   agentName: z.enum([
     "Sales Follow-Up Agent",
@@ -206,6 +273,7 @@ export type InternalQuoteCreateInput = z.infer<typeof internalQuoteCreateSchema>
 export type LeadUpdateInput = z.infer<typeof leadUpdateSchema>;
 export type ActivityCreateInput = z.infer<typeof activityCreateSchema>;
 export type CarrierCreateInput = z.infer<typeof carrierCreateSchema>;
+export type CarrierComplianceUpdateInput = z.infer<typeof carrierComplianceUpdateSchema>;
 export type LoadCreateInput = z.infer<typeof loadCreateSchema>;
 export type LoadUpdateInput = z.infer<typeof loadUpdateSchema>;
 export type ShipmentEventCreateInput = z.infer<typeof shipmentEventCreateSchema>;
@@ -214,4 +282,7 @@ export type CustomerQuoteCreateInput = z.infer<typeof customerQuoteCreateSchema>
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;
 export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
 export type CarrierQuoteCreateInput = z.infer<typeof carrierQuoteCreateSchema>;
+export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
+export type RateConfirmationUpdateInput = z.infer<typeof rateConfirmationUpdateSchema>;
 export type AiAgentRunRequestInput = z.infer<typeof aiAgentRunRequestSchema>;
+export type AppSettingsInput = z.infer<typeof appSettingsSchema>;

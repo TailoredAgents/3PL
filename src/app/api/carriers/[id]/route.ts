@@ -2,17 +2,15 @@ import { revalidatePath } from "next/cache";
 
 import { formValue, nullableString, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import { carrierCreateSchema } from "@/lib/validation";
+import { carrierComplianceUpdateSchema } from "@/lib/validation";
 
-export async function POST(request: Request) {
+export async function PATCH(
+  request: Request,
+  context: RouteContext<"/api/carriers/[id]">,
+) {
+  const { id } = await context.params;
   const formData = await request.formData();
-  const parsed = carrierCreateSchema.safeParse({
-    companyName: formValue(formData, "companyName"),
-    mcNumber: formValue(formData, "mcNumber"),
-    dotNumber: formValue(formData, "dotNumber"),
-    contactName: formValue(formData, "contactName"),
-    phone: formValue(formData, "phone"),
-    email: formValue(formData, "email") ?? "",
+  const parsed = carrierComplianceUpdateSchema.safeParse({
     complianceStatus: formValue(formData, "complianceStatus") ?? "PENDING",
     authorityStatus: formValue(formData, "authorityStatus"),
     insuranceStatus: formValue(formData, "insuranceStatus"),
@@ -21,13 +19,11 @@ export async function POST(request: Request) {
     lastVettedAt: formValue(formData, "lastVettedAt"),
     approvedBy: formValue(formData, "approvedBy"),
     complianceNotes: formValue(formData, "complianceNotes"),
-    preferredLanes: formValue(formData, "preferredLanes"),
-    notes: formValue(formData, "notes"),
   });
 
   if (!parsed.success) {
     return Response.json(
-      { error: "Please complete the required carrier fields." },
+      { error: "Please complete the carrier compliance update." },
       { status: 400 },
     );
   }
@@ -35,19 +31,14 @@ export async function POST(request: Request) {
   if (!hasDatabaseUrl() || !prisma) {
     return Response.json({
       message:
-        "Carrier validated. Connect DATABASE_URL to persist carrier records.",
+        "Carrier compliance update validated. Connect DATABASE_URL to persist updates.",
     });
   }
 
   const input = parsed.data;
-  await prisma.carrier.create({
+  const carrier = await prisma.carrier.update({
+    where: { id },
     data: {
-      companyName: input.companyName,
-      mcNumber: nullableString(input.mcNumber),
-      dotNumber: nullableString(input.dotNumber),
-      contactName: nullableString(input.contactName),
-      phone: nullableString(input.phone),
-      email: nullableString(input.email),
       complianceStatus: input.complianceStatus,
       authorityStatus: nullableString(input.authorityStatus),
       insuranceStatus: nullableString(input.insuranceStatus),
@@ -56,15 +47,13 @@ export async function POST(request: Request) {
       lastVettedAt: optionalDate(input.lastVettedAt),
       approvedBy: nullableString(input.approvedBy),
       complianceNotes: nullableString(input.complianceNotes),
-      preferredLanes: input.preferredLanes
-        ? input.preferredLanes.split(";").map((lane) => lane.trim())
-        : undefined,
-      notes: nullableString(input.notes),
     },
   });
 
   revalidatePath("/carriers");
+  revalidatePath(`/carriers/${carrier.id}`);
+  revalidatePath("/loads");
   revalidatePath("/dashboard");
 
-  return Response.json({ message: "Carrier created." });
+  return Response.json({ message: "Carrier compliance updated." });
 }

@@ -25,6 +25,12 @@ export default async function LoadsPage() {
   const readyToInvoice = loadViews.filter(
     (load) => load.billingReadiness === "Ready to invoice",
   ).length;
+  const needsCustomerUpdate = loadViews.filter(
+    (load) => load.customerUpdateStatus === "Needed",
+  ).length;
+  const needsRateConfirmation = loadViews.filter(
+    (load) => load.rateConfirmationStatus !== "Signed",
+  ).length;
 
   return (
     <InternalShell
@@ -34,11 +40,19 @@ export default async function LoadsPage() {
       description="Manage booked freight from tender to delivery, tracking, POD, invoice readiness, and margin visibility."
       action={{ label: "Carrier desk", href: "/carriers" }}
     >
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         {[
           { label: "Loads", value: loadViews.length.toString() },
           { label: "Projected margin", value: toCurrency(totalMargin) },
           { label: "Needs POD", value: needsPod.toString() },
+          {
+            label: "Needs customer update",
+            value: needsCustomerUpdate.toString(),
+          },
+          {
+            label: "Needs rate conf",
+            value: needsRateConfirmation.toString(),
+          },
           {
             label: "Ready to invoice",
             value: readyToInvoice.toString(),
@@ -145,6 +159,24 @@ export default async function LoadsPage() {
                   Billing
                 </p>
                 <p className="mt-1 font-medium">{load.billingReadiness}</p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-4">
+                <FileCheck2 className="h-5 w-5 text-emerald-600" />
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  Rate confirmation
+                </p>
+                <p className="mt-1 font-medium">
+                  {load.rateConfirmationStatus ?? "Not started"}
+                </p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-4">
+                <MapPinned className="h-5 w-5 text-emerald-600" />
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  Customer update
+                </p>
+                <p className="mt-1 font-medium">
+                  {load.customerUpdateStatus ?? "Not needed"}
+                </p>
               </div>
               <div className="rounded-md bg-slate-50 p-4">
                 <CircleDollarSign className="h-5 w-5 text-emerald-600" />

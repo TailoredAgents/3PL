@@ -176,9 +176,26 @@ export type AiCommandCenterView = {
     completed: string;
     averageConfidence: string;
   };
+  dailyBrief: DailyBriefItemView[];
+  exceptions: AiExceptionView[];
   approvalQueue: AiAgentRunView[];
   failedRuns: AiAgentRunView[];
   recentRuns: AiAgentRunView[];
+};
+export type DailyBriefItemView = {
+  label: string;
+  value: string;
+  detail: string;
+  href: string;
+  tone: "default" | "warning" | "danger";
+};
+export type AiExceptionView = {
+  id: string;
+  type: string;
+  severity: "High" | "Medium" | "Low";
+  title: string;
+  detail: string;
+  href: string;
 };
 export type QuoteRequestDetailView = QuoteRequestView & {
   id: string;
@@ -1021,6 +1038,8 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
         completed: "0",
         averageConfidence: "50%",
       },
+      dailyBrief: getSampleDailyBrief(),
+      exceptions: getSampleAiExceptions(),
       approvalQueue: sampleRuns,
       failedRuns: [],
       recentRuns: sampleRuns,
@@ -1028,14 +1047,100 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
   }
 
   try {
-    const runs = await prisma.aiAgentRun.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const [
+      runs,
+      overdueLeadCount,
+      openQuoteCount,
+      activeLoadCount,
+      overdueLeads,
+      pricingQuotes,
+      uncoveredLoads,
+      customerUpdateLoads,
+      podLoads,
+      complianceCarriers,
+    ] = await Promise.all([
+      prisma.aiAgentRun.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      }),
+      prisma.lead.count({
+        where: {
+          nextFollowUpAt: { lte: now },
+          stage: { notIn: ["WON", "LOST"] },
+        },
+      }),
+      prisma.quoteRequest.count({
+        where: { status: { in: ["NEW", "PRICING"] } },
+      }),
+      prisma.load.count({
+        where: {
+          status: {
+            in: ["TENDERED", "BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"],
+          },
+        },
+      }),
+      prisma.lead.findMany({
+        where: {
+          nextFollowUpAt: { lte: now },
+          stage: { notIn: ["WON", "LOST"] },
+        },
+        include: { shipper: true, contact: true },
+        orderBy: [{ priority: "asc" }, { nextFollowUpAt: "asc" }],
+        take: 5,
+      }),
+      prisma.quoteRequest.findMany({
+        where: {
+          status: { in: ["NEW", "PRICING"] },
+          OR: [{ pickupDate: null }, { pickupDate: { lte: tomorrow } }],
+        },
+        include: { shipper: true },
+        orderBy: [{ pickupDate: "asc" }, { createdAt: "asc" }],
+        take: 5,
+      }),
+      prisma.load.findMany({
+        where: {
+          carrierId: null,
+          status: { in: ["TENDERED", "BOOKED"] },
+        },
+        include: { shipper: true },
+        orderBy: [{ pickupDate: "asc" }, { createdAt: "asc" }],
+        take: 5,
+      }),
+      prisma.load.findMany({
+        where: {
+          customerUpdateStatus: "NEEDED",
+          status: { in: ["BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"] },
+        },
+        include: { shipper: true },
+        orderBy: [{ pickupDate: "asc" }, { updatedAt: "asc" }],
+        take: 5,
+      }),
+      prisma.load.findMany({
+        where: {
+          status: "DELIVERED",
+          documents: { none: { type: "POD" } },
+        },
+        include: { shipper: true },
+        orderBy: [{ deliveryDate: "asc" }, { updatedAt: "asc" }],
+        take: 5,
+      }),
+      prisma.carrier.findMany({
+        where: { complianceStatus: { in: ["PENDING", "EXPIRED", "REJECTED"] } },
+        orderBy: [{ updatedAt: "desc" }],
+        take: 5,
+      }),
+    ]);
     const views = runs.map(mapAiAgentRun);
     const confidenceValues = runs
       .map((run) => (run.confidence === null ? null : Number(run.confidence)))
       .filter((value): value is number => value !== null);
+    const failedRuns = runs.filter((run) => run.status === "FAILED");
+    const approvalRuns = runs.filter(
+      (run) => run.status === "NEEDS_HUMAN_APPROVAL",
+    );
     const averageConfidence = confidenceValues.length
       ? `${Math.round(
           (confidenceValues.reduce((total, value) => total + value, 0) /
@@ -1047,15 +1152,112 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
     return {
       metrics: {
         total: runs.length.toString(),
-        needsApproval: runs
-          .filter((run) => run.status === "NEEDS_HUMAN_APPROVAL")
-          .length.toString(),
-        failed: runs.filter((run) => run.status === "FAILED").length.toString(),
+        needsApproval: approvalRuns.length.toString(),
+        failed: failedRuns.length.toString(),
         completed: runs
           .filter((run) => run.status === "COMPLETED")
           .length.toString(),
         averageConfidence,
       },
+      dailyBrief: [
+        {
+          label: "Lead follow-ups due",
+          value: overdueLeadCount.toString(),
+          detail: "Sales should clear these before new prospecting.",
+          href: "/leads",
+          tone: overdueLeadCount ? "warning" : "default",
+        },
+        {
+          label: "Quotes needing pricing",
+          value: openQuoteCount.toString(),
+          detail: "Review DAT/Truckstop benchmarks before quoting customers.",
+          href: "/quote-requests",
+          tone: openQuoteCount ? "warning" : "default",
+        },
+        {
+          label: "Active loads",
+          value: activeLoadCount.toString(),
+          detail: "Watch coverage, tracking, POD, and billing readiness.",
+          href: "/loads",
+          tone: activeLoadCount ? "default" : "warning",
+        },
+        {
+          label: "AI approval backlog",
+          value: approvalRuns.length.toString(),
+          detail: "Approve useful output before expanding automation.",
+          href: "/agents",
+          tone: approvalRuns.length ? "warning" : "default",
+        },
+      ],
+      exceptions: [
+        ...overdueLeads.map((lead) => ({
+          id: `lead-${lead.id}`,
+          type: "Sales follow-up",
+          severity: "High" as const,
+          title: lead.shipper.companyName,
+          detail: `${formatContactName(lead.contact)} was due ${
+            lead.nextFollowUpAt
+              ? formatFollowUp(lead.nextFollowUpAt)
+              : "before today"
+          }.`,
+          href: `/leads/${lead.id}`,
+        })),
+        ...pricingQuotes.map((quote) => ({
+          id: `quote-${quote.id}`,
+          type: "Pricing",
+          severity: "High" as const,
+          title: `${quote.originCity}, ${quote.originState} -> ${quote.destinationCity}, ${quote.destinationState}`,
+          detail: `${quote.shipper.companyName} needs a ${titleCaseEnum(
+            quote.status,
+          ).toLowerCase()} quote priced.`,
+          href: `/quote-requests/${quote.id}`,
+        })),
+        ...uncoveredLoads.map((load) => ({
+          id: `coverage-${load.id}`,
+          type: "Carrier coverage",
+          severity: "High" as const,
+          title: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
+          detail: `${load.shipper.companyName} has no assigned carrier.`,
+          href: `/loads/${load.id}`,
+        })),
+        ...customerUpdateLoads.map((load) => ({
+          id: `customer-update-${load.id}`,
+          type: "Customer update",
+          severity: "Medium" as const,
+          title: `${load.shipper.companyName} update needed`,
+          detail: `${titleCaseEnum(load.status)} load needs a customer status update.`,
+          href: `/loads/${load.id}`,
+        })),
+        ...podLoads.map((load) => ({
+          id: `pod-${load.id}`,
+          type: "POD",
+          severity: "Medium" as const,
+          title: `${load.shipper.companyName} missing POD`,
+          detail: "Delivered load cannot move cleanly to billing without POD.",
+          href: `/loads/${load.id}`,
+        })),
+        ...complianceCarriers.map((carrier) => ({
+          id: `carrier-${carrier.id}`,
+          type: "Carrier compliance",
+          severity:
+            carrier.complianceStatus === "REJECTED"
+              ? ("High" as const)
+              : ("Medium" as const),
+          title: carrier.companyName,
+          detail: `Compliance status is ${titleCaseEnum(
+            carrier.complianceStatus,
+          ).toLowerCase()}.`,
+          href: `/carriers/${carrier.id}`,
+        })),
+        ...failedRuns.slice(0, 5).map((run) => ({
+          id: `agent-${run.id}`,
+          type: "AI agent",
+          severity: "Low" as const,
+          title: run.agentName,
+          detail: run.errorMessage ?? "Agent failed and can be reviewed.",
+          href: "/agents",
+        })),
+      ].slice(0, 20),
       approvalQueue: views.filter(
         (run) => run.status === "Needs Human Approval",
       ),
@@ -1071,6 +1273,8 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
         completed: "0",
         averageConfidence: "n/a",
       },
+      dailyBrief: getSampleDailyBrief(),
+      exceptions: [],
       approvalQueue: [],
       failedRuns: [],
       recentRuns: [],
@@ -1111,6 +1315,60 @@ function mapAiAgentRun(run: AiAgentRun): AiAgentRunView {
     errorMessage: run.errorMessage,
     created: formatFollowUp(run.createdAt),
   };
+}
+
+function getSampleDailyBrief(): DailyBriefItemView[] {
+  return [
+    {
+      label: "Lead follow-ups due",
+      value: "3",
+      detail: "Start with qualified leads and audit submissions.",
+      href: "/leads",
+      tone: "warning",
+    },
+    {
+      label: "Quotes needing pricing",
+      value: "2",
+      detail: "Use DAT/Truckstop benchmarks before quoting customers.",
+      href: "/quote-requests",
+      tone: "warning",
+    },
+    {
+      label: "Active loads",
+      value: "4",
+      detail: "Watch tracking, POD, and billing readiness.",
+      href: "/loads",
+      tone: "default",
+    },
+    {
+      label: "AI approval backlog",
+      value: "1",
+      detail: "Review output before expanding automation.",
+      href: "/agents",
+      tone: "warning",
+    },
+  ];
+}
+
+function getSampleAiExceptions(): AiExceptionView[] {
+  return [
+    {
+      id: "sample-quote-exception",
+      type: "Pricing",
+      severity: "High",
+      title: "Atlanta, GA -> Dallas, TX",
+      detail: "Sample quote needs DAT/Truckstop pricing before customer quote.",
+      href: "/quote-requests",
+    },
+    {
+      id: "sample-coverage-exception",
+      type: "Carrier coverage",
+      severity: "Medium",
+      title: "Load needs compliant carrier coverage",
+      detail: "Sample load has no assigned carrier yet.",
+      href: "/loads",
+    },
+  ];
 }
 
 function getSampleLeadDetailView(id: string): LeadDetailView | null {

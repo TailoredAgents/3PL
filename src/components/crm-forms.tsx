@@ -1127,6 +1127,40 @@ export function AgentRunRetryForm({ runId }: { runId: string }) {
   );
 }
 
+export function AgentPromptTemplateForm({
+  agentName,
+  systemPrompt,
+  task,
+  placeholderNextAction,
+}: {
+  agentName: string;
+  systemPrompt: string;
+  task: string;
+  placeholderNextAction: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit("/api/agents/prompts", "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="agentName" value={agentName} />
+      <Textarea
+        name="systemPrompt"
+        label="System prompt"
+        defaultValue={systemPrompt}
+        rows={4}
+      />
+      <Textarea name="task" label="Task" defaultValue={task} rows={3} />
+      <Textarea
+        name="placeholderNextAction"
+        label="Fallback next action"
+        defaultValue={placeholderNextAction}
+        rows={3}
+      />
+      <FormFooter state={state} buttonLabel="Save prompt" />
+    </form>
+  );
+}
+
 export function CallTranscriptForm({
   callId,
   transcriptText,

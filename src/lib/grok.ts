@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 
 import type { BrokerageAgentName } from "@/lib/agent-config";
+import { getAgentPromptTemplate } from "@/lib/settings";
 import type { FreightAuditInput, QuoteRequestInput } from "@/lib/validation";
 
 type AgentResult = {
@@ -97,7 +98,7 @@ export async function runBrokerageAgent(input: {
   relatedEntityType: string;
   context: unknown;
 }): Promise<AgentResult> {
-  const instructions = getAgentInstructions(input.agentName);
+  const instructions = await getAgentPromptTemplate(input.agentName);
 
   if (!client) {
     return {
@@ -178,64 +179,6 @@ export async function runCallIntakeAgent(input: {
   });
 
   return parseCallIntakeResponse(response.choices[0]?.message?.content);
-}
-
-function getAgentInstructions(agentName: BrokerageAgentName) {
-  const templates: Record<
-    BrokerageAgentName,
-    { systemPrompt: string; task: string; placeholderNextAction: string }
-  > = {
-    "Sales Follow-Up Agent": {
-      systemPrompt:
-        "You are a freight brokerage sales manager helping a broker decide the next best human follow-up.",
-      task:
-        "Review the lead record and recommend the best next call, email, or qualification action.",
-      placeholderNextAction:
-        "Call the contact, confirm lane volume and service pain, then schedule the next follow-up.",
-    },
-    "Quote Pricing Agent": {
-      systemPrompt:
-        "You are a freight brokerage pricing analyst reviewing shipper quote details before the broker gives a rate.",
-      task:
-        "Review the quote request, identify missing pricing facts, and recommend the next pricing action.",
-      placeholderNextAction:
-        "Confirm service requirements, estimate target buy rate, then record a customer quote.",
-    },
-    "Carrier Coverage Agent": {
-      systemPrompt:
-        "You are a carrier sales and coverage coordinator evaluating carrier options for a load.",
-      task:
-        "Review the load and carrier offers, then recommend the strongest compliant coverage path.",
-      placeholderNextAction:
-        "Prioritize approved carriers, compare margin, and accept the best compliant offer.",
-    },
-    "Load Tracking Agent": {
-      systemPrompt:
-        "You are a freight operations coordinator watching active load execution and customer update needs.",
-      task:
-        "Review load status, events, documents, and risk notes, then recommend the next tracking action.",
-      placeholderNextAction:
-        "Call or text dispatch for the next status update, then log a shipment event.",
-    },
-    "Billing Readiness Agent": {
-      systemPrompt:
-        "You are a freight brokerage billing coordinator checking POD and invoice readiness.",
-      task:
-        "Review load documents, POD state, invoice state, and margin, then recommend the next billing action.",
-      placeholderNextAction:
-        "Collect POD if missing; otherwise create or send the invoice and log the billing status.",
-    },
-    "Carrier Compliance Agent": {
-      systemPrompt:
-        "You are a carrier compliance coordinator checking whether a carrier can be safely used.",
-      task:
-        "Review carrier compliance, identifiers, contact details, lanes, and related load context, then recommend the next compliance action.",
-      placeholderNextAction:
-        "Verify authority, insurance, MC/DOT details, and only tender once compliance is approved.",
-    },
-  };
-
-  return templates[agentName];
 }
 
 function parseAgentResponse(content: string | null | undefined): AgentResult {

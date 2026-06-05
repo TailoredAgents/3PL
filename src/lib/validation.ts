@@ -345,6 +345,13 @@ export const aiAgentRunRequestSchema = z.object({
   relatedEntityId: requiredString,
 });
 
+export const agentPromptTemplateSchema = z.object({
+  agentName: z.enum(brokerageAgentNames),
+  systemPrompt: requiredString,
+  task: requiredString,
+  placeholderNextAction: requiredString,
+});
+
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
@@ -380,4 +387,7 @@ export type CarrierCandidateRequestQuoteInput = z.infer<
 export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
 export type RateConfirmationUpdateInput = z.infer<typeof rateConfirmationUpdateSchema>;
 export type AiAgentRunRequestInput = z.infer<typeof aiAgentRunRequestSchema>;
+export type AgentPromptTemplateInput = z.infer<
+  typeof agentPromptTemplateSchema
+>;
 export type AppSettingsInput = z.infer<typeof appSettingsSchema>;

@@ -50,6 +50,8 @@ Included now:
 - AI agent run forms on lead, quote, load, and carrier detail pages
 - Recent AI agent run log on the dashboard
 - AI Command Center with approval queue, failed-run retry, and recent run explorer
+- Editable Grok prompt templates for each brokerage agent
+- AI daily brief and exception dashboard for follow-ups, pricing, coverage, POD, customer updates, compliance, and failed agents
 - Prisma schema for the core brokerage domain
 - API routes for audit intake and quote intake
 - API routes for CRM creation and contact import
@@ -946,11 +948,18 @@ Remaining:
 - Failed-agent retry queue
 - Recent agent run explorer
 
+### Milestone 9: AI Management Layer
+
+- Prompt template management
+- Daily management brief
+- Exception dashboard
+- Prompt templates persisted through existing app settings
+
 Remaining:
 
-- Add prompt template management
-- Add daily brief
-- Add exception dashboard
+- Add scheduled daily brief delivery
+- Add exception assignment/ownership
+- Add prompt version history
 
 ## Design Principles
 

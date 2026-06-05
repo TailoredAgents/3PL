@@ -5,22 +5,29 @@ import {
   Bot,
   CheckCircle2,
   ClipboardCheck,
+  FileWarning,
   ExternalLink,
+  ListChecks,
   RefreshCcw,
   Sparkles,
 } from "lucide-react";
 
 import {
   AgentRunApproveForm,
+  AgentPromptTemplateForm,
   AgentRunRetryForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getAiCommandCenterView, type AiAgentRunView } from "@/lib/crm";
+import { getAgentPromptTemplates } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgentsPage() {
-  const commandCenter = await getAiCommandCenterView();
+  const [commandCenter, promptTemplates] = await Promise.all([
+    getAiCommandCenterView(),
+    getAgentPromptTemplates(),
+  ]);
   const metrics = [
     {
       label: "Awaiting approval",
@@ -74,6 +81,82 @@ export default async function AgentsPage() {
             </p>
           </article>
         ))}
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                Daily brief
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Management snapshot
+              </h2>
+            </div>
+            <ListChecks className="h-6 w-6 text-slate-400" />
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {commandCenter.dailyBrief.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`rounded-md border p-4 hover:-translate-y-0.5 hover:shadow-md ${getBriefClass(
+                  item.tone,
+                )}`}
+              >
+                <p className="text-sm font-medium">{item.label}</p>
+                <p className="mt-2 text-3xl font-semibold">{item.value}</p>
+                <p className="mt-3 text-sm leading-6">{item.detail}</p>
+              </Link>
+            ))}
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-700">
+                Exception dashboard
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Work that needs attention
+              </h2>
+            </div>
+            <FileWarning className="h-6 w-6 text-slate-400" />
+          </div>
+          <div className="mt-6 grid gap-3">
+            {commandCenter.exceptions.length ? (
+              commandCenter.exceptions.map((exception) => (
+                <Link
+                  key={exception.id}
+                  href={exception.href}
+                  className="grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md lg:grid-cols-[150px_1fr_auto]"
+                >
+                  <div>
+                    <p className="font-semibold">{exception.type}</p>
+                    <p
+                      className={`mt-2 w-fit rounded-full px-3 py-1 text-xs font-bold ${getSeverityClass(
+                        exception.severity,
+                      )}`}
+                    >
+                      {exception.severity}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{exception.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {exception.detail}
+                    </p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-emerald-700" />
+                </Link>
+              ))
+            ) : (
+              <EmptyState message="No operating exceptions are currently flagged." />
+            )}
+          </div>
+        </article>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -198,8 +281,79 @@ export default async function AgentsPage() {
           )}
         </div>
       </section>
+
+      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Prompt templates
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              Tune agent instructions
+            </h2>
+          </div>
+          <p className="text-sm leading-6 text-slate-600">
+            These templates control future Grok agent runs while keeping every
+            output approval-first.
+          </p>
+        </div>
+        <div className="mt-6 grid gap-4 xl:grid-cols-2">
+          {promptTemplates.map((template) => (
+            <details
+              key={template.agentName}
+              className="rounded-md border border-slate-100 bg-slate-50 p-4 open:bg-white open:shadow-md"
+            >
+              <summary className="cursor-pointer list-none">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold">{template.agentName}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {template.task}
+                    </p>
+                  </div>
+                  <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700 shadow-sm">
+                    {template.isCustomized ? "Custom" : "Default"}
+                  </span>
+                </div>
+              </summary>
+              <div className="mt-5 border-t border-slate-100 pt-4">
+                <AgentPromptTemplateForm
+                  agentName={template.agentName}
+                  systemPrompt={template.systemPrompt}
+                  task={template.task}
+                  placeholderNextAction={template.placeholderNextAction}
+                />
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
     </InternalShell>
   );
+}
+
+function getBriefClass(tone: "default" | "warning" | "danger") {
+  if (tone === "danger") {
+    return "border-red-100 bg-red-50 text-red-950";
+  }
+
+  if (tone === "warning") {
+    return "border-amber-100 bg-amber-50 text-amber-950";
+  }
+
+  return "border-slate-100 bg-slate-50 text-slate-950";
+}
+
+function getSeverityClass(severity: "High" | "Medium" | "Low") {
+  if (severity === "High") {
+    return "bg-red-50 text-red-700";
+  }
+
+  if (severity === "Medium") {
+    return "bg-amber-50 text-amber-700";
+  }
+
+  return "bg-slate-100 text-slate-700";
 }
 
 function RunReviewCard({

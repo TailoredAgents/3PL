@@ -146,6 +146,8 @@ Expected behavior:
 - CRM pages load.
 - AI Command Center loads.
 - AI agent approval and retry controls validate against the logged run state.
+- AI daily brief and exception dashboard load.
+- AI prompt template edits validate and persist when `DATABASE_URL` is configured.
 - call intelligence queue loads.
 - create lead works.
 - lead click-to-call validates/logs activity or starts Twilio call when configured.
@@ -186,47 +188,49 @@ Test in this order:
 2. Internal login
 3. Internal dashboard
 4. AI Command Center
-5. Call intelligence queue
-6. Create lead
-7. Open lead detail
-8. Run a lead AI agent and confirm it enters the approval queue
-9. Approve the waiting AI agent run
-10. Update lead stage/follow-up
-11. Start lead click-to-call
-12. Send lead SMS
-13. Add activity
-14. Create shipper/contact
-15. Create quote request
-16. Open quote request detail
-17. Add rate benchmark
-18. Generate system pricing recommendation
-19. Save customer quote
-20. Convert quote request to load
-21. Create carrier
-22. Open carrier detail
-23. Create load manually
-24. Open load detail
-25. Generate internal carrier candidates
-26. Search DAT/Truckstop capacity
-27. Post load to DAT/Truckstop
-28. Confirm marketplace audit log updates
-29. Add manual carrier candidate
-30. Request quote from a carrier candidate
-31. Update load status
-32. Add shipment event
-33. Add customer update
-34. Draft generated rate confirmation
-35. Open printable rate confirmation
-36. Update rate confirmation status
-37. Add load document metadata
-38. Add POD document metadata and confirm POD event appears
-39. Update carrier compliance and confirm pending carriers cannot be accepted
-40. Save Settings call recording disclosure
-41. Upload CSV contacts
-42. Public savings audit form
-43. Public instant quote form
-44. Intake queue
-45. Health check
+5. Review daily brief and exceptions
+6. Edit one AI prompt template and confirm it saves
+7. Call intelligence queue
+8. Create lead
+9. Open lead detail
+10. Run a lead AI agent and confirm it enters the approval queue
+11. Approve the waiting AI agent run
+12. Update lead stage/follow-up
+13. Start lead click-to-call
+14. Send lead SMS
+15. Add activity
+16. Create shipper/contact
+17. Create quote request
+18. Open quote request detail
+19. Add rate benchmark
+20. Generate system pricing recommendation
+21. Save customer quote
+22. Convert quote request to load
+23. Create carrier
+24. Open carrier detail
+25. Create load manually
+26. Open load detail
+27. Generate internal carrier candidates
+28. Search DAT/Truckstop capacity
+29. Post load to DAT/Truckstop
+30. Confirm marketplace audit log updates
+31. Add manual carrier candidate
+32. Request quote from a carrier candidate
+33. Update load status
+34. Add shipment event
+35. Add customer update
+36. Draft generated rate confirmation
+37. Open printable rate confirmation
+38. Update rate confirmation status
+39. Add load document metadata
+40. Add POD document metadata and confirm POD event appears
+41. Update carrier compliance and confirm pending carriers cannot be accepted
+42. Save Settings call recording disclosure
+43. Upload CSV contacts
+44. Public savings audit form
+45. Public instant quote form
+46. Intake queue
+47. Health check
 
 ## 8. Known Temporary Choices
 

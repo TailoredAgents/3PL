@@ -127,24 +127,6 @@ export const agentBriefs = [
   },
 ];
 
-export const portalLoads = [
-  {
-    lane: "Atlanta, GA -> Dallas, TX",
-    status: "In transit",
-    eta: "Tomorrow 10:00 AM",
-  },
-  {
-    lane: "Savannah, GA -> Nashville, TN",
-    status: "Pickup scheduled",
-    eta: "Jun 04, 8:30 AM",
-  },
-  {
-    lane: "Marietta, GA -> Charlotte, NC",
-    status: "POD received",
-    eta: "Ready for invoice",
-  },
-];
-
 export const operationsModules = [
   {
     icon: BarChart3,

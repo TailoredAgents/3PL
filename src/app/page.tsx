@@ -199,8 +199,8 @@ export default function Home() {
             </h2>
             <p className="mt-5 leading-8 text-slate-600">
               The first milestone creates the operating spine. DAT, Truckstop,
-              Twilio, Clerk, payments, and portal depth can plug into the same
-              records as the business matures.
+              Twilio, Clerk, payments, and deeper automation can plug into the
+              same records as the business matures.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">

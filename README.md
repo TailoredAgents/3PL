@@ -1,6 +1,6 @@
 # Atlanta Freight OS
 
-AI-native CRM, TMS, and shipper portal foundation for a new Atlanta-based pure freight brokerage.
+AI-native CRM and TMS foundation for a new Atlanta-based pure freight brokerage.
 
 This repository is the first build milestone for a non-asset 3PL platform. The brokerage does not own trucks, trailers, or warehouse space. The product connects shippers with carriers, manages load execution, tracks profitability, and uses Grok agents to automate as much of the daily workflow as possible.
 
@@ -42,7 +42,6 @@ Included now:
 - Sample contact import CSV at `docs/sample-contacts.csv`
 - Activity timeline and follow-up views
 - AI sales assistant placeholders
-- Shipper portal shell
 - Prisma schema for the core brokerage domain
 - API routes for audit intake and quote intake
 - API routes for CRM creation and contact import
@@ -68,7 +67,6 @@ Not included yet:
 - Email sending
 - Payment processing
 - Production role-based permissions
-- Real shipper-specific portal data
 - Background job processing
 
 ## Product Vision
@@ -92,13 +90,12 @@ Lead capture
 -> Repeat business
 ```
 
-The system is designed around three surfaces:
+The system is designed around two active surfaces:
 
 1. Public website
-2. Shipper portal
-3. Internal CRM/TMS dashboard
+2. Internal CRM/TMS dashboard
 
-The internal dashboard is the operational brain. The public site is the demand engine. The shipper portal is the customer retention layer.
+The internal dashboard is the operational brain. The public site is the demand engine. Customer-facing account access is intentionally out of scope for now.
 
 ## Business Model
 
@@ -163,7 +160,6 @@ Likely future additions:
 |   |   |-- quote-requests/        # Quote queue and quote-to-load workflow
 |   |   |-- carriers/              # Carrier list and profile workflow
 |   |   |-- loads/                 # Load board, load detail, events, documents
-|   |   |-- portal/                # Shipper portal shell
 |   |   |-- globals.css
 |   |   |-- layout.tsx
 |   |   `-- page.tsx               # Public marketing site
@@ -234,7 +230,6 @@ Useful local routes:
 /carriers/[id] Carrier profile and related load history
 /loads        Load operations and create form
 /loads/[id]   Load detail, status update, shipment timeline, and documents
-/portal       Shipper portal shell
 ```
 
 ## Environment Variables
@@ -517,37 +512,6 @@ The current TMS workflow supports the first manual operating loop:
 
 The document workflow is metadata-first. It records what document exists and where it should live later. Durable upload storage, OCR, file previews, and signed downloads are still future work.
 
-## Shipper Portal
-
-Current route:
-
-```txt
-/portal
-```
-
-Current sections:
-
-- Portal overview
-- Post-load placeholder
-- Active shipment placeholder
-- Invoice placeholder
-- Shipment activity shell
-- AI lane suggestion shell
-
-Future portal features:
-
-- Authentication
-- Customer-specific records
-- Post new load
-- View active loads
-- View shipment history
-- Download PODs
-- View invoices
-- View savings reports
-- Receive AI lane suggestions
-- Approve quotes
-- Message brokerage team
-
 ## Grok Agent Architecture
 
 Current agents implemented as wrappers:
@@ -694,15 +658,6 @@ Initial roles:
 - `OPS`
 - `ADMIN`
 
-Portal users can be modeled later either as:
-
-1. A separate `PortalUser` model, or
-2. A `User` with a shipper-scoped role.
-
-Recommendation:
-
-Start with internal users first, then add shipper portal users once the internal workflow is stable.
-
 ## Render Deployment Plan
 
 Recommended Render services:
@@ -755,7 +710,6 @@ Status: complete.
 - Audit form
 - Quote form
 - Internal dashboard shell
-- Shipper portal shell
 - Grok wrapper
 - README
 
@@ -856,18 +810,7 @@ Remaining:
 - Add AI follow-up suggestions
 - Add shipment update templates
 
-### Milestone 8: Shipper Portal
-
-- Add portal auth
-- Add shipper scoping
-- Add new load form
-- Add active load list
-- Add tracking view
-- Add savings report view
-- Add invoice view
-- Add AI lane suggestions
-
-### Milestone 9: AI Command Center
+### Milestone 8: AI Command Center
 
 - Add prompt template management
 - Add agent run explorer

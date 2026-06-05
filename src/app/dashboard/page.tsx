@@ -100,7 +100,7 @@ export default async function DashboardPage() {
       eyebrow="Internal dashboard"
       title="Daily brokerage command center"
       description="The first screen for sales and operations: follow-ups, open quotes, active load attention, AI notes, and the next work that matters."
-      action={{ label: "View shipper portal", href: "/portal" }}
+      action={{ label: "Phone quote intake", href: "/quote-requests" }}
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardCards.map((card) => (

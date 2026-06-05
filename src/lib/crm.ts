@@ -122,18 +122,7 @@ export async function getLeadDetailView(
   id: string,
 ): Promise<LeadDetailView | null> {
   if (!hasDatabaseUrl() || !prisma) {
-    const sample = leads.find((lead) => lead.id === id);
-
-    if (!sample) {
-      return null;
-    }
-
-    return {
-      ...sample,
-      activities: activities.filter(
-        (activity) => activity.company === sample.company,
-      ),
-    };
+    return getSampleLeadDetailView(id);
   }
 
   try {
@@ -150,7 +139,7 @@ export async function getLeadDetailView(
     });
 
     if (!lead) {
-      return null;
+      return getSampleLeadDetailView(id);
     }
 
     const notes = `${lead.shipper.notes ?? ""}\n${lead.notes ?? ""}`;
@@ -185,15 +174,7 @@ export async function getLeadDetailView(
         : activities.filter((activity) => activity.company === lead.shipper.companyName),
     };
   } catch {
-    const fallback = leads.find((lead) => lead.id === id);
-    return fallback
-      ? {
-          ...fallback,
-          activities: activities.filter(
-            (activity) => activity.company === fallback.company,
-          ),
-        }
-      : null;
+    return getSampleLeadDetailView(id);
   }
 }
 
@@ -409,18 +390,7 @@ export async function getShipperDetailView(
   id: string,
 ): Promise<ShipperDetailView | null> {
   if (!hasDatabaseUrl() || !prisma) {
-    const sample = shippers.find((shipper) => shipper.id === id);
-
-    return sample
-      ? {
-          ...sample,
-          leads: leads.filter((lead) => lead.company === sample.company),
-          quoteRequests: quoteRequests.filter(
-            (quote) => quote.company === sample.company,
-          ),
-          loads: loads.filter((load) => load.shipper === sample.company),
-        }
-      : null;
+    return getSampleShipperDetailView(id);
   }
 
   try {
@@ -438,7 +408,7 @@ export async function getShipperDetailView(
     });
 
     if (!shipper) {
-      return null;
+      return getSampleShipperDetailView(id);
     }
 
     const primary = shipper.contacts[0];
@@ -482,7 +452,7 @@ export async function getShipperDetailView(
       ),
     };
   } catch {
-    return null;
+    return getSampleShipperDetailView(id);
   }
 }
 
@@ -516,15 +486,7 @@ export async function getQuoteRequestDetailView(
   id: string,
 ): Promise<QuoteRequestDetailView | null> {
   if (!hasDatabaseUrl() || !prisma) {
-    const sample = quoteRequests.find((quote) => quote.id === id);
-    return sample
-      ? {
-          ...sample,
-          contact: "Primary contact",
-          email: "No email",
-          specialRequirements: sample.details,
-        }
-      : null;
+    return getSampleQuoteRequestDetailView(id);
   }
 
   try {
@@ -534,7 +496,7 @@ export async function getQuoteRequestDetailView(
     });
 
     if (!request) {
-      return null;
+      return getSampleQuoteRequestDetailView(id);
     }
 
     return {
@@ -545,7 +507,7 @@ export async function getQuoteRequestDetailView(
         request.specialRequirements ?? request.commodity ?? "No details yet.",
     };
   } catch {
-    return null;
+    return getSampleQuoteRequestDetailView(id);
   }
 }
 
@@ -593,13 +555,7 @@ export async function getCarrierDetailView(
   id: string,
 ): Promise<CarrierDetailView | null> {
   if (!hasDatabaseUrl() || !prisma) {
-    const sample = carriers.find((carrier) => carrier.id === id);
-    return sample
-      ? {
-          ...sample,
-          loads: loads.filter((load) => load.carrier === sample.company),
-        }
-      : null;
+    return getSampleCarrierDetailView(id);
   }
 
   try {
@@ -614,7 +570,7 @@ export async function getCarrierDetailView(
     });
 
     if (!carrier) {
-      return null;
+      return getSampleCarrierDetailView(id);
     }
 
     return {
@@ -634,7 +590,7 @@ export async function getCarrierDetailView(
       loads: carrier.loads.map((load) => mapLoad(load)),
     };
   } catch {
-    return null;
+    return getSampleCarrierDetailView(id);
   }
 }
 
@@ -671,7 +627,7 @@ export async function getLoadDetailView(
   id: string,
 ): Promise<LoadDetailView | null> {
   if (!hasDatabaseUrl() || !prisma) {
-    return loads.find((load) => load.id === id) ?? null;
+    return getSampleLoadDetailView(id);
   }
 
   try {
@@ -691,13 +647,73 @@ export async function getLoadDetailView(
     });
 
     if (!load) {
-      return null;
+      return getSampleLoadDetailView(id);
     }
 
     return mapLoad(load);
   } catch {
-    return loads.find((load) => load.id === id) ?? null;
+    return getSampleLoadDetailView(id);
   }
+}
+
+function getSampleLeadDetailView(id: string): LeadDetailView | null {
+  const sample = leads.find((lead) => lead.id === id);
+
+  if (!sample) {
+    return null;
+  }
+
+  return {
+    ...sample,
+    activities: activities.filter(
+      (activity) => activity.company === sample.company,
+    ),
+  };
+}
+
+function getSampleShipperDetailView(id: string): ShipperDetailView | null {
+  const sample = shippers.find((shipper) => shipper.id === id);
+
+  return sample
+    ? {
+        ...sample,
+        leads: leads.filter((lead) => lead.company === sample.company),
+        quoteRequests: quoteRequests.filter(
+          (quote) => quote.company === sample.company,
+        ),
+        loads: loads.filter((load) => load.shipper === sample.company),
+      }
+    : null;
+}
+
+function getSampleQuoteRequestDetailView(
+  id: string,
+): QuoteRequestDetailView | null {
+  const sample = quoteRequests.find((quote) => quote.id === id);
+
+  return sample
+    ? {
+        ...sample,
+        contact: "Primary contact",
+        email: "No email",
+        specialRequirements: sample.details,
+      }
+    : null;
+}
+
+function getSampleCarrierDetailView(id: string): CarrierDetailView | null {
+  const sample = carriers.find((carrier) => carrier.id === id);
+
+  return sample
+    ? {
+        ...sample,
+        loads: loads.filter((load) => load.carrier === sample.company),
+      }
+    : null;
+}
+
+function getSampleLoadDetailView(id: string): LoadDetailView | null {
+  return loads.find((load) => load.id === id) ?? null;
 }
 
 function formatContactName(

@@ -75,7 +75,7 @@ function useCrmSubmit(endpoint: string, method = "POST") {
 }
 
 const inputClass =
-  "rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900";
+  "rounded-md border border-slate-200 bg-white px-3 py-2.5 font-normal text-slate-950 shadow-sm outline-none ring-0 focus:border-emerald-500 focus:shadow-md focus:shadow-emerald-950/5";
 
 export function LeadCreateForm() {
   const { state, onSubmit } = useCrmSubmit("/api/leads");
@@ -129,7 +129,7 @@ export function ContactImportForm() {
           name="csv"
           type="file"
           accept=".csv"
-          className="rounded-md border border-slate-300 bg-white px-3 py-3 text-sm font-normal file:mr-3 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-white"
+          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-white hover:border-emerald-300"
         />
       </label>
       <p className="text-sm leading-6 text-slate-600">
@@ -489,7 +489,7 @@ function FormFooter({
       <button
         type="submit"
         disabled={state.status === "loading"}
-        className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
       >
         {buttonLabel}
       </button>

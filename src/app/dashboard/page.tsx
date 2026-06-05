@@ -1,4 +1,11 @@
-import { Bot, ClipboardList } from "lucide-react";
+import {
+  Bot,
+  ClipboardList,
+  FileText,
+  Headphones,
+  MapPinned,
+  ReceiptText,
+} from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
 import { getDashboardMetrics } from "@/lib/crm";
@@ -10,21 +17,25 @@ export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();
   const dashboardCards = [
     {
+      icon: Headphones,
       label: "Leads needing follow-up",
       value: metrics.leadsDue,
       note: "Call qualified leads and new audit submissions first.",
     },
     {
+      icon: FileText,
       label: "Open quote requests",
       value: metrics.openQuotes,
       note: "Review service details before rate work starts.",
     },
     {
+      icon: MapPinned,
       label: "Active loads",
       value: metrics.activeLoads,
       note: "Watch pickup, delivery, POD, and customer update needs.",
     },
     {
+      icon: ReceiptText,
       label: "Projected margin",
       value: metrics.projectedMargin,
       note: "Business margin from loads with carrier costs entered.",
@@ -43,8 +54,11 @@ export default async function DashboardPage() {
         {dashboardCards.map((card) => (
           <article
             key={card.label}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
           >
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+              <card.icon className="h-5 w-5" />
+            </div>
             <p className="mt-5 text-sm font-medium text-slate-600">
               {card.label}
             </p>
@@ -55,7 +69,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
@@ -71,7 +85,7 @@ export default async function DashboardPage() {
             {metrics.leadPipeline.map((stage) => (
               <div
                 key={stage.stage}
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-md bg-slate-50 px-4 py-3"
+                className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
               >
                 <p className="font-medium">{stage.stage}</p>
                 <p className="text-sm text-slate-600">{stage.count} leads</p>
@@ -81,7 +95,7 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <article id="ai" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article id="ai" className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
             AI brief
           </p>
@@ -103,7 +117,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <article id="loads" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article id="loads" className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
           <div className="flex items-center gap-3">
             <ClipboardList className="h-6 w-6 text-emerald-600" />
             <h2 className="text-2xl font-semibold">Operating checklist</h2>
@@ -121,7 +135,7 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <article id="carriers" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article id="carriers" className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
             Next build modules
           </p>

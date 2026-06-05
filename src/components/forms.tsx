@@ -8,6 +8,9 @@ type SubmitState = {
   message?: string;
 };
 
+const fieldClass =
+  "rounded-md border border-slate-200 bg-white px-3 py-2.5 font-normal text-slate-950 shadow-sm outline-none focus:border-emerald-500 focus:shadow-md focus:shadow-emerald-950/5";
+
 async function submitForm(endpoint: string, form: HTMLFormElement) {
   const formData = new FormData(form);
   const response = await fetch(endpoint, {
@@ -82,7 +85,7 @@ export function SavingsAuditForm() {
           <input
             required
             name="companyName"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="Acme Manufacturing"
           />
         </label>
@@ -91,7 +94,7 @@ export function SavingsAuditForm() {
           <input
             required
             name="contactName"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="Jordan Smith"
           />
         </label>
@@ -103,7 +106,7 @@ export function SavingsAuditForm() {
             required
             type="email"
             name="email"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="jordan@company.com"
           />
         </label>
@@ -112,7 +115,7 @@ export function SavingsAuditForm() {
           <input
             required
             name="phone"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="(404) 555-0199"
           />
         </label>
@@ -123,7 +126,7 @@ export function SavingsAuditForm() {
           required
           name="lanes"
           rows={3}
-          className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+          className={fieldClass}
           placeholder="Atlanta to Dallas, Savannah to Nashville, recurring dry van"
         />
       </label>
@@ -133,7 +136,7 @@ export function SavingsAuditForm() {
           <select
             required
             name="equipmentType"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
           >
             <option value="">Select equipment</option>
             <option>Dry van</option>
@@ -147,7 +150,7 @@ export function SavingsAuditForm() {
           Monthly volume
           <input
             name="monthlyVolume"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="25 loads"
           />
         </label>
@@ -160,7 +163,7 @@ export function SavingsAuditForm() {
           name="documents"
           multiple
           accept=".pdf,.png,.jpg,.jpeg"
-          className="rounded-md border border-dashed border-slate-300 px-3 py-3 text-sm font-normal file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-white"
+          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-white hover:border-emerald-300"
         />
       </label>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -168,7 +171,7 @@ export function SavingsAuditForm() {
         <button
           type="submit"
           disabled={state.status === "loading"}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
         >
           Generate audit request
           <ArrowRight className="h-4 w-4" />
@@ -210,7 +213,7 @@ export function QuoteForm() {
           <input
             required
             name="companyName"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="Acme Manufacturing"
           />
         </label>
@@ -220,7 +223,7 @@ export function QuoteForm() {
             required
             type="email"
             name="email"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="shipping@company.com"
           />
         </label>
@@ -231,7 +234,7 @@ export function QuoteForm() {
           <input
             required
             name="origin"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="Atlanta, GA"
           />
         </label>
@@ -240,7 +243,7 @@ export function QuoteForm() {
           <input
             required
             name="destination"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="Dallas, TX"
           />
         </label>
@@ -251,7 +254,7 @@ export function QuoteForm() {
           <input
             type="date"
             name="pickupDate"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
           />
         </label>
         <label className="grid gap-2 text-sm font-semibold text-slate-800">
@@ -259,7 +262,7 @@ export function QuoteForm() {
           <select
             required
             name="equipmentType"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
           >
             <option value="">Select</option>
             <option>Dry van</option>
@@ -273,7 +276,7 @@ export function QuoteForm() {
           <input
             name="weight"
             inputMode="numeric"
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+            className={fieldClass}
             placeholder="42,000"
           />
         </label>
@@ -283,7 +286,7 @@ export function QuoteForm() {
         <textarea
           name="details"
           rows={4}
-          className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+          className={fieldClass}
           placeholder="Commodity, appointment windows, accessorials, temperature, special instructions"
         />
       </label>
@@ -292,7 +295,7 @@ export function QuoteForm() {
         <button
           type="submit"
           disabled={state.status === "loading"}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/15 hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
         >
           Request quote
           <ArrowRight className="h-4 w-4" />

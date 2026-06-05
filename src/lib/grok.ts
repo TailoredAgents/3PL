@@ -8,6 +8,11 @@ type AgentResult = {
   nextAction: string;
 };
 
+export type CallIntakeAgentResult = AgentResult & {
+  quoteRequest: Record<string, string | number | boolean>;
+  missingQuestions: string[];
+};
+
 export type BrokerageAgentName =
   | "Sales Follow-Up Agent"
   | "Quote Pricing Agent"
@@ -131,6 +136,57 @@ export async function runBrokerageAgent(input: {
   return parseAgentResponse(response.choices[0]?.message?.content);
 }
 
+export async function runCallIntakeAgent(input: {
+  transcriptText: string;
+  context: unknown;
+}): Promise<CallIntakeAgentResult> {
+  if (!client) {
+    return {
+      summary:
+        "Call transcript reviewed locally. Grok is not configured yet, so this is a placeholder extraction.",
+      confidence: 0.4,
+      nextAction:
+        "Review the transcript, fill any missing lane details, then create a quote request.",
+      quoteRequest: {
+        companyName: "",
+        contactName: "",
+        originCity: "",
+        originState: "",
+        destinationCity: "",
+        destinationState: "",
+        equipmentType: "",
+        intakeChannel: "PHONE",
+      },
+      missingQuestions: [
+        "Confirm origin and destination.",
+        "Confirm equipment, pickup window, commodity, and weight.",
+      ],
+    };
+  }
+
+  const response = await client.chat.completions.create({
+    model: xaiModel,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a freight brokerage phone intake agent. Extract only facts supported by the transcript or CRM context. Return concise JSON with summary, confidence, nextAction, quoteRequest, and missingQuestions. quoteRequest should use field names from the internal quote request form: companyName, contactName, email, phone, originCity, originState, originAddress, destinationCity, destinationState, destinationAddress, pickupDate, pickupWindow, deliveryDate, deliveryWindow, equipmentType, commodity, weight, palletCount, pieceCount, dimensions, hazmat, temperatureRequirement, appointmentRequired, accessorials, customerReference, urgency, targetMarginPercent, pricingNotes, specialRequirements, intakeChannel, quotedByPhone.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify({
+          task: "Extract a quote request draft from this call transcript.",
+          transcriptText: input.transcriptText,
+          context: input.context,
+        }),
+      },
+    ],
+    response_format: { type: "json_object" },
+  });
+
+  return parseCallIntakeResponse(response.choices[0]?.message?.content);
+}
+
 function getAgentInstructions(agentName: BrokerageAgentName) {
   const templates: Record<
     BrokerageAgentName,
@@ -211,6 +267,46 @@ function parseAgentResponse(content: string | null | undefined): AgentResult {
       summary: content,
       confidence: 0.5,
       nextAction: "Review manually.",
+    };
+  }
+}
+
+function parseCallIntakeResponse(
+  content: string | null | undefined,
+): CallIntakeAgentResult {
+  const fallback: CallIntakeAgentResult = {
+    summary: "Call intake output unavailable.",
+    confidence: 0.25,
+    nextAction: "Review manually.",
+    quoteRequest: {},
+    missingQuestions: ["Review transcript manually."],
+  };
+
+  if (!content) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(content) as Partial<CallIntakeAgentResult>;
+    return {
+      summary: parsed.summary ?? fallback.summary,
+      confidence:
+        typeof parsed.confidence === "number"
+          ? parsed.confidence
+          : fallback.confidence,
+      nextAction: parsed.nextAction ?? fallback.nextAction,
+      quoteRequest:
+        parsed.quoteRequest && typeof parsed.quoteRequest === "object"
+          ? parsed.quoteRequest
+          : {},
+      missingQuestions: Array.isArray(parsed.missingQuestions)
+        ? parsed.missingQuestions.map(String)
+        : fallback.missingQuestions,
+    };
+  } catch {
+    return {
+      ...fallback,
+      summary: content,
     };
   }
 }

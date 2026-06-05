@@ -120,6 +120,7 @@ After deploy, open:
 /login
 /dashboard
 /intake
+/calls
 /leads
 /shippers
 /quote-requests
@@ -136,6 +137,7 @@ Expected behavior:
 - internal pages redirect to `/login` when `INTERNAL_APP_PASSWORD` is set.
 - the internal password allows access.
 - CRM pages load.
+- call intelligence queue loads.
 - create lead works.
 - create shipper works.
 - create quote request works.
@@ -161,31 +163,32 @@ Test in this order:
 1. Public homepage
 2. Internal login
 3. Internal dashboard
-4. Create lead
-5. Open lead detail
-6. Update lead stage/follow-up
-7. Add activity
-8. Create shipper/contact
-9. Create quote request
-10. Open quote request detail
-11. Convert quote request to load
-12. Create carrier
-13. Open carrier detail
-14. Create load manually
-15. Open load detail
-16. Update load status
-17. Add shipment event
-18. Add customer update
-19. Update rate confirmation status
-20. Add load document metadata
-21. Add POD document metadata and confirm POD event appears
-22. Update carrier compliance and confirm pending carriers cannot be accepted
-23. Save Settings call recording disclosure
-24. Upload CSV contacts
-25. Public savings audit form
-26. Public instant quote form
-27. Intake queue
-28. Health check
+4. Call intelligence queue
+5. Create lead
+6. Open lead detail
+7. Update lead stage/follow-up
+8. Add activity
+9. Create shipper/contact
+10. Create quote request
+11. Open quote request detail
+12. Convert quote request to load
+13. Create carrier
+14. Open carrier detail
+15. Create load manually
+16. Open load detail
+17. Update load status
+18. Add shipment event
+19. Add customer update
+20. Update rate confirmation status
+21. Add load document metadata
+22. Add POD document metadata and confirm POD event appears
+23. Update carrier compliance and confirm pending carriers cannot be accepted
+24. Save Settings call recording disclosure
+25. Upload CSV contacts
+26. Public savings audit form
+27. Public instant quote form
+28. Intake queue
+29. Health check
 
 ## 8. Known Temporary Choices
 
@@ -204,6 +207,7 @@ Document upload:
 Integrations:
 
 - Grok wrapper exists.
+- Twilio inbound call webhook foundation exists at `/api/twilio/voice/incoming`.
 - DAT, Truckstop, Twilio, Clerk, Resend, and Stripe are not fully wired yet.
 
 ## 9. Render References

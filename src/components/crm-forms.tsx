@@ -96,6 +96,8 @@ function useCrmSubmit(endpoint: string, method = "POST") {
 const inputClass =
   "rounded-md border border-slate-200 bg-white px-3 py-2.5 font-normal text-slate-950 shadow-sm outline-none ring-0 focus:border-emerald-500 focus:shadow-md focus:shadow-emerald-950/5";
 
+type QuoteFieldDefaults = Record<string, string | number | boolean | undefined>;
+
 export function LeadCreateForm() {
   const { state, onSubmit } = useCrmSubmit("/api/leads");
 
@@ -190,55 +192,64 @@ export function QuoteRequestCreateForm() {
   return (
     <form className="grid gap-3" onSubmit={onSubmit}>
       <input type="hidden" name="intakeChannel" value="PHONE" />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field name="companyName" label="Company" required />
-        <Field name="contactName" label="Contact" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field name="email" label="Email" type="email" />
-        <Field name="phone" label="Phone" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-4">
-        <Field name="originCity" label="Origin city" required />
-        <Field name="originState" label="State" required placeholder="GA" />
-        <Field name="destinationCity" label="Destination city" required />
-        <Field name="destinationState" label="State" required placeholder="TX" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field name="originAddress" label="Pickup address" />
-        <Field name="destinationAddress" label="Delivery address" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-4">
-        <Field name="pickupDate" label="Pickup" type="date" />
-        <Field name="pickupWindow" label="Pickup window" placeholder="0800-1200" />
-        <Field name="deliveryDate" label="Delivery" type="date" />
-        <Field name="deliveryWindow" label="Delivery window" placeholder="By appointment" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-4">
-        <Field name="equipmentType" label="Equipment" required />
-        <Field name="weight" label="Weight" type="number" />
-        <Field name="palletCount" label="Pallets" type="number" />
-        <Field name="pieceCount" label="Pieces" type="number" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Field name="commodity" label="Commodity" />
-        <Field name="dimensions" label="Dimensions" placeholder="48x40 pallets" />
-        <Field name="temperatureRequirement" label="Temperature" placeholder="Frozen, 34-38F, none" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Field name="customerReference" label="Customer ref / PO" />
-        <Field name="urgency" label="Urgency" placeholder="Same day, this week" />
-        <Field name="targetMarginPercent" label="Target margin %" type="number" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Checkbox name="hazmat" label="Hazmat" />
-        <Checkbox name="appointmentRequired" label="Appointment required" />
-      </div>
-      <Textarea name="accessorials" label="Accessorials" rows={2} />
-      <Textarea name="pricingNotes" label="Pricing notes" rows={2} />
-      <Textarea name="specialRequirements" label="Special requirements" />
+      <QuoteRequestFieldset />
       <FormFooter state={state} buttonLabel="Create quote request" />
     </form>
+  );
+}
+
+function QuoteRequestFieldset({ defaults = {} }: { defaults?: QuoteFieldDefaults }) {
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="companyName" label="Company" required defaultValue={stringDefault(defaults.companyName)} />
+        <Field name="contactName" label="Contact" defaultValue={stringDefault(defaults.contactName)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="email" label="Email" type="email" defaultValue={stringDefault(defaults.email)} />
+        <Field name="phone" label="Phone" defaultValue={stringDefault(defaults.phone)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Field name="originCity" label="Origin city" required defaultValue={stringDefault(defaults.originCity)} />
+        <Field name="originState" label="State" required placeholder="GA" defaultValue={stringDefault(defaults.originState)} />
+        <Field name="destinationCity" label="Destination city" required defaultValue={stringDefault(defaults.destinationCity)} />
+        <Field name="destinationState" label="State" required placeholder="TX" defaultValue={stringDefault(defaults.destinationState)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="originAddress" label="Pickup address" defaultValue={stringDefault(defaults.originAddress)} />
+        <Field name="destinationAddress" label="Delivery address" defaultValue={stringDefault(defaults.destinationAddress)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Field name="pickupDate" label="Pickup" type="date" defaultValue={stringDefault(defaults.pickupDate)} />
+        <Field name="pickupWindow" label="Pickup window" placeholder="0800-1200" defaultValue={stringDefault(defaults.pickupWindow)} />
+        <Field name="deliveryDate" label="Delivery" type="date" defaultValue={stringDefault(defaults.deliveryDate)} />
+        <Field name="deliveryWindow" label="Delivery window" placeholder="By appointment" defaultValue={stringDefault(defaults.deliveryWindow)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Field name="equipmentType" label="Equipment" required defaultValue={stringDefault(defaults.equipmentType)} />
+        <Field name="weight" label="Weight" type="number" defaultValue={stringDefault(defaults.weight)} />
+        <Field name="palletCount" label="Pallets" type="number" defaultValue={stringDefault(defaults.palletCount)} />
+        <Field name="pieceCount" label="Pieces" type="number" defaultValue={stringDefault(defaults.pieceCount)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="commodity" label="Commodity" defaultValue={stringDefault(defaults.commodity)} />
+        <Field name="dimensions" label="Dimensions" placeholder="48x40 pallets" defaultValue={stringDefault(defaults.dimensions)} />
+        <Field name="temperatureRequirement" label="Temperature" placeholder="Frozen, 34-38F, none" defaultValue={stringDefault(defaults.temperatureRequirement)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="customerReference" label="Customer ref / PO" defaultValue={stringDefault(defaults.customerReference)} />
+        <Field name="urgency" label="Urgency" placeholder="Same day, this week" defaultValue={stringDefault(defaults.urgency)} />
+        <Field name="targetMarginPercent" label="Target margin %" type="number" defaultValue={stringDefault(defaults.targetMarginPercent)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Checkbox name="hazmat" label="Hazmat" defaultChecked={Boolean(defaults.hazmat)} />
+        <Checkbox name="appointmentRequired" label="Appointment required" defaultChecked={Boolean(defaults.appointmentRequired)} />
+        <Checkbox name="quotedByPhone" label="Quoted by phone" defaultChecked={Boolean(defaults.quotedByPhone)} />
+      </div>
+      <Textarea name="accessorials" label="Accessorials" rows={2} defaultValue={stringDefault(defaults.accessorials)} />
+      <Textarea name="pricingNotes" label="Pricing notes" rows={2} defaultValue={stringDefault(defaults.pricingNotes)} />
+      <Textarea name="specialRequirements" label="Special requirements" defaultValue={stringDefault(defaults.specialRequirements)} />
+    </>
   );
 }
 
@@ -800,6 +811,86 @@ export function AiAgentRunForm({
   );
 }
 
+export function CallTranscriptForm({
+  callId,
+  transcriptText,
+}: {
+  callId: string;
+  transcriptText: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/calls/${callId}/transcript`, "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Textarea
+        name="transcriptText"
+        label="Call transcript"
+        defaultValue={transcriptText}
+        rows={8}
+      />
+      <FormFooter state={state} buttonLabel="Save transcript" />
+    </form>
+  );
+}
+
+export function CallExtractionForm({ callId }: { callId: string }) {
+  const [state, setState] = useState<FormState>({ status: "idle" });
+  const [agentResult, setAgentResult] = useState<AgentResult | null>(null);
+  const router = useRouter();
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setState({ status: "loading" });
+    setAgentResult(null);
+
+    try {
+      const response = await submit(`/api/calls/${callId}/extract`, form, "POST");
+      setState({ status: "success", message: response.message });
+      setAgentResult(response.agentResult ?? null);
+      router.refresh();
+    } catch (error) {
+      setState({
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Call extraction failed.",
+      });
+    }
+  }
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Run call intake agent" />
+      {agentResult ? (
+        <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
+          <p className="font-semibold">Extraction result</p>
+          <p className="mt-2">{agentResult.summary}</p>
+          <p className="mt-3 font-semibold">Next action</p>
+          <p className="mt-1">{agentResult.nextAction}</p>
+        </div>
+      ) : null}
+    </form>
+  );
+}
+
+export function CallQuoteCreateForm({
+  callId,
+  defaults,
+}: {
+  callId: string;
+  defaults: QuoteFieldDefaults;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/calls/${callId}/quote-request`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="intakeChannel" value="PHONE_AI_REVIEW" />
+      <QuoteRequestFieldset defaults={defaults} />
+      <FormFooter state={state} buttonLabel="Create quote from call" />
+    </form>
+  );
+}
+
 function Field({
   label,
   name,
@@ -854,18 +945,35 @@ function Textarea({
   );
 }
 
-function Checkbox({ label, name }: { label: string; name: string }) {
+function Checkbox({
+  label,
+  name,
+  defaultChecked = false,
+}: {
+  label: string;
+  name: string;
+  defaultChecked?: boolean;
+}) {
   return (
     <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm">
       <input
         name={name}
         type="checkbox"
         value="true"
+        defaultChecked={defaultChecked}
         className="h-4 w-4 rounded border-slate-300 text-emerald-600"
       />
       {label}
     </label>
   );
+}
+
+function stringDefault(value: string | number | boolean | undefined) {
+  if (value === undefined || typeof value === "boolean") {
+    return undefined;
+  }
+
+  return String(value);
 }
 
 function Select({

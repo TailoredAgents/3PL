@@ -28,6 +28,7 @@ export const navItems = [
 export const internalNavItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Intake", href: "/intake" },
+  { label: "Calls", href: "/calls" },
   { label: "Leads", href: "/leads" },
   { label: "Shippers", href: "/shippers" },
   { label: "Quote Requests", href: "/quote-requests" },

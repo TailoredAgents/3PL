@@ -12,6 +12,7 @@ export async function GET() {
       twilio: Boolean(
         process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN,
       ),
+      twilioForwarding: Boolean(process.env.TWILIO_FORWARD_TO_PHONE_NUMBER),
       dat: Boolean(process.env.DAT_CLIENT_ID && process.env.DAT_CLIENT_SECRET),
       truckstop: Boolean(
         process.env.TRUCKSTOP_CLIENT_ID && process.env.TRUCKSTOP_CLIENT_SECRET,

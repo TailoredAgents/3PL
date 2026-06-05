@@ -48,11 +48,13 @@ Clerk should replace `INTERNAL_APP_PASSWORD` once internal users are ready.
 TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN
 TWILIO_PHONE_NUMBER
+TWILIO_FORWARD_TO_PHONE_NUMBER
 ```
 
 Needed for:
 
 - click-to-call
+- inbound call recording/disclosure routing
 - SMS outreach
 - shipment updates
 - call/SMS activity logging

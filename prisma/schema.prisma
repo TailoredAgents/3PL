@@ -143,6 +143,40 @@ enum RateConfirmationStatus {
   SIGNED
 }
 
+enum BrokerageCallDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum BrokerageCallStatus {
+  RECEIVED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum CallRecordingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  ABSENT
+}
+
+enum CallTranscriptStatus {
+  NOT_REQUESTED
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum CallExtractionStatus {
+  NOT_STARTED
+  NEEDS_REVIEW
+  APPROVED
+  FAILED
+}
+
 model User {
   id         String          @id @default(cuid())
   name       String
@@ -172,6 +206,7 @@ model Shipper {
   loads         Load[]
   documents     Document[]
   invoices      Invoice[]
+  calls         BrokerageCall[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -193,6 +228,7 @@ model Contact {
   activities    Activity[]
   audits        SavingsAudit[]
   quoteRequests QuoteRequest[]
+  calls         BrokerageCall[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -302,6 +338,7 @@ model QuoteRequest {
   status              QuoteRequestStatus @default(NEW)
   customerQuotes      CustomerQuote[]
   loads               Load[]
+  calls               BrokerageCall[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 
@@ -484,6 +521,41 @@ model AiAgentRun {
 
   @@index([agentName])
   @@index([relatedEntityType, relatedEntityId])
+  @@index([createdAt])
+}
+
+model BrokerageCall {
+  id                String               @id @default(cuid())
+  direction         BrokerageCallDirection @default(INBOUND)
+  status            BrokerageCallStatus  @default(RECEIVED)
+  twilioCallSid     String?              @unique
+  fromPhone         String?
+  toPhone           String?
+  callerName        String?
+  shipperId         String?
+  shipper           Shipper?             @relation(fields: [shipperId], references: [id], onDelete: SetNull)
+  contactId         String?
+  contact           Contact?             @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  quoteRequestId    String?
+  quoteRequest      QuoteRequest?        @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  recordingSid      String?
+  recordingUrl      String?
+  recordingDuration Int?
+  recordingStatus   CallRecordingStatus  @default(NOT_STARTED)
+  transcriptText    String?
+  transcriptStatus  CallTranscriptStatus @default(NOT_REQUESTED)
+  aiSummary         String?
+  aiExtractedJson   Json?
+  missingQuestions  Json?
+  extractionStatus  CallExtractionStatus @default(NOT_STARTED)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([twilioCallSid])
+  @@index([fromPhone])
+  @@index([shipperId])
+  @@index([contactId])
+  @@index([quoteRequestId])
   @@index([createdAt])
 }
 

@@ -36,6 +36,8 @@ Included now:
 - Load detail page with status updates, carrier offers, carrier assignment, tracking events, customer update state, rate confirmation state, document records, POD status handling, and invoice records
 - Rich phone quote intake fields for pickup/delivery windows, addresses, reference numbers, pallet/piece counts, dimensions, hazmat, temperature, appointments, accessorials, urgency, target margin, and pricing notes
 - Settings page with editable call recording disclosure message for future Twilio call handling
+- Call intelligence queue for recorded calls, transcripts, AI extraction, and quote request draft approval
+- Twilio inbound voice webhook foundation with call recording callbacks and transcription callback support
 - Database-backed dashboard metrics with sample-data fallback
 - Database-backed CRM read helpers with sample-data fallback
 - Create lead form and API
@@ -72,7 +74,8 @@ Not included yet:
 - Payment processing
 - Production role-based permissions
 - Background job processing
-- Actual call recording, transcription, and AI autofill from transcripts
+- Outbound click-to-call
+- Automated transcription worker for bridged calls
 - Generated/signed rate confirmation PDFs
 
 ## Product Vision
@@ -232,6 +235,8 @@ Useful local routes:
 /shippers/[id] Shipper account detail with related work
 /quote-requests Quote request queue and create form
 /quote-requests/[id] Quote detail and quote-to-load conversion
+/calls        Call intelligence queue
+/calls/[id]   Call transcript, AI extraction, and quote draft review
 /carriers     Carrier management and create form
 /carriers/[id] Carrier profile and related load history
 /loads        Load operations and create form
@@ -256,6 +261,7 @@ Optional/future:
 TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN
 TWILIO_PHONE_NUMBER
+TWILIO_FORWARD_TO_PHONE_NUMBER
 DAT_CLIENT_ID
 DAT_CLIENT_SECRET
 TRUCKSTOP_CLIENT_ID
@@ -528,7 +534,21 @@ The document workflow is metadata-first. It records what document exists and whe
 
 Phase 1 now treats phone quote intake as the primary sales workflow. The quote request record stores the detailed load facts needed for a live pricing call, and those facts copy forward when an accepted quote becomes a load.
 
-The Settings page includes editable call recording disclosure copy. Future Twilio call handling should play that message before recording starts, then store the call, transcript, matched shipper/contact context, and Grok-filled quote request draft for salesperson approval.
+The Settings page includes editable call recording disclosure copy. Phase 2 adds the call intelligence foundation:
+
+- Configure the Twilio inbound voice webhook to:
+
+```txt
+POST /api/twilio/voice/incoming
+```
+
+- The webhook plays the configured disclosure.
+- If `TWILIO_FORWARD_TO_PHONE_NUMBER` is set, the call is bridged to that phone number and recorded.
+- If no forwarding number is set, the caller can leave a recorded shipment-detail message.
+- Recording and transcription callbacks update the call record when Twilio sends them.
+- Internal users review calls at `/calls`, edit transcripts, run the Call Intake Agent, and approve quote request drafts.
+
+For bridged live calls, Twilio recording metadata is stored now. Full automated transcription for bridged recordings should be added as a later worker/API integration; the call detail page supports manual transcript entry until then.
 
 ## Grok Agent Architecture
 
@@ -841,9 +861,11 @@ Remaining:
 
 - Add Twilio client
 - Play configurable call recording disclosure from Settings
-- Add call recording and transcription records
-- Match calls to shipper/contact/recent activity
+- Add inbound call webhook
+- Add call recording metadata and transcription records
+- Match calls to shipper/contact/recent activity by phone number
 - Add Grok autofill for quote request drafts from call transcripts
+- Add call review queue and approve-to-quote flow
 - Add click-to-call
 - Add SMS sending
 - Add call/SMS activity logging

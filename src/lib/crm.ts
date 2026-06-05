@@ -7,6 +7,7 @@ import {
   shippers,
 } from "@/lib/data";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import type { AiAgentRun } from "@prisma/client";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -164,7 +165,20 @@ export type AiAgentRunView = {
   confidence: number | null;
   summary: string;
   nextAction: string;
+  errorMessage?: string | null;
   created: string;
+};
+export type AiCommandCenterView = {
+  metrics: {
+    total: string;
+    needsApproval: string;
+    failed: string;
+    completed: string;
+    averageConfidence: string;
+  };
+  approvalQueue: AiAgentRunView[];
+  failedRuns: AiAgentRunView[];
+  recentRuns: AiAgentRunView[];
 };
 export type QuoteRequestDetailView = QuoteRequestView & {
   id: string;
@@ -976,20 +990,7 @@ export async function getLoadDetailView(
 
 export async function getRecentAiAgentRunViews(): Promise<AiAgentRunView[]> {
   if (!hasDatabaseUrl() || !prisma) {
-    return [
-      {
-        id: "sample-agent-run",
-        agentName: "Sales Follow-Up Agent",
-        relatedEntityType: "Lead",
-        relatedEntityId: "peachtree-building-supply",
-        status: "Completed",
-        confidence: 0.5,
-        summary:
-          "Sample agent run. Connect XAI_API_KEY and DATABASE_URL to log real agent output.",
-        nextAction: "Call the lead, confirm lane details, and log the result.",
-        created: "Demo",
-      },
-    ];
+    return getSampleAiAgentRunViews();
   }
 
   try {
@@ -1002,27 +1003,114 @@ export async function getRecentAiAgentRunViews(): Promise<AiAgentRunView[]> {
       return [];
     }
 
-    return runs.map((run) => {
-      const output = parseAgentOutput(run.outputJson);
-
-      return {
-        id: run.id,
-        agentName: run.agentName,
-        relatedEntityType: run.relatedEntityType ?? "Unknown",
-        relatedEntityId: run.relatedEntityId ?? "",
-        status: titleCaseEnum(run.status),
-        confidence: run.confidence === null ? null : Number(run.confidence),
-        summary:
-          output.summary ??
-          run.errorMessage ??
-          "Agent run did not return a summary.",
-        nextAction: output.nextAction ?? "Review manually.",
-        created: formatFollowUp(run.createdAt),
-      };
-    });
+    return runs.map(mapAiAgentRun);
   } catch {
     return [];
   }
+}
+
+export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
+  if (!hasDatabaseUrl() || !prisma) {
+    const sampleRuns = getSampleAiAgentRunViews();
+
+    return {
+      metrics: {
+        total: sampleRuns.length.toString(),
+        needsApproval: "1",
+        failed: "0",
+        completed: "0",
+        averageConfidence: "50%",
+      },
+      approvalQueue: sampleRuns,
+      failedRuns: [],
+      recentRuns: sampleRuns,
+    };
+  }
+
+  try {
+    const runs = await prisma.aiAgentRun.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    const views = runs.map(mapAiAgentRun);
+    const confidenceValues = runs
+      .map((run) => (run.confidence === null ? null : Number(run.confidence)))
+      .filter((value): value is number => value !== null);
+    const averageConfidence = confidenceValues.length
+      ? `${Math.round(
+          (confidenceValues.reduce((total, value) => total + value, 0) /
+            confidenceValues.length) *
+            100,
+        )}%`
+      : "n/a";
+
+    return {
+      metrics: {
+        total: runs.length.toString(),
+        needsApproval: runs
+          .filter((run) => run.status === "NEEDS_HUMAN_APPROVAL")
+          .length.toString(),
+        failed: runs.filter((run) => run.status === "FAILED").length.toString(),
+        completed: runs
+          .filter((run) => run.status === "COMPLETED")
+          .length.toString(),
+        averageConfidence,
+      },
+      approvalQueue: views.filter(
+        (run) => run.status === "Needs Human Approval",
+      ),
+      failedRuns: views.filter((run) => run.status === "Failed"),
+      recentRuns: views.slice(0, 25),
+    };
+  } catch {
+    return {
+      metrics: {
+        total: "0",
+        needsApproval: "0",
+        failed: "0",
+        completed: "0",
+        averageConfidence: "n/a",
+      },
+      approvalQueue: [],
+      failedRuns: [],
+      recentRuns: [],
+    };
+  }
+}
+
+function getSampleAiAgentRunViews(): AiAgentRunView[] {
+  return [
+    {
+      id: "sample-agent-run",
+      agentName: "Sales Follow-Up Agent",
+      relatedEntityType: "Lead",
+      relatedEntityId: "peachtree-building-supply",
+      status: "Needs Human Approval",
+      confidence: 0.5,
+      summary:
+        "Sample agent run. Connect XAI_API_KEY and DATABASE_URL to log real agent output.",
+      nextAction: "Call the lead, confirm lane details, and log the result.",
+      created: "Demo",
+    },
+  ];
+}
+
+function mapAiAgentRun(run: AiAgentRun): AiAgentRunView {
+  const output = parseAgentOutput(run.outputJson);
+
+  return {
+    id: run.id,
+    agentName: run.agentName,
+    relatedEntityType: run.relatedEntityType ?? "Unknown",
+    relatedEntityId: run.relatedEntityId ?? "",
+    status: titleCaseEnum(run.status),
+    confidence: run.confidence === null ? null : Number(run.confidence),
+    summary:
+      output.summary ?? run.errorMessage ?? "Agent run did not return a summary.",
+    nextAction: output.nextAction ?? "Review manually.",
+    errorMessage: run.errorMessage,
+    created: formatFollowUp(run.createdAt),
+  };
 }
 
 function getSampleLeadDetailView(id: string): LeadDetailView | null {

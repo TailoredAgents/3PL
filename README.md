@@ -49,6 +49,7 @@ Included now:
 - Activity timeline and follow-up views
 - AI agent run forms on lead, quote, load, and carrier detail pages
 - Recent AI agent run log on the dashboard
+- AI Command Center with approval queue, failed-run retry, and recent run explorer
 - Prisma schema for the core brokerage domain
 - API routes for audit intake and quote intake
 - API routes for CRM creation and contact import
@@ -163,6 +164,7 @@ Likely future additions:
 |-- src/
 |   |-- app/
 |   |   |-- api/                   # Route handlers for intake and CRM/TMS writes
+|   |   |-- agents/                # AI Command Center approval and retry surface
 |   |   |-- dashboard/             # Internal command center
 |   |   |-- leads/                 # Lead list and detail workflow
 |   |   |-- shippers/              # Shipper list and account detail workflow
@@ -939,13 +941,14 @@ Remaining:
 - Approval-first agent run endpoint
 - Entity-level agent forms
 - Dashboard agent run visibility
+- Dedicated AI Command Center page
+- Agent approval queue
+- Failed-agent retry queue
+- Recent agent run explorer
 
 Remaining:
 
 - Add prompt template management
-- Add full agent run explorer
-- Add approval queues
-- Add failed-agent retry
 - Add daily brief
 - Add exception dashboard
 

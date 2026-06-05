@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 
+import type { BrokerageAgentName } from "@/lib/agent-config";
 import type { FreightAuditInput, QuoteRequestInput } from "@/lib/validation";
 
 type AgentResult = {
@@ -12,14 +13,6 @@ export type CallIntakeAgentResult = AgentResult & {
   quoteRequest: Record<string, string | number | boolean>;
   missingQuestions: string[];
 };
-
-export type BrokerageAgentName =
-  | "Sales Follow-Up Agent"
-  | "Quote Pricing Agent"
-  | "Carrier Coverage Agent"
-  | "Load Tracking Agent"
-  | "Billing Readiness Agent"
-  | "Carrier Compliance Agent";
 
 const xaiApiKey = process.env.XAI_API_KEY;
 const xaiModel = process.env.XAI_MODEL ?? "grok-4.3";

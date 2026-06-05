@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { brokerageAgentNames } from "@/lib/agent-config";
+
 const requiredString = z.string().trim().min(1);
 
 export const freightAuditSchema = z.object({
@@ -338,14 +340,7 @@ export const appSettingsSchema = z.object({
 });
 
 export const aiAgentRunRequestSchema = z.object({
-  agentName: z.enum([
-    "Sales Follow-Up Agent",
-    "Quote Pricing Agent",
-    "Carrier Coverage Agent",
-    "Load Tracking Agent",
-    "Billing Readiness Agent",
-    "Carrier Compliance Agent",
-  ]),
+  agentName: z.enum(brokerageAgentNames),
   relatedEntityType: z.enum(["Lead", "QuoteRequest", "Load", "Carrier"]),
   relatedEntityId: requiredString,
 });

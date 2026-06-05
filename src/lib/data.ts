@@ -34,7 +34,7 @@ export const internalNavItems = [
   { label: "Quote Requests", href: "/quote-requests" },
   { label: "Loads", href: "/loads" },
   { label: "Carriers", href: "/carriers" },
-  { label: "AI Command Center", href: "/dashboard#ai" },
+  { label: "AI Command Center", href: "/agents" },
   { label: "Settings", href: "/settings" },
 ];
 

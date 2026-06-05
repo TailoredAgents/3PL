@@ -1107,6 +1107,26 @@ export function AiAgentRunForm({
   );
 }
 
+export function AgentRunApproveForm({ runId }: { runId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/agents/${runId}/approve`);
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Approve run" />
+    </form>
+  );
+}
+
+export function AgentRunRetryForm({ runId }: { runId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/agents/${runId}/retry`);
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Retry run" />
+    </form>
+  );
+}
+
 export function CallTranscriptForm({
   callId,
   transcriptText,

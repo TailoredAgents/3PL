@@ -82,8 +82,8 @@ export default async function LeadsPage() {
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_320px]">
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+      <section className="grid items-start gap-6 xl:grid-cols-[1fr_320px]">
+        <article className="self-start rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -103,17 +103,22 @@ export default async function LeadsPage() {
           </div>
 
           <div className="mt-6 overflow-x-auto pb-2">
-            <div className="grid min-w-[1080px] grid-cols-6 gap-3">
+            <div className="grid min-w-[1260px] grid-cols-6 gap-4">
             {leadStages.map((stage) => {
               const stageLeads = leadViews.filter((lead) => lead.stage === stage);
 
               return (
                 <div
                   key={stage}
-                  className="min-h-[340px] rounded-lg border border-slate-100 bg-slate-50 p-3"
+                  className="min-h-[300px] rounded-lg border border-slate-100 bg-slate-50 p-3"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-slate-900">{stage}</p>
+                  <div
+                    className={cn(
+                      "flex items-center justify-between gap-3 rounded-md border px-3 py-2",
+                      stageHeaderClass(stage),
+                    )}
+                  >
+                    <p className="text-sm font-bold">{stage}</p>
                     <span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-600 shadow-sm">
                       {stageLeads.length}
                     </span>
@@ -149,9 +154,14 @@ export default async function LeadsPage() {
                           <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
                             {lead.lanes}
                           </p>
-                          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            {lead.nextFollowUp}
-                          </p>
+                          <div className="mt-3 flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              {lead.nextFollowUp}
+                            </p>
+                            <span className="text-xs font-bold text-emerald-700">
+                              Open
+                            </span>
+                          </div>
                         </Link>
                       ))
                     ) : (
@@ -192,6 +202,9 @@ export default async function LeadsPage() {
                   <p className="text-sm leading-6 text-slate-600">
                     {lead.pain}
                   </p>
+                  <span className="mt-1 w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
+                    Open lead
+                  </span>
                 </Link>
               ))}
             </div>
@@ -213,23 +226,29 @@ export default async function LeadsPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-            <UserPlus className="h-6 w-6" />
+      <details className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+              <UserPlus className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-semibold">Create lead</h2>
+              <p className="mt-1 leading-7 text-slate-600">
+                Add a prospect manually when they come from a call, referral,
+                outbound list, or savings conversation.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-semibold">Create lead</h2>
-            <p className="mt-1 leading-7 text-slate-600">
-              Add a prospect directly from a call, referral, outbound list, or
-              freight savings conversation.
-            </p>
-          </div>
-        </div>
+          <span className="flex-none rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white group-open:bg-slate-700">
+            <span className="group-open:hidden">Open form</span>
+            <span className="hidden group-open:inline">Hide form</span>
+          </span>
+        </summary>
         <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4">
           <LeadCreateForm />
         </div>
-      </section>
+      </details>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
@@ -291,4 +310,17 @@ export default async function LeadsPage() {
       </section>
     </InternalShell>
   );
+}
+
+function stageHeaderClass(stage: string) {
+  const styles: Record<string, string> = {
+    New: "border-sky-100 bg-sky-50 text-sky-900",
+    Contacted: "border-cyan-100 bg-cyan-50 text-cyan-900",
+    Qualified: "border-emerald-100 bg-emerald-50 text-emerald-900",
+    Quoted: "border-amber-100 bg-amber-50 text-amber-900",
+    Won: "border-lime-100 bg-lime-50 text-lime-900",
+    Lost: "border-slate-200 bg-slate-100 text-slate-700",
+  };
+
+  return styles[stage] ?? "border-slate-100 bg-white text-slate-900";
 }

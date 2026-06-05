@@ -4,15 +4,19 @@ import type { ComponentType } from "react";
 import {
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
   CircleDollarSign,
+  ClipboardCheck,
   FileText,
   MapPinned,
   Package,
+  ReceiptText,
   Truck,
 } from "lucide-react";
 
 import {
   DocumentCreateForm,
+  InvoiceCreateForm,
   LoadUpdateForm,
   ShipmentEventCreateForm,
 } from "@/components/crm-forms";
@@ -100,6 +104,31 @@ export default async function LoadDetailPage({
             </div>
             <p className="mt-2 text-sm leading-6 text-amber-900">{load.risk}</p>
           </div>
+
+          <div className="mt-6 rounded-md border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <ClipboardCheck className="h-4 w-4 text-emerald-600" />
+              Billing readiness
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <ReadinessItem
+                label="Carrier assigned"
+                complete={load.carrier !== "Carrier needed"}
+              />
+              <ReadinessItem
+                label="Carrier rate entered"
+                complete={load.carrierRate > 0}
+              />
+              <ReadinessItem label="POD received" complete={load.hasPod} />
+              <ReadinessItem
+                label="Invoice created"
+                complete={Boolean(load.invoice)}
+              />
+            </div>
+            <p className="mt-4 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+              Current billing state: {load.billingReadiness}
+            </p>
+          </div>
         </article>
 
         <div className="grid gap-6">
@@ -110,7 +139,12 @@ export default async function LoadDetailPage({
               cost as coverage changes.
             </p>
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
-              <LoadUpdateForm loadId={load.id} currentStatus={load.status} />
+              <LoadUpdateForm
+                loadId={load.id}
+                currentStatus={load.status}
+                currentCarrier={load.carrier}
+                currentCarrierRate={load.carrierRate}
+              />
             </div>
           </article>
 
@@ -133,6 +167,29 @@ export default async function LoadDetailPage({
             </p>
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
               <DocumentCreateForm loadId={load.id} />
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <ReceiptText className="h-6 w-6 text-emerald-600" />
+              <h2 className="text-2xl font-semibold">Invoice load</h2>
+            </div>
+            <p className="mt-3 leading-7 text-slate-600">
+              Create or update the invoice once the POD is in. Marking the
+              invoice sent or paid updates the load status.
+            </p>
+            {load.invoice ? (
+              <div className="mt-4 rounded-md bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+                Current invoice: {toCurrency(load.invoice.amount)} |{" "}
+                {load.invoice.status} | Due {load.invoice.dueDate}
+              </div>
+            ) : null}
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <InvoiceCreateForm
+                loadId={load.id}
+                defaultAmount={load.invoice?.amount ?? load.customerRate}
+              />
             </div>
           </article>
         </div>
@@ -204,6 +261,27 @@ export default async function LoadDetailPage({
         </article>
       </section>
     </InternalShell>
+  );
+}
+
+function ReadinessItem({
+  label,
+  complete,
+}: {
+  label: string;
+  complete: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold">
+      <CheckCircle2
+        className={`h-4 w-4 ${
+          complete ? "text-emerald-600" : "text-slate-300"
+        }`}
+      />
+      <span className={complete ? "text-slate-900" : "text-slate-500"}>
+        {label}
+      </span>
+    </div>
   );
 }
 

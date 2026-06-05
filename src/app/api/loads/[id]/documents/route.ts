@@ -53,14 +53,20 @@ export async function POST(
   });
 
   if (input.type === "POD") {
-    await prisma.shipmentEvent.create({
-      data: {
-        loadId: load.id,
-        type: "POD_UPLOADED",
-        message: `POD document added: ${input.fileName}`,
-        occurredAt: new Date(),
-      },
-    });
+    await prisma.$transaction([
+      prisma.load.update({
+        where: { id: load.id },
+        data: { status: "POD_RECEIVED" },
+      }),
+      prisma.shipmentEvent.create({
+        data: {
+          loadId: load.id,
+          type: "POD_UPLOADED",
+          message: `POD document added: ${input.fileName}`,
+          occurredAt: new Date(),
+        },
+      }),
+    ]);
   }
 
   revalidatePath("/loads");

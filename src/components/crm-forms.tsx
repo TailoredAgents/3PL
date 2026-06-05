@@ -330,14 +330,35 @@ export function LoadCreateForm() {
 export function LoadUpdateForm({
   loadId,
   currentStatus,
+  currentCarrier,
+  currentCarrierRate,
 }: {
   loadId: string;
   currentStatus: string;
+  currentCarrier?: string;
+  currentCarrierRate?: number;
 }) {
   const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}`, "PATCH");
 
   return (
     <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field
+          name="carrierCompanyName"
+          label="Carrier"
+          defaultValue={
+            currentCarrier && currentCarrier !== "Carrier needed"
+              ? currentCarrier
+              : undefined
+          }
+        />
+        <Field
+          name="carrierRate"
+          label="Carrier rate"
+          type="number"
+          defaultValue={currentCarrierRate ? currentCarrierRate.toString() : undefined}
+        />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Select
           name="status"
@@ -354,7 +375,7 @@ export function LoadUpdateForm({
           ]}
           defaultValue={enumValue(currentStatus)}
         />
-        <Field name="carrierRate" label="Carrier rate" type="number" />
+        <Field name="deliveryDate" label="Delivery date" type="date" />
       </div>
       <Textarea name="notes" label="Status note" />
       <FormFooter state={state} buttonLabel="Update load" />
@@ -477,6 +498,37 @@ export function DocumentCreateForm({ loadId }: { loadId: string }) {
       <Field name="fileUrl" label="File URL" placeholder="Optional until storage is wired" />
       <Textarea name="extractedText" label="Notes / extracted text" />
       <FormFooter state={state} buttonLabel="Add document" />
+    </form>
+  );
+}
+
+export function InvoiceCreateForm({
+  loadId,
+  defaultAmount,
+}: {
+  loadId: string;
+  defaultAmount: number;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/invoice`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field
+          name="amount"
+          label="Invoice amount"
+          type="number"
+          required
+          defaultValue={defaultAmount.toString()}
+        />
+        <Select
+          name="status"
+          label="Invoice status"
+          options={["DRAFT", "SENT", "PARTIAL", "PAID", "OVERDUE"]}
+        />
+        <Field name="dueDate" label="Due date" type="date" />
+      </div>
+      <FormFooter state={state} buttonLabel="Save invoice" />
     </form>
   );
 }

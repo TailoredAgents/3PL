@@ -20,6 +20,12 @@ export type LoadDocumentView = {
   fileUrl: string;
   created: string;
 };
+export type InvoiceView = {
+  amount: number;
+  status: string;
+  dueDate: string;
+  paidAt: string;
+};
 export type LoadEventView = {
   type: string;
   message: string;
@@ -40,6 +46,9 @@ export type LoadView = {
   margin: number;
   marginPercent: number;
   risk: string;
+  hasPod: boolean;
+  billingReadiness: string;
+  invoice: InvoiceView | null;
   events: LoadEventView[];
   documents: LoadDocumentView[];
 };
@@ -650,6 +659,8 @@ export async function getLoadViews(): Promise<LoadView[]> {
       include: {
         shipper: true,
         carrier: true,
+        invoice: true,
+        documents: true,
         events: {
           orderBy: { occurredAt: "desc" },
           take: 1,
@@ -682,6 +693,7 @@ export async function getLoadDetailView(
       include: {
         shipper: true,
         carrier: true,
+        invoice: true,
         events: {
           orderBy: { occurredAt: "desc" },
           take: 50,
@@ -881,6 +893,12 @@ function mapLoad(load: {
   customerRate: unknown;
   carrierRate?: unknown | null;
   grossProfit?: unknown | null;
+  invoice?: {
+    amount: unknown;
+    status: string;
+    dueDate?: Date | null;
+    paidAt?: Date | null;
+  } | null;
   events: Array<{
     type: string;
     message: string;
@@ -903,6 +921,24 @@ function mapLoad(load: {
       : carrierRate
         ? customerRate - carrierRate
         : 0;
+  const documents = load.documents?.map((document) => ({
+    id: document.id,
+    type: titleCaseEnum(document.type),
+    fileName: document.fileName,
+    fileUrl: document.fileUrl,
+    created: formatFollowUp(document.createdAt),
+  })) ?? [];
+  const hasPod = documents.some((document) => document.type === "Pod");
+  const invoice = load.invoice
+    ? {
+        amount: Number(load.invoice.amount),
+        status: titleCaseEnum(load.invoice.status),
+        dueDate: load.invoice.dueDate
+          ? formatDate(load.invoice.dueDate)
+          : "Not set",
+        paidAt: load.invoice.paidAt ? formatFollowUp(load.invoice.paidAt) : "",
+      }
+    : null;
 
   return {
     id: load.id,
@@ -920,18 +956,39 @@ function mapLoad(load: {
     risk:
       load.events[0]?.message ??
       "No recent tracking event. Add an update before contacting the shipper.",
+    hasPod,
+    billingReadiness: getBillingReadiness(titleCaseEnum(load.status), hasPod, invoice),
+    invoice,
     events: load.events.map((event) => ({
       type: titleCaseEnum(event.type),
       message: event.message,
       location: event.location ?? "Location not set",
       time: formatFollowUp(event.occurredAt),
     })),
-    documents: load.documents?.map((document) => ({
-      id: document.id,
-      type: titleCaseEnum(document.type),
-      fileName: document.fileName,
-      fileUrl: document.fileUrl,
-      created: formatFollowUp(document.createdAt),
-    })) ?? [],
+    documents,
   };
+}
+
+function getBillingReadiness(
+  status: string,
+  hasPod: boolean,
+  invoice: InvoiceView | null,
+) {
+  if (invoice?.status === "Paid") {
+    return "Paid";
+  }
+
+  if (invoice) {
+    return `Invoice ${invoice.status.toLowerCase()}`;
+  }
+
+  if (status === "Delivered" && !hasPod) {
+    return "Needs POD";
+  }
+
+  if (hasPod || status === "Pod Received") {
+    return "Ready to invoice";
+  }
+
+  return "Not ready";
 }

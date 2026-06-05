@@ -32,7 +32,7 @@ Included now:
 - Carrier management page
 - Carrier detail page with compliance context and related loads
 - Load operations page
-- Load detail page with status updates, tracking events, document records, and POD event logging
+- Load detail page with status updates, carrier assignment, tracking events, document records, POD status handling, and invoice records
 - Database-backed dashboard metrics with sample-data fallback
 - Database-backed CRM read helpers with sample-data fallback
 - Create lead form and API
@@ -229,7 +229,7 @@ Useful local routes:
 /carriers     Carrier management and create form
 /carriers/[id] Carrier profile and related load history
 /loads        Load operations and create form
-/loads/[id]   Load detail, status update, shipment timeline, and documents
+/loads/[id]   Load detail, status update, shipment timeline, documents, and invoice records
 ```
 
 ## Environment Variables
@@ -509,8 +509,9 @@ The current TMS workflow supports the first manual operating loop:
 6. Update load status as the shipment moves.
 7. Add tracking events for pickup, location updates, delays, delivery, and POD.
 8. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
+9. Save invoice amount/status once POD and billing details are ready.
 
-The document workflow is metadata-first. It records what document exists and where it should live later. Durable upload storage, OCR, file previews, and signed downloads are still future work.
+The document workflow is metadata-first. It records what document exists and where it should live later. Invoice records are also metadata-first. Durable upload storage, OCR, generated invoice PDFs, file previews, signed downloads, and payment collection are still future work.
 
 ## Grok Agent Architecture
 
@@ -763,9 +764,6 @@ Remaining:
 
 Remaining:
 
-- Add customer quote creation
-- Add target buy/sell rate logic
-- Add projected margin
 - Add quote email draft
 - Add accepted/rejected status flow
 
@@ -784,12 +782,16 @@ Status: started.
 - Customer rate, carrier rate, margin, and margin percent views
 - Convert accepted quote to load
 - Add document/POD metadata records
+- Carrier assignment from load detail
+- POD document updates load status
+- Billing readiness state
+- Invoice amount/status records
 
 Remaining:
 
 - Add carrier quotes
 - Add durable POD upload and downloads
-- Add invoice generation
+- Add generated invoice PDFs and email sending
 
 ### Milestone 6: DAT and Truckstop
 

@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 
-import { formValue } from "@/lib/server-utils";
+import { formValue, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { loadUpdateSchema } from "@/lib/validation";
 
@@ -12,7 +12,9 @@ export async function PATCH(
   const formData = await request.formData();
   const parsed = loadUpdateSchema.safeParse({
     status: formValue(formData, "status") ?? "TENDERED",
+    carrierCompanyName: formValue(formData, "carrierCompanyName"),
     carrierRate: formValue(formData, "carrierRate") ?? "",
+    deliveryDate: formValue(formData, "deliveryDate"),
     notes: formValue(formData, "notes"),
   });
 
@@ -33,7 +35,7 @@ export async function PATCH(
   const input = parsed.data;
   const existing = await prisma.load.findUnique({
     where: { id },
-    select: { customerRate: true },
+    select: { customerRate: true, carrierId: true, status: true },
   });
 
   if (!existing) {
@@ -46,22 +48,36 @@ export async function PATCH(
     carrierRate === null
       ? undefined
       : Number(existing.customerRate) - carrierRate;
+  const carrier = input.carrierCompanyName
+    ? await findOrCreateCarrier(input.carrierCompanyName)
+    : null;
+  const deliveryDate = optionalDate(input.deliveryDate);
 
   await prisma.load.update({
     where: { id },
     data: {
       status: input.status,
+      carrierId: carrier?.id,
       carrierRate,
       grossProfit,
+      deliveryDate: deliveryDate ?? undefined,
     },
   });
 
-  if (input.notes) {
+  const updateMessages = [
+    carrier && carrier.id !== existing.carrierId
+      ? `Carrier assigned: ${carrier.companyName}.`
+      : null,
+    input.status !== existing.status ? `Status changed to ${input.status}.` : null,
+    input.notes || null,
+  ].filter(Boolean);
+
+  if (updateMessages.length) {
     await prisma.shipmentEvent.create({
       data: {
         loadId: id,
         type: "LOCATION_UPDATE",
-        message: input.notes,
+        message: updateMessages.join(" "),
         occurredAt: new Date(),
       },
     });
@@ -72,4 +88,30 @@ export async function PATCH(
   revalidatePath("/dashboard");
 
   return Response.json({ message: "Load updated." });
+}
+
+async function findOrCreateCarrier(companyName: string) {
+  if (!prisma) {
+    throw new Error("Database is not configured.");
+  }
+
+  const existing = await prisma.carrier.findFirst({
+    where: {
+      companyName: {
+        equals: companyName,
+        mode: "insensitive",
+      },
+    },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  return prisma.carrier.create({
+    data: {
+      companyName,
+      complianceStatus: "PENDING",
+    },
+  });
 }

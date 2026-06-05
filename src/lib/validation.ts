@@ -134,7 +134,9 @@ export const loadUpdateSchema = z.object({
     "INVOICED",
     "PAID",
   ]),
+  carrierCompanyName: z.string().trim().optional(),
   carrierRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  deliveryDate: z.string().trim().optional(),
   notes: z.string().trim().optional(),
 });
 
@@ -171,6 +173,12 @@ export const documentCreateSchema = z.object({
   extractedText: z.string().trim().optional(),
 });
 
+export const invoiceCreateSchema = z.object({
+  amount: z.coerce.number().positive(),
+  status: z.enum(["DRAFT", "SENT", "PARTIAL", "PAID", "OVERDUE"]).default("DRAFT"),
+  dueDate: z.string().trim().optional(),
+});
+
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
@@ -185,3 +193,4 @@ export type ShipmentEventCreateInput = z.infer<typeof shipmentEventCreateSchema>
 export type QuoteConvertInput = z.infer<typeof quoteConvertSchema>;
 export type CustomerQuoteCreateInput = z.infer<typeof customerQuoteCreateSchema>;
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;
+export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;

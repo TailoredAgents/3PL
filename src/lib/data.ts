@@ -426,6 +426,9 @@ export const loads = [
     margin: 470,
     marginPercent: 19.2,
     risk: "Needs pickup confirmation by 2:00 PM.",
+    hasPod: false,
+    billingReadiness: "Not ready",
+    invoice: null,
     events: [
       {
         type: "Location Update",
@@ -450,6 +453,9 @@ export const loads = [
     margin: 0,
     marginPercent: 0,
     risk: "Carrier compliance pending. Confirm temperature requirements.",
+    hasPod: false,
+    billingReadiness: "Not ready",
+    invoice: null,
     events: [
       {
         type: "Location Update",

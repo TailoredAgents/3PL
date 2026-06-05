@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CircleDollarSign, MapPinned, Truck } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CircleDollarSign,
+  FileCheck2,
+  MapPinned,
+  ReceiptText,
+  Truck,
+} from "lucide-react";
 
 import { LoadCreateForm } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
@@ -12,7 +20,10 @@ export default async function LoadsPage() {
   const loadViews = await getLoadViews();
   const totalMargin = loadViews.reduce((total, load) => total + load.margin, 0);
   const needsPod = loadViews.filter((load) =>
-    ["Delivered", "Pod Received"].includes(load.status),
+    load.billingReadiness === "Needs POD",
+  ).length;
+  const readyToInvoice = loadViews.filter(
+    (load) => load.billingReadiness === "Ready to invoice",
   ).length;
 
   return (
@@ -27,12 +38,10 @@ export default async function LoadsPage() {
         {[
           { label: "Loads", value: loadViews.length.toString() },
           { label: "Projected margin", value: toCurrency(totalMargin) },
-          { label: "Needs POD review", value: needsPod.toString() },
+          { label: "Needs POD", value: needsPod.toString() },
           {
-            label: "Open tenders",
-            value: loadViews
-              .filter((load) => load.status === "Tendered")
-              .length.toString(),
+            label: "Ready to invoice",
+            value: readyToInvoice.toString(),
           },
         ].map((item) => (
           <article
@@ -116,6 +125,36 @@ export default async function LoadsPage() {
                 </p>
                 <p className="mt-1 text-sm leading-6 text-amber-900">
                   {load.risk}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <div className="rounded-md bg-slate-50 p-4">
+                <FileCheck2 className="h-5 w-5 text-emerald-600" />
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  POD
+                </p>
+                <p className="mt-1 font-medium">
+                  {load.hasPod ? "Received" : "Needed"}
+                </p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-4">
+                <ReceiptText className="h-5 w-5 text-emerald-600" />
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  Billing
+                </p>
+                <p className="mt-1 font-medium">{load.billingReadiness}</p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-4">
+                <CircleDollarSign className="h-5 w-5 text-emerald-600" />
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  Invoice
+                </p>
+                <p className="mt-1 font-medium">
+                  {load.invoice
+                    ? `${toCurrency(load.invoice.amount)} ${load.invoice.status}`
+                    : "Not created"}
                 </p>
               </div>
             </div>

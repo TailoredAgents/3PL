@@ -1,6 +1,16 @@
 export const internalAuthCookie =
   process.env.INTERNAL_AUTH_COOKIE ?? "atlanta_freight_internal";
 
+export const internalRoles = ["OWNER", "SALES", "OPS", "ADMIN"] as const;
+export type InternalRole = (typeof internalRoles)[number];
+
+export function isClerkAuthConfigured() {
+  return Boolean(
+    process.env.CLERK_SECRET_KEY &&
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  );
+}
+
 export function isInternalAuthConfigured() {
   return Boolean(process.env.INTERNAL_APP_PASSWORD);
 }
@@ -20,6 +30,13 @@ export function verifyInternalPassword(password: string) {
     Boolean(process.env.INTERNAL_APP_PASSWORD) &&
     password === process.env.INTERNAL_APP_PASSWORD
   );
+}
+
+export function parseInternalRole(value: unknown): InternalRole | null {
+  return typeof value === "string" &&
+    internalRoles.includes(value as InternalRole)
+    ? (value as InternalRole)
+    : null;
 }
 
 function hash(value: string) {

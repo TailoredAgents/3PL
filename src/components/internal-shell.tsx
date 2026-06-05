@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
 
+import { InternalAccount } from "@/components/internal-account";
+import { isClerkAuthConfigured } from "@/lib/auth";
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { internalNavItems, platformName } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +19,7 @@ type InternalShellProps = {
   children: React.ReactNode;
 };
 
-export function InternalShell({
+export async function InternalShell({
   active,
   eyebrow,
   title,
@@ -24,6 +27,9 @@ export function InternalShell({
   action,
   children,
 }: InternalShellProps) {
+  const clerkEnabled = isClerkAuthConfigured();
+  const internalUser = clerkEnabled ? await getCurrentInternalUser() : null;
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#d1fae5_0,#f1f5f9_34%,#e2e8f0_100%)] text-slate-950">
       <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-slate-950 p-5 text-white shadow-2xl lg:block">
@@ -61,6 +67,14 @@ export function InternalShell({
             </Link>
           ))}
         </nav>
+        <div className="absolute bottom-5 left-5 right-5">
+          <InternalAccount
+            clerkEnabled={clerkEnabled}
+            fallbackLabel="Password gate active"
+            userName={internalUser?.name}
+            role={internalUser?.role}
+          />
+        </div>
       </aside>
 
       <section className="lg:pl-72">
@@ -69,14 +83,23 @@ export function InternalShell({
             <Link href="/" className="text-sm font-semibold">
               {platformName}
             </Link>
-            {action ? (
-              <Link
-                href={action.href}
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-              >
-                {action.label}
-              </Link>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {action ? (
+                <Link
+                  href={action.href}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  {action.label}
+                </Link>
+              ) : null}
+              <InternalAccount
+                clerkEnabled={clerkEnabled}
+                fallbackLabel="Password gate"
+                userName={internalUser?.name}
+                role={internalUser?.role}
+                tone="light"
+              />
+            </div>
           </div>
           <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 text-sm font-medium text-slate-600">
             {internalNavItems.map((item) => (

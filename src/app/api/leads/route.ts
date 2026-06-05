@@ -7,6 +7,7 @@ import {
   optionalDate,
   splitContactName,
 } from "@/lib/server-utils";
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { leadCreateSchema } from "@/lib/validation";
 
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
+  const currentUser = await getCurrentInternalUser();
   const contactName = splitContactName(input.contactName);
   const shipperNotes = composeShipperNotes(input);
 
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
       contactId: shipper.contacts[0]?.id,
       stage: input.stage,
       source: input.source,
+      ownerUserId: currentUser?.id,
       priority: input.priority,
       nextFollowUpAt: optionalDate(input.nextFollowUpAt),
       notes:
@@ -84,6 +87,7 @@ export async function POST(request: Request) {
       leadId: lead.id,
       shipperId: shipper.id,
       contactId: shipper.contacts[0]?.id,
+      userId: currentUser?.id,
       type: "NOTE",
       direction: "INTERNAL",
       subject: "Lead created",

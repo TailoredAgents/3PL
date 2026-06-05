@@ -231,24 +231,27 @@ enum IntegrationStatus {
 }
 
 model User {
-  id         String          @id @default(cuid())
-  name       String
-  email      String          @unique
-  role       UserRole        @default(SALES)
-  phone      String?
-  leads      Lead[]          @relation("LeadOwner")
-  activities Activity[]
-  quotes     CustomerQuote[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id          String          @id @default(cuid())
+  clerkUserId String?         @unique
+  name        String
+  email       String          @unique
+  role        UserRole        @default(SALES)
+  phone       String?
+  leads       Lead[]          @relation("LeadOwner")
+  activities  Activity[]
+  quotes      CustomerQuote[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([role])
 }
 
 model Shipper {
-  id            String         @id @default(cuid())
+  id            String          @id @default(cuid())
   companyName   String
   website       String?
   industry      String?
-  status        ShipperStatus  @default(LEAD)
+  status        ShipperStatus   @default(LEAD)
   source        LeadSource?
   notes         String?
   contacts      Contact[]
@@ -260,30 +263,30 @@ model Shipper {
   documents     Document[]
   invoices      Invoice[]
   calls         BrokerageCall[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([companyName])
   @@index([status])
 }
 
 model Contact {
-  id            String         @id @default(cuid())
+  id            String          @id @default(cuid())
   shipperId     String
-  shipper       Shipper        @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  shipper       Shipper         @relation(fields: [shipperId], references: [id], onDelete: Cascade)
   firstName     String
   lastName      String?
   title         String?
   email         String?
   phone         String?
-  isPrimary     Boolean        @default(false)
+  isPrimary     Boolean         @default(false)
   leads         Lead[]
   activities    Activity[]
   audits        SavingsAudit[]
   quoteRequests QuoteRequest[]
   calls         BrokerageCall[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([email])
   @@index([shipperId])
@@ -356,46 +359,46 @@ model SavingsAudit {
 }
 
 model QuoteRequest {
-  id                  String             @id @default(cuid())
-  shipperId           String
-  shipper             Shipper            @relation(fields: [shipperId], references: [id], onDelete: Cascade)
-  contactId           String?
-  contact             Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  originCity          String
-  originState         String
-  originAddress       String?
-  destinationCity     String
-  destinationState    String
-  destinationAddress  String?
-  pickupDate          DateTime?
-  pickupWindow        String?
-  deliveryDate        DateTime?
-  deliveryWindow      String?
-  equipmentType       String
-  commodity           String?
-  weight              Int?
-  palletCount         Int?
-  pieceCount          Int?
-  dimensions          String?
-  hazmat              Boolean            @default(false)
+  id                     String                  @id @default(cuid())
+  shipperId              String
+  shipper                Shipper                 @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  contactId              String?
+  contact                Contact?                @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  originCity             String
+  originState            String
+  originAddress          String?
+  destinationCity        String
+  destinationState       String
+  destinationAddress     String?
+  pickupDate             DateTime?
+  pickupWindow           String?
+  deliveryDate           DateTime?
+  deliveryWindow         String?
+  equipmentType          String
+  commodity              String?
+  weight                 Int?
+  palletCount            Int?
+  pieceCount             Int?
+  dimensions             String?
+  hazmat                 Boolean                 @default(false)
   temperatureRequirement String?
-  appointmentRequired Boolean            @default(false)
-  accessorials        String?
-  customerReference   String?
-  urgency             String?
-  intakeChannel       String             @default("PHONE")
-  quotedByPhone       Boolean            @default(false)
-  targetMarginPercent Decimal?           @db.Decimal(5, 2)
-  pricingNotes        String?
-  specialRequirements String?
-  status              QuoteRequestStatus @default(NEW)
-  customerQuotes      CustomerQuote[]
-  rateBenchmarks      RateBenchmark[]
+  appointmentRequired    Boolean                 @default(false)
+  accessorials           String?
+  customerReference      String?
+  urgency                String?
+  intakeChannel          String                  @default("PHONE")
+  quotedByPhone          Boolean                 @default(false)
+  targetMarginPercent    Decimal?                @db.Decimal(5, 2)
+  pricingNotes           String?
+  specialRequirements    String?
+  status                 QuoteRequestStatus      @default(NEW)
+  customerQuotes         CustomerQuote[]
+  rateBenchmarks         RateBenchmark[]
   pricingRecommendations PricingRecommendation[]
-  loads               Load[]
-  calls               BrokerageCall[]
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+  loads                  Load[]
+  calls                  BrokerageCall[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
 
   @@index([status])
   @@index([pickupDate])
@@ -437,7 +440,7 @@ model RateBenchmark {
 }
 
 model PricingRecommendation {
-  id                     String                      @id @default(cuid())
+  id                      String                      @id @default(cuid())
   quoteRequestId          String
   quoteRequest            QuoteRequest                @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
   source                  PricingRecommendationSource @default(SYSTEM)
@@ -458,79 +461,79 @@ model PricingRecommendation {
 }
 
 model Load {
-  id               String          @id @default(cuid())
-  quoteRequestId   String?
-  quoteRequest     QuoteRequest?   @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
-  shipperId        String
-  shipper          Shipper         @relation(fields: [shipperId], references: [id], onDelete: Cascade)
-  carrierId        String?
-  carrier          Carrier?        @relation(fields: [carrierId], references: [id], onDelete: SetNull)
-  status           LoadStatus      @default(TENDERED)
-  originCity       String          @default("Unknown")
-  originState      String          @default("NA")
-  originAddress    String?
-  destinationCity  String          @default("Unknown")
-  destinationState String          @default("NA")
-  destinationAddress String?
-  equipmentType    String          @default("Dry van")
-  commodity        String?
-  weight           Int?
-  palletCount      Int?
-  pieceCount       Int?
-  dimensions       String?
-  hazmat           Boolean         @default(false)
-  temperatureRequirement String?
-  appointmentRequired Boolean      @default(false)
-  accessorials     String?
-  customerReference String?
-  pickupWindow     String?
-  deliveryWindow   String?
-  customerRate     Decimal         @db.Decimal(12, 2)
-  carrierRate      Decimal?        @db.Decimal(12, 2)
-  grossProfit      Decimal?        @db.Decimal(12, 2)
-  pickupDate       DateTime?
-  deliveryDate     DateTime?
-  customerUpdateStatus CustomerUpdateStatus @default(NOT_NEEDED)
-  lastCustomerUpdateAt DateTime?
-  rateConfirmationStatus RateConfirmationStatus @default(NOT_STARTED)
-  rateConfirmationSentAt DateTime?
+  id                       String                     @id @default(cuid())
+  quoteRequestId           String?
+  quoteRequest             QuoteRequest?              @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  shipperId                String
+  shipper                  Shipper                    @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  carrierId                String?
+  carrier                  Carrier?                   @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  status                   LoadStatus                 @default(TENDERED)
+  originCity               String                     @default("Unknown")
+  originState              String                     @default("NA")
+  originAddress            String?
+  destinationCity          String                     @default("Unknown")
+  destinationState         String                     @default("NA")
+  destinationAddress       String?
+  equipmentType            String                     @default("Dry van")
+  commodity                String?
+  weight                   Int?
+  palletCount              Int?
+  pieceCount               Int?
+  dimensions               String?
+  hazmat                   Boolean                    @default(false)
+  temperatureRequirement   String?
+  appointmentRequired      Boolean                    @default(false)
+  accessorials             String?
+  customerReference        String?
+  pickupWindow             String?
+  deliveryWindow           String?
+  customerRate             Decimal                    @db.Decimal(12, 2)
+  carrierRate              Decimal?                   @db.Decimal(12, 2)
+  grossProfit              Decimal?                   @db.Decimal(12, 2)
+  pickupDate               DateTime?
+  deliveryDate             DateTime?
+  customerUpdateStatus     CustomerUpdateStatus       @default(NOT_NEEDED)
+  lastCustomerUpdateAt     DateTime?
+  rateConfirmationStatus   RateConfirmationStatus     @default(NOT_STARTED)
+  rateConfirmationSentAt   DateTime?
   rateConfirmationSignedAt DateTime?
-  sourcingCandidates CarrierSourcingCandidate[]
-  integrationLogs   IntegrationLog[]
-  carrierQuotes    CarrierQuote[]
-  events           ShipmentEvent[]
-  documents        Document[]
-  invoice          Invoice?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  sourcingCandidates       CarrierSourcingCandidate[]
+  integrationLogs          IntegrationLog[]
+  carrierQuotes            CarrierQuote[]
+  events                   ShipmentEvent[]
+  documents                Document[]
+  invoice                  Invoice?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
 
   @@index([status])
   @@index([pickupDate])
 }
 
 model Carrier {
-  id               String           @id @default(cuid())
-  companyName      String
-  mcNumber         String?
-  dotNumber        String?
-  contactName      String?
-  phone            String?
-  email            String?
-  complianceStatus ComplianceStatus @default(PENDING)
-  authorityStatus  String?
-  insuranceStatus  String?
-  safetyRating     String?
-  fraudRiskLevel   String?
-  lastVettedAt     DateTime?
-  approvedBy       String?
-  complianceNotes  String?
-  preferredLanes   Json?
-  notes            String?
-  loads            Load[]
-  carrierQuotes    CarrierQuote[]
+  id                 String                     @id @default(cuid())
+  companyName        String
+  mcNumber           String?
+  dotNumber          String?
+  contactName        String?
+  phone              String?
+  email              String?
+  complianceStatus   ComplianceStatus           @default(PENDING)
+  authorityStatus    String?
+  insuranceStatus    String?
+  safetyRating       String?
+  fraudRiskLevel     String?
+  lastVettedAt       DateTime?
+  approvedBy         String?
+  complianceNotes    String?
+  preferredLanes     Json?
+  notes              String?
+  loads              Load[]
+  carrierQuotes      CarrierQuote[]
   sourcingCandidates CarrierSourcingCandidate[]
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
 
   @@index([companyName])
   @@index([mcNumber])
@@ -555,25 +558,25 @@ model CarrierQuote {
 }
 
 model CarrierSourcingCandidate {
-  id                  String                @id @default(cuid())
-  loadId              String
-  load                Load                  @relation(fields: [loadId], references: [id], onDelete: Cascade)
-  carrierId           String?
-  carrier             Carrier?              @relation(fields: [carrierId], references: [id], onDelete: SetNull)
-  source              CarrierSourcingSource @default(MANUAL)
-  status              CarrierSourcingStatus @default(NEW)
-  companyName         String
-  contactName         String?
-  phone               String?
-  email               String?
-  mcNumber            String?
-  dotNumber           String?
-  suggestedRate       Decimal?              @db.Decimal(12, 2)
-  matchScore          Decimal?              @db.Decimal(5, 2)
-  complianceSnapshot  String?
-  notes               String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  id                 String                @id @default(cuid())
+  loadId             String
+  load               Load                  @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  carrierId          String?
+  carrier            Carrier?              @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  source             CarrierSourcingSource @default(MANUAL)
+  status             CarrierSourcingStatus @default(NEW)
+  companyName        String
+  contactName        String?
+  phone              String?
+  email              String?
+  mcNumber           String?
+  dotNumber          String?
+  suggestedRate      Decimal?              @db.Decimal(12, 2)
+  matchScore         Decimal?              @db.Decimal(5, 2)
+  complianceSnapshot String?
+  notes              String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
 
   @@index([loadId])
   @@index([carrierId])
@@ -672,31 +675,31 @@ model AiAgentRun {
 }
 
 model BrokerageCall {
-  id                String               @id @default(cuid())
+  id                String                 @id @default(cuid())
   direction         BrokerageCallDirection @default(INBOUND)
-  status            BrokerageCallStatus  @default(RECEIVED)
-  twilioCallSid     String?              @unique
+  status            BrokerageCallStatus    @default(RECEIVED)
+  twilioCallSid     String?                @unique
   fromPhone         String?
   toPhone           String?
   callerName        String?
   shipperId         String?
-  shipper           Shipper?             @relation(fields: [shipperId], references: [id], onDelete: SetNull)
+  shipper           Shipper?               @relation(fields: [shipperId], references: [id], onDelete: SetNull)
   contactId         String?
-  contact           Contact?             @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contact           Contact?               @relation(fields: [contactId], references: [id], onDelete: SetNull)
   quoteRequestId    String?
-  quoteRequest      QuoteRequest?        @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  quoteRequest      QuoteRequest?          @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
   recordingSid      String?
   recordingUrl      String?
   recordingDuration Int?
-  recordingStatus   CallRecordingStatus  @default(NOT_STARTED)
+  recordingStatus   CallRecordingStatus    @default(NOT_STARTED)
   transcriptText    String?
-  transcriptStatus  CallTranscriptStatus @default(NOT_REQUESTED)
+  transcriptStatus  CallTranscriptStatus   @default(NOT_REQUESTED)
   aiSummary         String?
   aiExtractedJson   Json?
   missingQuestions  Json?
-  extractionStatus  CallExtractionStatus @default(NOT_STARTED)
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  extractionStatus  CallExtractionStatus   @default(NOT_STARTED)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
 
   @@index([twilioCallSid])
   @@index([fromPhone])

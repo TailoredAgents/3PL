@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { formValue, nullableString, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { customerQuoteCreateSchema } from "@/lib/validation";
@@ -41,6 +42,7 @@ export async function POST(
   }
 
   const input = parsed.data;
+  const currentUser = await getCurrentInternalUser();
   const targetCarrierCost =
     typeof input.targetCarrierCost === "number"
       ? input.targetCarrierCost
@@ -61,6 +63,7 @@ export async function POST(
       marginPercent,
       status: "SENT",
       validUntil: optionalDate(input.validUntil),
+      createdByUserId: currentUser?.id,
     },
   });
 
@@ -73,6 +76,7 @@ export async function POST(
     data: {
       shipperId: quoteRequest.shipperId,
       contactId: quoteRequest.contactId,
+      userId: currentUser?.id,
       type: "CALL",
       direction: "OUTBOUND",
       subject: "Customer quote recorded",

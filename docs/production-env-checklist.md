@@ -7,16 +7,34 @@ Use this checklist when creating the Render Blueprint and later adding credentia
 ```txt
 DATABASE_URL
 NEXT_PUBLIC_APP_URL
-INTERNAL_APP_PASSWORD
-INTERNAL_AUTH_COOKIE
+CLERK_SECRET_KEY
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+CLERK_SIGN_IN_URL
+CLERK_SIGN_UP_URL
+CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
+NEXT_PUBLIC_CLERK_SIGN_IN_URL
+NEXT_PUBLIC_CLERK_SIGN_UP_URL
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
 ```
 
 Notes:
 
 - `DATABASE_URL` comes from Render Postgres in `render.yaml`.
 - `NEXT_PUBLIC_APP_URL` should be the Render web service URL.
-- `INTERNAL_APP_PASSWORD` protects internal routes until Clerk is live.
-- `INTERNAL_AUTH_COOKIE` can stay as `atlanta_freight_internal`.
+- Clerk protects internal routes when both Clerk keys are configured.
+- Use `/login` for Clerk sign-in and sign-up URLs.
+- Use `/dashboard` for Clerk sign-in and sign-up fallback redirect URLs.
+
+## Temporary Password Fallback
+
+```txt
+INTERNAL_APP_PASSWORD
+INTERNAL_AUTH_COOKIE
+```
+
+Only use these while Clerk keys are not configured. Once Clerk is live, internal routes use Clerk instead of the password gate.
 
 ## Required For Grok
 
@@ -32,15 +50,6 @@ grok-4.3
 ```
 
 Without `XAI_API_KEY`, AI endpoints return safe placeholder output.
-
-## Future Auth
-
-```txt
-CLERK_SECRET_KEY
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-```
-
-Clerk should replace `INTERNAL_APP_PASSWORD` once internal users are ready.
 
 ## Twilio Outreach
 

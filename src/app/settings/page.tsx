@@ -2,12 +2,22 @@ import { PhoneCall, ShieldCheck } from "lucide-react";
 
 import { SettingsForm } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
+import { isClerkAuthConfigured } from "@/lib/auth";
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { getAppSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const settings = await getAppSettings();
+  const [settings, currentUser] = await Promise.all([
+    getAppSettings(),
+    getCurrentInternalUser(),
+  ]);
+  const clerkEnabled = isClerkAuthConfigured();
+  const canManageSettings =
+    !clerkEnabled ||
+    currentUser?.role === "OWNER" ||
+    currentUser?.role === "ADMIN";
 
   return (
     <InternalShell
@@ -28,11 +38,17 @@ export default async function SettingsPage() {
             call recording and transcription begin. Twilio wiring comes later,
             but the system setting is ready now.
           </p>
-          <div className="mt-5 rounded-lg bg-slate-50 p-4">
-            <SettingsForm
-              callRecordingDisclosure={settings.callRecordingDisclosure}
-            />
-          </div>
+          {canManageSettings ? (
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <SettingsForm
+                callRecordingDisclosure={settings.callRecordingDisclosure}
+              />
+            </div>
+          ) : (
+            <p className="mt-5 rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+              Settings are limited to owner and admin users.
+            </p>
+          )}
         </article>
 
         <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

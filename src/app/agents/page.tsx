@@ -18,16 +18,24 @@ import {
   AgentRunRetryForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
+import { isClerkAuthConfigured } from "@/lib/auth";
 import { getAiCommandCenterView, type AiAgentRunView } from "@/lib/crm";
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { getAgentPromptTemplates } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgentsPage() {
-  const [commandCenter, promptTemplates] = await Promise.all([
+  const [commandCenter, promptTemplates, currentUser] = await Promise.all([
     getAiCommandCenterView(),
     getAgentPromptTemplates(),
+    getCurrentInternalUser(),
   ]);
+  const clerkEnabled = isClerkAuthConfigured();
+  const canManagePrompts =
+    !clerkEnabled ||
+    currentUser?.role === "OWNER" ||
+    currentUser?.role === "ADMIN";
   const metrics = [
     {
       label: "Awaiting approval",
@@ -297,36 +305,42 @@ export default async function AgentsPage() {
             output approval-first.
           </p>
         </div>
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
-          {promptTemplates.map((template) => (
-            <details
-              key={template.agentName}
-              className="rounded-md border border-slate-100 bg-slate-50 p-4 open:bg-white open:shadow-md"
-            >
-              <summary className="cursor-pointer list-none">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="font-semibold">{template.agentName}</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {template.task}
-                    </p>
+        {canManagePrompts ? (
+          <div className="mt-6 grid gap-4 xl:grid-cols-2">
+            {promptTemplates.map((template) => (
+              <details
+                key={template.agentName}
+                className="rounded-md border border-slate-100 bg-slate-50 p-4 open:bg-white open:shadow-md"
+              >
+                <summary className="cursor-pointer list-none">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold">{template.agentName}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {template.task}
+                      </p>
+                    </div>
+                    <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700 shadow-sm">
+                      {template.isCustomized ? "Custom" : "Default"}
+                    </span>
                   </div>
-                  <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700 shadow-sm">
-                    {template.isCustomized ? "Custom" : "Default"}
-                  </span>
+                </summary>
+                <div className="mt-5 border-t border-slate-100 pt-4">
+                  <AgentPromptTemplateForm
+                    agentName={template.agentName}
+                    systemPrompt={template.systemPrompt}
+                    task={template.task}
+                    placeholderNextAction={template.placeholderNextAction}
+                  />
                 </div>
-              </summary>
-              <div className="mt-5 border-t border-slate-100 pt-4">
-                <AgentPromptTemplateForm
-                  agentName={template.agentName}
-                  systemPrompt={template.systemPrompt}
-                  task={template.task}
-                  placeholderNextAction={template.placeholderNextAction}
-                />
-              </div>
-            </details>
-          ))}
-        </div>
+              </details>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-6 rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+            Prompt template editing is limited to owner and admin users.
+          </p>
+        )}
       </section>
     </InternalShell>
   );

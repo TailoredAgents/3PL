@@ -1,3 +1,4 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 
 const protectedPrefixes = [
@@ -21,8 +22,21 @@ const protectedPrefixes = [
   "/api/loads",
   "/api/settings",
 ];
+const protectedRoutePatterns = protectedPrefixes.map(
+  (prefix) => `${prefix}(.*)`,
+);
+const isProtectedRoute = createRouteMatcher(protectedRoutePatterns);
+const clerkConfigured = Boolean(
+  process.env.CLERK_SECRET_KEY &&
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+);
+const clerkProxy = clerkMiddleware(async (auth, request) => {
+  if (isProtectedRoute(request)) {
+    await auth.protect();
+  }
+});
 
-export function proxy(request: NextRequest) {
+function passwordProxy(request: NextRequest) {
   if (!process.env.INTERNAL_APP_PASSWORD) {
     return NextResponse.next();
   }
@@ -60,6 +74,8 @@ export function proxy(request: NextRequest) {
 
   return NextResponse.redirect(loginUrl);
 }
+
+export const proxy = clerkConfigured ? clerkProxy : passwordProxy;
 
 export const config = {
   matcher: [

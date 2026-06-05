@@ -1,11 +1,26 @@
 import { revalidatePath } from "next/cache";
 
+import { requireInternalRole } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl } from "@/lib/prisma";
 import { saveAgentPromptTemplate } from "@/lib/settings";
 import { agentPromptTemplateSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request) {
+  try {
+    await requireInternalRole(["OWNER", "ADMIN"]);
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "You do not have permission to update prompts.",
+      },
+      { status: 403 },
+    );
+  }
+
   let formData: FormData;
 
   try {

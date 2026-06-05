@@ -74,13 +74,22 @@ Set these during Blueprint creation or immediately after:
 
 ```txt
 NEXT_PUBLIC_APP_URL
-INTERNAL_APP_PASSWORD
+CLERK_SECRET_KEY
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+CLERK_SIGN_IN_URL
+CLERK_SIGN_UP_URL
+CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
+NEXT_PUBLIC_CLERK_SIGN_IN_URL
+NEXT_PUBLIC_CLERK_SIGN_UP_URL
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
 XAI_API_KEY
 ```
 
 `DATABASE_URL` is supplied by the Render Postgres database through `fromDatabase`.
 
-`INTERNAL_APP_PASSWORD` is required before any public deployment because it protects the internal CRM while Clerk is not wired yet.
+Clerk protects the internal CRM/TMS when both Clerk keys are configured. Use `/login` for the Clerk sign-in and sign-up URLs, and `/dashboard` for the fallback redirect URLs.
 
 `NEXT_PUBLIC_APP_URL` should be the live Render URL after the first deploy, for example:
 
@@ -108,13 +117,13 @@ TRUCKSTOP_CLIENT_SECRET
 TRUCKSTOP_RATE_API_URL
 TRUCKSTOP_CAPACITY_API_URL
 TRUCKSTOP_POST_LOAD_API_URL
-CLERK_SECRET_KEY
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+INTERNAL_APP_PASSWORD
+INTERNAL_AUTH_COOKIE
 RESEND_API_KEY
 STRIPE_SECRET_KEY
 ```
 
-Missing optional credentials should not block the first deploy. The quote pricing workspace still supports manual benchmarks and the load coverage desk still supports manual carrier candidates when DAT/Truckstop endpoints are not configured.
+Missing optional credentials should not block the first deploy. The quote pricing workspace still supports manual benchmarks and the load coverage desk still supports manual carrier candidates when DAT/Truckstop endpoints are not configured. `INTERNAL_APP_PASSWORD` is only a fallback when Clerk keys are absent.
 
 ## 6. First Live Checks
 
@@ -141,8 +150,9 @@ Expected behavior:
 
 - `/` loads publicly.
 - `/api/health` returns JSON.
-- internal pages redirect to `/login` when `INTERNAL_APP_PASSWORD` is set.
-- the internal password allows access.
+- internal pages redirect to `/login` when Clerk keys are configured.
+- Clerk sign-in allows access and creates/syncs the local user role record.
+- the first synced Clerk user is assigned `OWNER`.
 - CRM pages load.
 - AI Command Center loads.
 - AI agent approval and retry controls validate against the logged run state.
@@ -240,8 +250,8 @@ Test in this order:
 Temporary internal gate:
 
 - Uses `INTERNAL_APP_PASSWORD`.
-- Protects internal routes and CRM write APIs.
-- Should be replaced with Clerk before real multi-user operation.
+- Only protects internal routes and CRM write APIs when Clerk keys are absent.
+- Should not be used as the primary production auth once Clerk is configured.
 
 Document upload:
 
@@ -256,7 +266,7 @@ Integrations:
 - Twilio lead click-to-call and SMS outreach exist and fall back to activity logging when credentials are missing.
 - DAT and Truckstop rate adapter boundaries exist for configured endpoint URLs and credentials.
 - DAT/Truckstop carrier capacity and load posting adapter boundaries exist for configured endpoint URLs and credentials.
-- Clerk, Resend, Stripe, Twilio SMS delivery callbacks, and bridged-call transcription workers are not fully wired yet.
+- Resend, Stripe, Twilio SMS delivery callbacks, Clerk webhooks, and bridged-call transcription workers are not fully wired yet.
 
 ## 9. Render References
 

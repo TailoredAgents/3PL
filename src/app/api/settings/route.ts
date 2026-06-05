@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { requireInternalRole } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import {
@@ -9,6 +10,20 @@ import {
 import { appSettingsSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request) {
+  try {
+    await requireInternalRole(["OWNER", "ADMIN"]);
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "You do not have permission to update settings.",
+      },
+      { status: 403 },
+    );
+  }
+
   const formData = await request.formData();
   const parsed = appSettingsSchema.safeParse({
     callRecordingDisclosure:

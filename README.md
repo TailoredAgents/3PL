@@ -52,6 +52,8 @@ Included now:
 - AI Command Center with approval queue, failed-run retry, and recent run explorer
 - Editable Grok prompt templates for each brokerage agent
 - AI daily brief and exception dashboard for follow-ups, pricing, coverage, POD, customer updates, compliance, and failed agents
+- Clerk authentication with password-gate fallback when Clerk keys are absent
+- Local user role sync for owner, sales, ops, and admin users
 - Prisma schema for the core brokerage domain
 - API routes for audit intake and quote intake
 - API routes for CRM creation and contact import
@@ -68,14 +70,12 @@ Included now:
 
 Not included yet:
 
-- Clerk production authentication
 - Real document storage and file download handling
 - PDF parsing/OCR
 - Final DAT provider payload mapping
 - Final Truckstop provider payload mapping
 - Email sending
 - Payment processing
-- Production role-based permissions
 - Background job processing
 - Automated transcription worker for bridged calls
 - SMS delivery status callbacks
@@ -278,18 +278,26 @@ TRUCKSTOP_CAPACITY_API_URL
 TRUCKSTOP_POST_LOAD_API_URL
 CLERK_SECRET_KEY
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+CLERK_SIGN_IN_URL
+CLERK_SIGN_UP_URL
+CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
+NEXT_PUBLIC_CLERK_SIGN_IN_URL
+NEXT_PUBLIC_CLERK_SIGN_UP_URL
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
 RESEND_API_KEY
 STRIPE_SECRET_KEY
 ```
 
-Temporary internal gate:
+Temporary internal gate fallback:
 
 ```txt
 INTERNAL_APP_PASSWORD
 INTERNAL_AUTH_COOKIE
 ```
 
-If `INTERNAL_APP_PASSWORD` is set, internal routes and CRM write APIs require login at `/login`. If it is not set, internal routes remain open for local development. Set this before any public Render deployment until Clerk is wired.
+If Clerk keys are configured, internal routes and write APIs require Clerk login at `/login`. If Clerk keys are absent, the app falls back to `INTERNAL_APP_PASSWORD`. If neither Clerk nor `INTERNAL_APP_PASSWORD` is set, internal routes remain open for local development.
 
 The app currently works without `DATABASE_URL` and `XAI_API_KEY`.
 
@@ -724,24 +732,16 @@ Every phone call, SMS, email, meeting, AI touch, and internal note should become
 
 ## Auth Plan
 
-Temporary internal access protection is implemented with:
-
-```txt
-INTERNAL_APP_PASSWORD
-```
-
-When `INTERNAL_APP_PASSWORD` is set, internal CRM/TMS routes and internal write APIs require login at:
-
-```txt
-/login
-```
-
-This is a deployment safety gate, not the final auth system.
-
-Recommended provider:
+Production internal access protection is implemented with:
 
 ```txt
 Clerk
+```
+
+When Clerk keys are configured, internal CRM/TMS routes and internal write APIs require login at:
+
+```txt
+/login
 ```
 
 Initial roles:
@@ -750,6 +750,8 @@ Initial roles:
 - `SALES`
 - `OPS`
 - `ADMIN`
+
+The first signed-in user synced into Postgres is bootstrapped as `OWNER`. Later users default to `SALES` unless their Clerk public metadata contains a valid `role`. Settings and AI prompt-template updates are limited to `OWNER` and `ADMIN` when Clerk is active.
 
 ## Render Deployment Plan
 
@@ -773,7 +775,8 @@ Environment variables:
 - Set all required variables in Render.
 - Use Render Postgres internal connection string for `DATABASE_URL`.
 - Use SSL mode as required by Render Postgres.
-- Set `INTERNAL_APP_PASSWORD` before the app is publicly reachable.
+- Set Clerk keys and redirect URLs before the app is publicly reachable.
+- Use `INTERNAL_APP_PASSWORD` only as a temporary fallback if Clerk keys are not configured yet.
 
 Blueprint files:
 
@@ -811,7 +814,7 @@ Status: complete.
 Status: mostly complete for V1.
 
 - Shared internal layout/navigation
-- Temporary internal password gate
+- Clerk auth with temporary internal password fallback
 - Intake queue for public audits and quote requests
 - Leads page
 - Lead detail page
@@ -834,7 +837,6 @@ Status: mostly complete for V1.
 
 Remaining:
 
-- Replace temporary password gate with Clerk auth
 - Add edit pages for shippers, contacts, and quote requests
 - Add contact detail pages
 - Add follow-up completion
@@ -980,6 +982,27 @@ Remaining:
 - Add server-side pagination for high load volume
 - Add carrier response sync from DAT/Truckstop
 
+### Milestone 11: Clerk Auth and Roles
+
+- Add Clerk Next.js SDK
+- Wrap the app with `ClerkProvider` when Clerk keys are configured
+- Protect internal routes and write APIs with Clerk sessions
+- Keep temporary password gate as a fallback only when Clerk keys are absent
+- Add custom `/login` Clerk sign-in/sign-up surface
+- Sync signed-in Clerk users into the local `User` table
+- Bootstrap the first synced user as `OWNER`
+- Support local roles: `OWNER`, `SALES`, `OPS`, and `ADMIN`
+- Limit settings and AI prompt-template updates to `OWNER` and `ADMIN`
+- Attribute new leads and customer quotes to the signed-in user when Clerk is active
+
+Remaining:
+
+- Add an owner/admin user-management screen
+- Add per-route role permissions beyond settings and prompt templates
+- Add Clerk webhook sync for profile/email/metadata changes
+- Add invitation workflow for new internal users
+- Add audit logs for permission-sensitive actions
+
 ## Design Principles
 
 - Keep the interface clean, operational, and fast.
@@ -1024,10 +1047,10 @@ Recommended next engineering steps:
 2. Confirm the lead stages, quote fields, and shipper fields with the operator.
 3. Push the repo to GitHub.
 4. Create the Render Blueprint from `render.yaml`.
-5. Set `INTERNAL_APP_PASSWORD`, `NEXT_PUBLIC_APP_URL`, and `XAI_API_KEY`.
-6. Verify `/api/health` and internal login on the live Render URL.
+5. Set Clerk keys, Clerk redirect URLs, `NEXT_PUBLIC_APP_URL`, and `XAI_API_KEY`.
+6. Verify `/api/health` and Clerk login on the live Render URL.
 7. Test feature by feature using `docs/render-deployment.md`.
 8. Do the post-deploy aesthetics pass.
-9. Replace the temporary internal password gate with Clerk auth.
+9. Invite the remaining internal users and assign roles.
 
 The best next product step is to get the first live Render deployment working, then test the CRM workflow with real records before adding deeper automation.

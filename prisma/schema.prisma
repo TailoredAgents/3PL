@@ -330,10 +330,15 @@ model Activity {
   subject   String?
   body      String?
   outcome   String?
+  externalProvider  String?
+  externalMessageId String?
+  externalEventId   String? @unique
   createdAt DateTime          @default(now())
 
   @@index([leadId])
   @@index([shipperId])
+  @@index([externalProvider])
+  @@index([externalMessageId])
   @@index([createdAt])
 }
 

@@ -99,6 +99,8 @@ export async function POST(
               emailResult.providerId ? ` (${emailResult.providerId})` : ""
             }`
           : emailResult.message,
+        externalProvider: emailResult.sent ? emailResult.provider : undefined,
+        externalMessageId: emailResult.providerId,
       },
     }),
   ]);

@@ -288,6 +288,7 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
 NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
 RESEND_API_KEY
 RESEND_FROM_EMAIL
+RESEND_WEBHOOK_SECRET
 STRIPE_SECRET_KEY
 ```
 
@@ -1021,7 +1022,6 @@ Remaining:
 
 - Add quote email version history
 - Add inbound reply tracking
-- Add Resend webhook handling for delivered, bounced, and complained events
 - Add owner/admin controls for quote email sender domains
 
 ### Milestone 13: Quote Email Templates
@@ -1038,6 +1038,22 @@ Remaining:
 - Add separate templates for follow-up, reprice, accepted, and rejected responses
 - Add per-user saved signatures
 - Let AI agents draft from approved templates while preserving human approval
+
+### Milestone 14: Resend Delivery Webhooks
+
+- Add `/api/resend/webhook` for Resend email delivery events
+- Verify webhook payloads with the Resend/Svix signing headers and `RESEND_WEBHOOK_SECRET`
+- Store Resend message ids on outbound quote email activities
+- Deduplicate webhook events by Resend/Svix event id
+- Log delivered, bounced, and spam complaint events into the customer activity timeline
+- Add Resend webhook readiness to `/api/health`
+
+Remaining:
+
+- Add an email-event dashboard view
+- Add bounce/complaint suppression rules before future sends
+- Add inbound reply tracking
+- Add quote email version history
 
 ## Design Principles
 

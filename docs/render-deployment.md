@@ -121,10 +121,17 @@ INTERNAL_APP_PASSWORD
 INTERNAL_AUTH_COOKIE
 RESEND_API_KEY
 RESEND_FROM_EMAIL
+RESEND_WEBHOOK_SECRET
 STRIPE_SECRET_KEY
 ```
 
 Missing optional credentials should not block the first deploy. The quote pricing workspace still supports manual benchmarks and the load coverage desk still supports manual carrier candidates when DAT/Truckstop endpoints are not configured. `INTERNAL_APP_PASSWORD` is only a fallback when Clerk keys are absent.
+
+When Resend is configured, add this endpoint in the Resend dashboard and select `email.delivered`, `email.bounced`, and `email.complained`:
+
+```txt
+https://YOUR_RENDER_DOMAIN/api/resend/webhook
+```
 
 ## 6. First Live Checks
 
@@ -172,6 +179,7 @@ Expected behavior:
 - final customer quote save works with recommendation defaults.
 - quote email draft renders after a customer quote exists.
 - quote email send logs activity and sends through Resend when configured.
+- Resend delivery webhooks validate and log delivered, bounced, and complained events when `RESEND_WEBHOOK_SECRET` is configured.
 - customer quote accepted/rejected/reprice actions update status.
 - quote request converts to a load.
 - create carrier works.
@@ -271,7 +279,7 @@ Integrations:
 - Twilio lead click-to-call and SMS outreach exist and fall back to activity logging when credentials are missing.
 - DAT and Truckstop rate adapter boundaries exist for configured endpoint URLs and credentials.
 - DAT/Truckstop carrier capacity and load posting adapter boundaries exist for configured endpoint URLs and credentials.
-- Resend, Stripe, Twilio SMS delivery callbacks, Clerk webhooks, and bridged-call transcription workers are not fully wired yet.
+- Stripe, Twilio SMS delivery callbacks, Clerk webhooks, inbound email replies, and bridged-call transcription workers are not fully wired yet.
 
 ## 9. Render References
 

@@ -22,6 +22,7 @@ export async function GET() {
           process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
       ),
       resend: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL),
+      resendWebhook: Boolean(process.env.RESEND_WEBHOOK_SECRET),
     },
   });
 }

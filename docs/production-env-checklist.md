@@ -105,6 +105,7 @@ Needed for:
 ```txt
 RESEND_API_KEY
 RESEND_FROM_EMAIL
+RESEND_WEBHOOK_SECRET
 ```
 
 Needed for:
@@ -112,6 +113,7 @@ Needed for:
 - savings audit report emails
 - quote emails
 - follow-up automation
+- email delivery, bounce, and complaint webhooks
 
 ## Future Payments
 

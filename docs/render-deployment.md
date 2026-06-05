@@ -100,15 +100,17 @@ TWILIO_AUTH_TOKEN
 TWILIO_PHONE_NUMBER
 DAT_CLIENT_ID
 DAT_CLIENT_SECRET
+DAT_RATE_API_URL
 TRUCKSTOP_CLIENT_ID
 TRUCKSTOP_CLIENT_SECRET
+TRUCKSTOP_RATE_API_URL
 CLERK_SECRET_KEY
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 RESEND_API_KEY
 STRIPE_SECRET_KEY
 ```
 
-Missing optional credentials should not block the first deploy.
+Missing optional credentials should not block the first deploy. The quote pricing workspace still supports manual benchmarks when DAT/Truckstop rate endpoints are not configured.
 
 ## 6. First Live Checks
 
@@ -142,6 +144,9 @@ Expected behavior:
 - create shipper works.
 - create quote request works.
 - quote request detail opens.
+- rate benchmark save works.
+- system pricing recommendation generation works after a benchmark exists.
+- final customer quote save works with recommendation defaults.
 - quote request converts to a load.
 - create carrier works.
 - carrier detail opens.
@@ -171,24 +176,27 @@ Test in this order:
 9. Create shipper/contact
 10. Create quote request
 11. Open quote request detail
-12. Convert quote request to load
-13. Create carrier
-14. Open carrier detail
-15. Create load manually
-16. Open load detail
-17. Update load status
-18. Add shipment event
-19. Add customer update
-20. Update rate confirmation status
-21. Add load document metadata
-22. Add POD document metadata and confirm POD event appears
-23. Update carrier compliance and confirm pending carriers cannot be accepted
-24. Save Settings call recording disclosure
-25. Upload CSV contacts
-26. Public savings audit form
-27. Public instant quote form
-28. Intake queue
-29. Health check
+12. Add rate benchmark
+13. Generate system pricing recommendation
+14. Save customer quote
+15. Convert quote request to load
+16. Create carrier
+17. Open carrier detail
+18. Create load manually
+19. Open load detail
+20. Update load status
+21. Add shipment event
+22. Add customer update
+23. Update rate confirmation status
+24. Add load document metadata
+25. Add POD document metadata and confirm POD event appears
+26. Update carrier compliance and confirm pending carriers cannot be accepted
+27. Save Settings call recording disclosure
+28. Upload CSV contacts
+29. Public savings audit form
+30. Public instant quote form
+31. Intake queue
+32. Health check
 
 ## 8. Known Temporary Choices
 
@@ -208,7 +216,8 @@ Integrations:
 
 - Grok wrapper exists.
 - Twilio inbound call webhook foundation exists at `/api/twilio/voice/incoming`.
-- DAT, Truckstop, Twilio, Clerk, Resend, and Stripe are not fully wired yet.
+- DAT and Truckstop rate adapter boundaries exist for configured endpoint URLs and credentials.
+- DAT/Truckstop carrier capacity, load posting, Twilio calling, Clerk, Resend, and Stripe are not fully wired yet.
 
 ## 9. Render References
 

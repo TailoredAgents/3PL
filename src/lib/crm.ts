@@ -12,6 +12,10 @@ export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
 export type ShipperView = (typeof shippers)[number];
 export type QuoteRequestView = (typeof quoteRequests)[number] & {
+  originCity?: string;
+  originState?: string;
+  destinationCity?: string;
+  destinationState?: string;
   pickupWindow?: string;
   delivery?: string;
   deliveryWindow?: string;
@@ -28,7 +32,10 @@ export type QuoteRequestView = (typeof quoteRequests)[number] & {
   customerReference?: string;
   urgency?: string;
   targetMarginPercent?: string;
+  targetMarginPercentInput?: string;
   pricingNotes?: string;
+  pickupDateInput?: string;
+  deliveryDateInput?: string;
 };
 export type CarrierView = (typeof carriers)[number] & {
   authorityStatus?: string;
@@ -138,6 +145,9 @@ export type QuoteRequestDetailView = QuoteRequestView & {
   specialRequirements: string;
   latestQuote: CustomerQuoteView | null;
   customerQuotes: CustomerQuoteView[];
+  rateBenchmarks: RateBenchmarkView[];
+  pricingRecommendations: PricingRecommendationView[];
+  laneHistory: LaneHistoryView[];
 };
 
 export type CustomerQuoteView = {
@@ -149,6 +159,43 @@ export type CustomerQuoteView = {
   status: string;
   validUntil: string;
   created: string;
+};
+
+export type RateBenchmarkView = {
+  id: string;
+  source: string;
+  sourceLabel: string;
+  lowRate: number | null;
+  highRate: number | null;
+  averageRate: number;
+  confidence: number | null;
+  notes: string;
+  created: string;
+};
+
+export type PricingRecommendationView = {
+  id: string;
+  source: string;
+  recommendedCarrierCost: number;
+  recommendedCustomerRate: number;
+  projectedGrossProfit: number;
+  marginPercent: number;
+  targetMarginPercent: number | null;
+  riskLevel: string;
+  validForHours: number | null;
+  summary: string;
+  notes: string;
+  created: string;
+};
+
+export type LaneHistoryView = {
+  id: string;
+  customerRate: number;
+  carrierRate: number;
+  margin: number;
+  marginPercent: number;
+  pickup: string;
+  status: string;
 };
 
 export type LeadDetailView = LeadView & {
@@ -594,6 +641,12 @@ export async function getQuoteRequestDetailView(
       include: {
         shipper: true,
         contact: true,
+        rateBenchmarks: {
+          orderBy: { createdAt: "desc" },
+        },
+        pricingRecommendations: {
+          orderBy: { createdAt: "desc" },
+        },
         customerQuotes: {
           orderBy: { createdAt: "desc" },
         },
@@ -619,6 +672,17 @@ export async function getQuoteRequestDetailView(
       validUntil: quote.validUntil ? formatFollowUp(quote.validUntil) : "Not set",
       created: formatFollowUp(quote.createdAt),
     }));
+    const laneHistory = await prisma.load.findMany({
+      where: {
+        originCity: { equals: request.originCity, mode: "insensitive" },
+        originState: request.originState,
+        destinationCity: { equals: request.destinationCity, mode: "insensitive" },
+        destinationState: request.destinationState,
+        equipmentType: { equals: request.equipmentType, mode: "insensitive" },
+      },
+      orderBy: { pickupDate: "desc" },
+      take: 8,
+    });
 
     return {
       ...mapQuoteRequest(request, request.shipper.companyName),
@@ -629,6 +693,62 @@ export async function getQuoteRequestDetailView(
         request.specialRequirements ?? request.commodity ?? "No details yet.",
       latestQuote: customerQuotes[0] ?? null,
       customerQuotes,
+      rateBenchmarks: request.rateBenchmarks.map((benchmark) => ({
+        id: benchmark.id,
+        source: titleCaseEnum(benchmark.source),
+        sourceLabel: benchmark.sourceLabel ?? titleCaseEnum(benchmark.source),
+        lowRate:
+          benchmark.lowRate === null ? null : Number(benchmark.lowRate),
+        highRate:
+          benchmark.highRate === null ? null : Number(benchmark.highRate),
+        averageRate: Number(benchmark.averageRate),
+        confidence:
+          benchmark.confidence === null ? null : Number(benchmark.confidence),
+        notes: benchmark.notes ?? "No benchmark notes.",
+        created: formatFollowUp(benchmark.createdAt),
+      })),
+      pricingRecommendations: request.pricingRecommendations.map(
+        (recommendation) => ({
+          id: recommendation.id,
+          source: titleCaseEnum(recommendation.source),
+          recommendedCarrierCost: Number(recommendation.recommendedCarrierCost),
+          recommendedCustomerRate: Number(
+            recommendation.recommendedCustomerRate,
+          ),
+          projectedGrossProfit: Number(recommendation.projectedGrossProfit),
+          marginPercent: Number(recommendation.marginPercent),
+          targetMarginPercent:
+            recommendation.targetMarginPercent === null
+              ? null
+              : Number(recommendation.targetMarginPercent),
+          riskLevel: recommendation.riskLevel ?? "Not set",
+          validForHours: recommendation.validForHours,
+          summary: recommendation.summary ?? "No recommendation summary.",
+          notes: recommendation.notes ?? "No recommendation notes.",
+          created: formatFollowUp(recommendation.createdAt),
+        }),
+      ),
+      laneHistory: laneHistory.map((load) => {
+        const customerRate = Number(load.customerRate);
+        const carrierRate =
+          load.carrierRate === null ? 0 : Number(load.carrierRate);
+        const margin =
+          load.grossProfit === null || load.grossProfit === undefined
+            ? customerRate - carrierRate
+            : Number(load.grossProfit);
+
+        return {
+          id: load.id,
+          customerRate,
+          carrierRate,
+          margin,
+          marginPercent: customerRate
+            ? Number(((margin / customerRate) * 100).toFixed(1))
+            : 0,
+          pickup: load.pickupDate ? formatDate(load.pickupDate) : "Not set",
+          status: titleCaseEnum(load.status),
+        };
+      }),
     };
   } catch {
     return getSampleQuoteRequestDetailView(id);
@@ -904,6 +1024,9 @@ function getSampleQuoteRequestDetailView(
         specialRequirements: sample.details,
         latestQuote: null,
         customerQuotes: [],
+        rateBenchmarks: [],
+        pricingRecommendations: [],
+        laneHistory: [],
       }
     : null;
 }
@@ -964,6 +1087,10 @@ function formatDate(date: Date) {
     month: "short",
     day: "2-digit",
   }).format(date);
+}
+
+function formatDateInput(date: Date) {
+  return date.toISOString().slice(0, 10);
 }
 
 function formatFollowUp(date: Date) {
@@ -1028,11 +1155,21 @@ function mapQuoteRequest(
     company: companyName,
     lane: `${request.originCity}, ${request.originState} -> ${request.destinationCity}, ${request.destinationState}`,
     equipment: request.equipmentType,
+    originCity: request.originCity,
+    originState: request.originState,
+    destinationCity: request.destinationCity,
+    destinationState: request.destinationState,
     originAddress: request.originAddress ?? "Pickup address needed",
     destinationAddress: request.destinationAddress ?? "Delivery address needed",
     pickup: request.pickupDate ? formatDate(request.pickupDate) : "Not set",
+    pickupDateInput: request.pickupDate
+      ? formatDateInput(request.pickupDate)
+      : undefined,
     pickupWindow: request.pickupWindow ?? "Window needed",
     delivery: request.deliveryDate ? formatDate(request.deliveryDate) : "Not set",
+    deliveryDateInput: request.deliveryDate
+      ? formatDateInput(request.deliveryDate)
+      : undefined,
     deliveryWindow: request.deliveryWindow ?? "Window needed",
     weight: request.weight ? `${request.weight.toLocaleString()} lbs` : "Not set",
     commodity: request.commodity ?? "Commodity needed",
@@ -1056,6 +1193,11 @@ function mapQuoteRequest(
       request.targetMarginPercent === undefined
         ? "Not set"
         : `${Number(request.targetMarginPercent)}%`,
+    targetMarginPercentInput:
+      request.targetMarginPercent === null ||
+      request.targetMarginPercent === undefined
+        ? undefined
+        : String(Number(request.targetMarginPercent)),
     pricingNotes: request.pricingNotes ?? "No pricing notes yet.",
     status: titleCaseEnum(request.status),
     details:

@@ -35,6 +35,7 @@ Included now:
 - Load operations page
 - Load detail page with status updates, carrier offers, carrier assignment, tracking events, customer update state, rate confirmation state, document records, POD status handling, and invoice records
 - Rich phone quote intake fields for pickup/delivery windows, addresses, reference numbers, pallet/piece counts, dimensions, hazmat, temperature, appointments, accessorials, urgency, target margin, and pricing notes
+- Pricing intelligence workspace with manual rate benchmarks, system buy/sell recommendations, projected margin, quote validity, risk notes, and same-lane history
 - Settings page with editable call recording disclosure message for future Twilio call handling
 - Call intelligence queue for recorded calls, transcripts, AI extraction, and quote request draft approval
 - Twilio inbound voice webhook foundation with call recording callbacks and transcription callback support
@@ -264,8 +265,10 @@ TWILIO_PHONE_NUMBER
 TWILIO_FORWARD_TO_PHONE_NUMBER
 DAT_CLIENT_ID
 DAT_CLIENT_SECRET
+DAT_RATE_API_URL
 TRUCKSTOP_CLIENT_ID
 TRUCKSTOP_CLIENT_SECRET
+TRUCKSTOP_RATE_API_URL
 CLERK_SECRET_KEY
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 RESEND_API_KEY
@@ -317,6 +320,8 @@ Core entities:
 - `SavingsAudit`
 - `QuoteRequest`
 - `CustomerQuote`
+- `RateBenchmark`
+- `PricingRecommendation`
 - `Load`
 - `Carrier`
 - `CarrierQuote`
@@ -333,6 +338,8 @@ Important design choices:
 - `QuoteRequest` represents requested freight pricing.
 - `Load` represents booked freight.
 - `Carrier` represents the truck carrier.
+- `RateBenchmark` represents manual or future integration-sourced pricing context.
+- `PricingRecommendation` represents buy/sell guidance for a quote request.
 - `AiAgentRun` logs every AI action for auditability.
 
 ### Prisma Commands
@@ -470,12 +477,18 @@ Current behavior:
 Future behavior:
 
 1. Normalize origin/destination with geocoding.
-2. Fetch live rates from DAT and Truckstop.
-3. Suggest target carrier buy rate.
-4. Suggest customer sell rate.
-5. Calculate projected margin.
-6. Draft shipper quote email.
-7. Queue carrier outreach.
+2. Draft shipper quote email.
+3. Queue carrier outreach.
+
+Current pricing workspace behavior:
+
+1. Edit quote details before pricing so lane, timing, equipment, and requirements are correct.
+2. Fetch DAT/Truckstop market rates when provider endpoints and credentials are configured.
+3. Add manual fallback benchmarks from DAT, Truckstop, carrier calls, customer history, or internal knowledge.
+4. Review same-lane internal load history when available.
+5. Generate a system pricing recommendation with target carrier buy rate, customer sell rate, projected margin, risk level, and quote validity.
+6. Save manual pricing recommendations when the broker overrides the system recommendation.
+7. Record the final customer quote and preserve quote history.
 
 ## Internal Dashboard
 
@@ -618,7 +631,7 @@ This is important because AI automation needs traceability.
 
 ## DAT and Truckstop Integration Plan
 
-These integrations are not implemented yet.
+The first rate-intelligence adapter boundary is implemented. It can call configured DAT and Truckstop rate endpoints, normalize the response into internal benchmark records, and keep the rest of the app independent from provider-specific payloads.
 
 Recommended abstraction:
 
@@ -628,9 +641,13 @@ src/lib/integrations/truckstop.ts
 src/lib/rating/rate-intelligence.ts
 ```
 
-Initial capabilities:
+Current capability:
 
 - Rate lookup by lane
+- Normalize rate data into `RateBenchmark`
+
+Future capabilities:
+
 - Capacity search by lane
 - Post load
 - Pull carrier responses
@@ -809,6 +826,10 @@ Remaining:
 - Add rich phone quote intake fields
 - Preserve detailed intake data through quote-to-load conversion
 - Add pricing notes, urgency, target margin, accessorials, and customer reference fields
+- Add manual rate benchmarks
+- Add system buy/sell pricing recommendations
+- Add same-lane internal history in quote detail
+- Add quote validity and risk notes
 
 Remaining:
 

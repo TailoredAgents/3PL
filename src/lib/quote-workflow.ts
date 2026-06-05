@@ -8,11 +8,12 @@ import {
 } from "@/lib/server-utils";
 import {
   internalQuoteCreateSchema,
+  internalQuoteUpdateSchema,
   type InternalQuoteCreateInput,
 } from "@/lib/validation";
 
-export function parseInternalQuoteFormData(formData: FormData) {
-  return internalQuoteCreateSchema.safeParse({
+function quoteFormPayload(formData: FormData) {
+  return {
     companyName: formValue(formData, "companyName"),
     contactName: formValue(formData, "contactName"),
     email: formValue(formData, "email") ?? "",
@@ -44,6 +45,17 @@ export function parseInternalQuoteFormData(formData: FormData) {
     targetMarginPercent: formValue(formData, "targetMarginPercent") ?? "",
     pricingNotes: formValue(formData, "pricingNotes"),
     specialRequirements: formValue(formData, "specialRequirements"),
+  };
+}
+
+export function parseInternalQuoteFormData(formData: FormData) {
+  return internalQuoteCreateSchema.safeParse(quoteFormPayload(formData));
+}
+
+export function parseInternalQuoteUpdateFormData(formData: FormData) {
+  return internalQuoteUpdateSchema.safeParse({
+    ...quoteFormPayload(formData),
+    status: formValue(formData, "status"),
   });
 }
 

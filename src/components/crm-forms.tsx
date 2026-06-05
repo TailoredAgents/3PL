@@ -198,6 +198,27 @@ export function QuoteRequestCreateForm() {
   );
 }
 
+export function QuoteRequestEditForm({
+  quoteId,
+  defaults,
+}: {
+  quoteId: string;
+  defaults: QuoteFieldDefaults;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}`,
+    "PATCH",
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="intakeChannel" value={stringDefault(defaults.intakeChannel) ?? "PHONE"} />
+      <QuoteRequestFieldset defaults={defaults} />
+      <FormFooter state={state} buttonLabel="Save quote details" />
+    </form>
+  );
+}
+
 function QuoteRequestFieldset({ defaults = {} }: { defaults?: QuoteFieldDefaults }) {
   return (
     <>
@@ -557,6 +578,116 @@ export function CustomerQuoteCreateForm({
       </div>
       <Textarea name="notes" label="Quote notes / customer response" />
       <FormFooter state={state} buttonLabel="Save customer quote" />
+    </form>
+  );
+}
+
+export function RateBenchmarkCreateForm({ quoteId }: { quoteId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/rate-benchmarks`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Select
+          name="source"
+          label="Source"
+          options={[
+            "MANUAL",
+            "INTERNAL_HISTORY",
+            "DAT",
+            "TRUCKSTOP",
+            "CARRIER_QUOTE",
+            "CUSTOMER_HISTORY",
+            "OTHER",
+          ]}
+        />
+        <Field name="sourceLabel" label="Source label" placeholder="DAT spot, broker note" />
+        <Field name="confidence" label="Confidence 0-1" type="number" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="lowRate" label="Low rate" type="number" />
+        <Field name="averageRate" label="Average rate" type="number" required />
+        <Field name="highRate" label="High rate" type="number" />
+      </div>
+      <Textarea name="notes" label="Benchmark notes" rows={2} />
+      <FormFooter state={state} buttonLabel="Save benchmark" />
+    </form>
+  );
+}
+
+export function MarketRateFetchForm({ quoteId }: { quoteId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/market-rates`,
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Fetch DAT / Truckstop rates" />
+    </form>
+  );
+}
+
+export function PricingRecommendationCreateForm({
+  quoteId,
+  defaultCarrierCost,
+  defaultCustomerRate,
+  defaultTargetMarginPercent,
+}: {
+  quoteId: string;
+  defaultCarrierCost?: number;
+  defaultCustomerRate?: number;
+  defaultTargetMarginPercent?: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/pricing-recommendations`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="source" value="MANUAL" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field
+          name="recommendedCarrierCost"
+          label="Target carrier cost"
+          type="number"
+          required
+          defaultValue={defaultCarrierCost?.toString()}
+        />
+        <Field
+          name="recommendedCustomerRate"
+          label="Recommended customer rate"
+          type="number"
+          required
+          defaultValue={defaultCustomerRate?.toString()}
+        />
+        <Field
+          name="targetMarginPercent"
+          label="Target margin %"
+          type="number"
+          defaultValue={defaultTargetMarginPercent}
+        />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="riskLevel" label="Risk level" placeholder="Low, medium, high" />
+        <Field name="validForHours" label="Valid hours" type="number" />
+      </div>
+      <Textarea name="summary" label="Recommendation summary" rows={2} />
+      <Textarea name="notes" label="Pricing notes" rows={2} />
+      <FormFooter state={state} buttonLabel="Save recommendation" />
+    </form>
+  );
+}
+
+export function PricingRecommendationGenerateForm({ quoteId }: { quoteId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/pricing-recommendations/generate`,
+  );
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Generate system recommendation" />
     </form>
   );
 }

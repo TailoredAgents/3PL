@@ -95,6 +95,12 @@ export const internalQuoteCreateSchema = z.object({
   specialRequirements: z.string().trim().optional(),
 });
 
+export const internalQuoteUpdateSchema = internalQuoteCreateSchema.extend({
+  status: z
+    .enum(["NEW", "PRICING", "QUOTED", "ACCEPTED", "REJECTED"])
+    .optional(),
+});
+
 export const leadUpdateSchema = z.object({
   stage: z.enum(["NEW", "CONTACTED", "QUALIFIED", "QUOTED", "WON", "LOST"]),
   priority: z.coerce.number().int().min(1).max(5),
@@ -216,6 +222,44 @@ export const customerQuoteCreateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+export const rateBenchmarkCreateSchema = z.object({
+  source: z
+    .enum([
+      "MANUAL",
+      "INTERNAL_HISTORY",
+      "DAT",
+      "TRUCKSTOP",
+      "CARRIER_QUOTE",
+      "CUSTOMER_HISTORY",
+      "OTHER",
+    ])
+    .default("MANUAL"),
+  sourceLabel: z.string().trim().optional(),
+  lowRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  highRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  averageRate: z.coerce.number().positive(),
+  confidence: z.coerce.number().min(0).max(1).optional().or(z.literal("")),
+  notes: z.string().trim().optional(),
+});
+
+export const pricingRecommendationCreateSchema = z.object({
+  source: z.enum(["MANUAL", "AI", "SYSTEM"]).default("MANUAL"),
+  recommendedCarrierCost: z.coerce.number().positive(),
+  recommendedCustomerRate: z.coerce.number().positive(),
+  targetMarginPercent: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  riskLevel: z.string().trim().optional(),
+  validForHours: z.coerce.number().int().positive().optional().or(z.literal("")),
+  summary: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const marketRateFetchSchema = z.object({
+  providers: z
+    .array(z.enum(["DAT", "TRUCKSTOP"]))
+    .min(1)
+    .default(["DAT", "TRUCKSTOP"]),
+});
+
 export const documentCreateSchema = z.object({
   type: z.enum(["INVOICE", "POD", "RATE_CONFIRMATION", "AUDIT_UPLOAD", "OTHER"]),
   fileName: requiredString,
@@ -270,6 +314,7 @@ export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
 export type ShipperCreateInput = z.infer<typeof shipperCreateSchema>;
 export type InternalQuoteCreateInput = z.infer<typeof internalQuoteCreateSchema>;
+export type InternalQuoteUpdateInput = z.infer<typeof internalQuoteUpdateSchema>;
 export type LeadUpdateInput = z.infer<typeof leadUpdateSchema>;
 export type ActivityCreateInput = z.infer<typeof activityCreateSchema>;
 export type CarrierCreateInput = z.infer<typeof carrierCreateSchema>;
@@ -279,6 +324,9 @@ export type LoadUpdateInput = z.infer<typeof loadUpdateSchema>;
 export type ShipmentEventCreateInput = z.infer<typeof shipmentEventCreateSchema>;
 export type QuoteConvertInput = z.infer<typeof quoteConvertSchema>;
 export type CustomerQuoteCreateInput = z.infer<typeof customerQuoteCreateSchema>;
+export type RateBenchmarkCreateInput = z.infer<typeof rateBenchmarkCreateSchema>;
+export type PricingRecommendationCreateInput = z.infer<typeof pricingRecommendationCreateSchema>;
+export type MarketRateFetchInput = z.infer<typeof marketRateFetchSchema>;
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;
 export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
 export type CarrierQuoteCreateInput = z.infer<typeof carrierQuoteCreateSchema>;

@@ -59,29 +59,37 @@ Needed for:
 - shipment updates
 - call/SMS activity logging
 
-## Future DAT
+## DAT Rate Lookup
 
 ```txt
 DAT_CLIENT_ID
 DAT_CLIENT_SECRET
+DAT_RATE_API_URL
 ```
 
 Needed for:
 
 - rate lookup
+
+Future DAT capabilities:
+
 - carrier capacity
 - load posting
 
-## Future Truckstop
+## Truckstop Rate Lookup
 
 ```txt
 TRUCKSTOP_CLIENT_ID
 TRUCKSTOP_CLIENT_SECRET
+TRUCKSTOP_RATE_API_URL
 ```
 
 Needed for:
 
 - rate lookup
+
+Future Truckstop capabilities:
+
 - carrier capacity
 - load posting
 

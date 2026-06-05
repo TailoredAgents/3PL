@@ -177,6 +177,22 @@ enum CallExtractionStatus {
   FAILED
 }
 
+enum RateBenchmarkSource {
+  MANUAL
+  INTERNAL_HISTORY
+  DAT
+  TRUCKSTOP
+  CARRIER_QUOTE
+  CUSTOMER_HISTORY
+  OTHER
+}
+
+enum PricingRecommendationSource {
+  MANUAL
+  AI
+  SYSTEM
+}
+
 model User {
   id         String          @id @default(cuid())
   name       String
@@ -337,6 +353,8 @@ model QuoteRequest {
   specialRequirements String?
   status              QuoteRequestStatus @default(NEW)
   customerQuotes      CustomerQuote[]
+  rateBenchmarks      RateBenchmark[]
+  pricingRecommendations PricingRecommendation[]
   loads               Load[]
   calls               BrokerageCall[]
   createdAt           DateTime           @default(now())
@@ -361,6 +379,45 @@ model CustomerQuote {
   createdAt            DateTime     @default(now())
 
   @@index([status])
+}
+
+model RateBenchmark {
+  id             String              @id @default(cuid())
+  quoteRequestId String
+  quoteRequest   QuoteRequest        @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  source         RateBenchmarkSource @default(MANUAL)
+  sourceLabel    String?
+  lowRate        Decimal?            @db.Decimal(12, 2)
+  highRate       Decimal?            @db.Decimal(12, 2)
+  averageRate    Decimal             @db.Decimal(12, 2)
+  confidence     Decimal?            @db.Decimal(5, 2)
+  notes          String?
+  createdAt      DateTime            @default(now())
+
+  @@index([quoteRequestId])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model PricingRecommendation {
+  id                     String                      @id @default(cuid())
+  quoteRequestId          String
+  quoteRequest            QuoteRequest                @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  source                  PricingRecommendationSource @default(SYSTEM)
+  recommendedCarrierCost  Decimal                     @db.Decimal(12, 2)
+  recommendedCustomerRate Decimal                     @db.Decimal(12, 2)
+  projectedGrossProfit    Decimal                     @db.Decimal(12, 2)
+  marginPercent           Decimal                     @db.Decimal(5, 2)
+  targetMarginPercent     Decimal?                    @db.Decimal(5, 2)
+  riskLevel               String?
+  validForHours           Int?
+  summary                 String?
+  notes                   String?
+  createdAt               DateTime                    @default(now())
+
+  @@index([quoteRequestId])
+  @@index([source])
+  @@index([createdAt])
 }
 
 model Load {

@@ -331,6 +331,59 @@ export function ActivityCreateForm({ leadId }: { leadId: string }) {
   );
 }
 
+export function LeadClickToCallForm({
+  leadId,
+  defaultPhone,
+}: {
+  leadId: string;
+  defaultPhone?: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/leads/${leadId}/outreach/call`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field
+        name="toPhone"
+        label="Call number"
+        required
+        defaultValue={defaultPhone}
+      />
+      <Textarea name="note" label="Call note" rows={2} />
+      <FormFooter state={state} buttonLabel="Start click-to-call" />
+    </form>
+  );
+}
+
+export function LeadSmsForm({
+  leadId,
+  defaultPhone,
+  defaultMessage,
+}: {
+  leadId: string;
+  defaultPhone?: string;
+  defaultMessage?: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/leads/${leadId}/outreach/sms`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field
+        name="toPhone"
+        label="SMS number"
+        required
+        defaultValue={defaultPhone}
+      />
+      <Textarea
+        name="message"
+        label="Message"
+        rows={3}
+        defaultValue={defaultMessage}
+      />
+      <FormFooter state={state} buttonLabel="Send SMS" />
+    </form>
+  );
+}
+
 export function CarrierCreateForm() {
   const { state, onSubmit } = useCrmSubmit("/api/carriers");
 

@@ -118,6 +118,16 @@ export const activityCreateSchema = z.object({
   outcome: z.string().trim().optional(),
 });
 
+export const outboundCallCreateSchema = z.object({
+  toPhone: requiredString,
+  note: z.string().trim().optional(),
+});
+
+export const outboundSmsCreateSchema = z.object({
+  toPhone: requiredString,
+  message: requiredString,
+});
+
 export const carrierCreateSchema = z.object({
   companyName: requiredString,
   mcNumber: z.string().trim().optional(),
@@ -348,6 +358,8 @@ export type InternalQuoteCreateInput = z.infer<typeof internalQuoteCreateSchema>
 export type InternalQuoteUpdateInput = z.infer<typeof internalQuoteUpdateSchema>;
 export type LeadUpdateInput = z.infer<typeof leadUpdateSchema>;
 export type ActivityCreateInput = z.infer<typeof activityCreateSchema>;
+export type OutboundCallCreateInput = z.infer<typeof outboundCallCreateSchema>;
+export type OutboundSmsCreateInput = z.infer<typeof outboundSmsCreateSchema>;
 export type CarrierCreateInput = z.infer<typeof carrierCreateSchema>;
 export type CarrierComplianceUpdateInput = z.infer<typeof carrierComplianceUpdateSchema>;
 export type LoadCreateInput = z.infer<typeof loadCreateSchema>;

@@ -13,6 +13,8 @@ import {
 import {
   ActivityCreateForm,
   AiAgentRunForm,
+  LeadClickToCallForm,
+  LeadSmsForm,
   LeadUpdateForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
@@ -31,6 +33,8 @@ export default async function LeadDetailPage({
   if (!lead) {
     notFound();
   }
+  const outreachPhone = lead.phone === "No phone" ? undefined : lead.phone;
+  const defaultSmsMessage = `Hi ${lead.contact}, this is Atlanta Freight OS following up on your freight lanes. Is now a good time to confirm your shipment needs?`;
 
   return (
     <InternalShell
@@ -135,6 +139,25 @@ export default async function LeadDetailPage({
                 relatedEntityId={lead.id}
                 defaultAgent="Sales Follow-Up Agent"
                 agentOptions={["Sales Follow-Up Agent"]}
+              />
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-2xl font-semibold">Outreach</h2>
+            <p className="mt-3 leading-7 text-slate-600">
+              Start a recorded click-to-call or send an SMS follow-up. Each
+              action is logged to this lead&apos;s activity timeline.
+            </p>
+            <div className="mt-5 grid gap-4 rounded-lg bg-slate-50 p-4 xl:grid-cols-2">
+              <LeadClickToCallForm
+                leadId={lead.id}
+                defaultPhone={outreachPhone}
+              />
+              <LeadSmsForm
+                leadId={lead.id}
+                defaultPhone={outreachPhone}
+                defaultMessage={defaultSmsMessage}
               />
             </div>
           </article>

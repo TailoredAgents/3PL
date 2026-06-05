@@ -42,7 +42,7 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
 Clerk should replace `INTERNAL_APP_PASSWORD` once internal users are ready.
 
-## Future Twilio
+## Twilio Outreach
 
 ```txt
 TWILIO_ACCOUNT_SID

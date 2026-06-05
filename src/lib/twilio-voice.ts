@@ -57,6 +57,32 @@ export async function buildInboundCallTwiml(callId: string) {
   );
 }
 
+export async function buildOutboundCallTwiml(callId: string) {
+  const settings = await getAppSettings();
+  const forwardTo = process.env.TWILIO_FORWARD_TO_PHONE_NUMBER;
+  const recordingCallback = buildPublicUrl(
+    `/api/twilio/voice/recording?callId=${encodeURIComponent(callId)}`,
+  );
+
+  if (!forwardTo) {
+    return twimlResponse(
+      [
+        say("A broker is not available to connect this call right now."),
+        hangup(),
+      ].join(""),
+    );
+  }
+
+  return twimlResponse(
+    [
+      say(settings.callRecordingDisclosure),
+      `<Dial record="record-from-answer-dual" recordingStatusCallback="${escapeAttribute(
+        recordingCallback,
+      )}" recordingStatusCallbackMethod="POST">${escapeXml(forwardTo)}</Dial>`,
+    ].join(""),
+  );
+}
+
 function escapeXml(value: string) {
   return value
     .replace(/&/g, "&amp;")

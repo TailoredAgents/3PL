@@ -68,15 +68,14 @@ Not included yet:
 - Clerk production authentication
 - Real document storage and file download handling
 - PDF parsing/OCR
-- DAT integration
-- Truckstop integration
-- Twilio integration
+- Final DAT provider payload mapping
+- Final Truckstop provider payload mapping
 - Email sending
 - Payment processing
 - Production role-based permissions
 - Background job processing
-- Outbound click-to-call
 - Automated transcription worker for bridged calls
+- SMS delivery status callbacks
 - Signed rate confirmation PDFs
 
 ## Product Vision
@@ -572,6 +571,14 @@ POST /api/twilio/voice/incoming
 
 For bridged live calls, Twilio recording metadata is stored now. Full automated transcription for bridged recordings should be added as a later worker/API integration; the call detail page supports manual transcript entry until then.
 
+Phase 7 adds outbound outreach:
+
+- Lead detail pages include click-to-call and SMS follow-up forms.
+- Click-to-call creates an outbound `BrokerageCall`, calls the shipper contact through Twilio when credentials are configured, plays the configured recording disclosure, bridges to `TWILIO_FORWARD_TO_PHONE_NUMBER`, and records call metadata.
+- SMS follow-up sends through Twilio when credentials are configured.
+- If Twilio is not configured, outreach actions are validated and logged as `Activity` records so the workflow still works during setup.
+- Outbound call and SMS actions are attached to the lead, shipper, and contact activity timeline.
+
 ## Grok Agent Architecture
 
 Current agents implemented as wrappers:
@@ -679,16 +686,24 @@ Do not let API-specific payload shapes leak across the app. Normalize them into 
 
 ## Twilio Integration Plan
 
-Twilio is not implemented yet.
+Twilio is partially implemented.
 
-Recommended capabilities:
+Current capabilities:
 
-- Click-to-call from CRM
-- Call logging
-- SMS outreach
-- SMS shipment updates
+- Inbound call webhook
+- Configurable recording disclosure
+- Inbound recording/transcription callbacks
+- Call review queue and call-to-quote approval flow
+- Lead click-to-call with activity logging
+- Lead SMS outreach with activity logging
+
+Remaining capabilities:
+
+- SMS shipment update templates
 - Missed call handling
-- Voicemail transcription if needed
+- Voicemail/transcription worker for bridged calls
+- SMS delivery status callbacks
+- Broader click-to-call and SMS surfaces on shippers, carriers, quotes, and loads
 
 Data should flow into:
 
@@ -911,8 +926,13 @@ Remaining:
 - Add click-to-call
 - Add SMS sending
 - Add call/SMS activity logging
+
+Remaining:
+
 - Add AI follow-up suggestions
 - Add shipment update templates
+- Add SMS delivery status callbacks
+- Add outbound outreach surfaces beyond leads
 
 ### Milestone 8: AI Command Center
 

@@ -145,6 +145,8 @@ Expected behavior:
 - CRM pages load.
 - call intelligence queue loads.
 - create lead works.
+- lead click-to-call validates/logs activity or starts Twilio call when configured.
+- lead SMS validates/logs activity or sends through Twilio when configured.
 - create shipper works.
 - create quote request works.
 - quote request detail opens.
@@ -184,39 +186,41 @@ Test in this order:
 5. Create lead
 6. Open lead detail
 7. Update lead stage/follow-up
-8. Add activity
-9. Create shipper/contact
-10. Create quote request
-11. Open quote request detail
-12. Add rate benchmark
-13. Generate system pricing recommendation
-14. Save customer quote
-15. Convert quote request to load
-16. Create carrier
-17. Open carrier detail
-18. Create load manually
-19. Open load detail
-20. Generate internal carrier candidates
-21. Search DAT/Truckstop capacity
-22. Post load to DAT/Truckstop
-23. Confirm marketplace audit log updates
-24. Add manual carrier candidate
-25. Request quote from a carrier candidate
-26. Update load status
-27. Add shipment event
-28. Add customer update
-29. Draft generated rate confirmation
-30. Open printable rate confirmation
-31. Update rate confirmation status
-32. Add load document metadata
-30. Add POD document metadata and confirm POD event appears
-31. Update carrier compliance and confirm pending carriers cannot be accepted
-32. Save Settings call recording disclosure
-33. Upload CSV contacts
-29. Public savings audit form
-30. Public instant quote form
-31. Intake queue
-32. Health check
+8. Start lead click-to-call
+9. Send lead SMS
+10. Add activity
+11. Create shipper/contact
+12. Create quote request
+13. Open quote request detail
+14. Add rate benchmark
+15. Generate system pricing recommendation
+16. Save customer quote
+17. Convert quote request to load
+18. Create carrier
+19. Open carrier detail
+20. Create load manually
+21. Open load detail
+22. Generate internal carrier candidates
+23. Search DAT/Truckstop capacity
+24. Post load to DAT/Truckstop
+25. Confirm marketplace audit log updates
+26. Add manual carrier candidate
+27. Request quote from a carrier candidate
+28. Update load status
+29. Add shipment event
+30. Add customer update
+31. Draft generated rate confirmation
+32. Open printable rate confirmation
+33. Update rate confirmation status
+34. Add load document metadata
+35. Add POD document metadata and confirm POD event appears
+36. Update carrier compliance and confirm pending carriers cannot be accepted
+37. Save Settings call recording disclosure
+38. Upload CSV contacts
+39. Public savings audit form
+40. Public instant quote form
+41. Intake queue
+42. Health check
 
 ## 8. Known Temporary Choices
 
@@ -236,8 +240,10 @@ Integrations:
 
 - Grok wrapper exists.
 - Twilio inbound call webhook foundation exists at `/api/twilio/voice/incoming`.
+- Twilio lead click-to-call and SMS outreach exist and fall back to activity logging when credentials are missing.
 - DAT and Truckstop rate adapter boundaries exist for configured endpoint URLs and credentials.
-- DAT/Truckstop carrier capacity, load posting, Twilio calling, Clerk, Resend, and Stripe are not fully wired yet.
+- DAT/Truckstop carrier capacity and load posting adapter boundaries exist for configured endpoint URLs and credentials.
+- Clerk, Resend, Stripe, Twilio SMS delivery callbacks, and bridged-call transcription workers are not fully wired yet.
 
 ## 9. Render References
 

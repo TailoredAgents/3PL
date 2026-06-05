@@ -117,7 +117,7 @@ After deploy, open:
 ```txt
 /api/health
 /
-/internal-login
+/login
 /dashboard
 /intake
 /leads
@@ -132,7 +132,7 @@ Expected behavior:
 
 - `/` loads publicly.
 - `/api/health` returns JSON.
-- internal pages redirect to `/internal-login` when `INTERNAL_APP_PASSWORD` is set.
+- internal pages redirect to `/login` when `INTERNAL_APP_PASSWORD` is set.
 - the internal password allows access.
 - CRM pages load.
 - create lead works.

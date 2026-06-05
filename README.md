@@ -221,7 +221,7 @@ Useful local routes:
 
 ```txt
 /             Public site
-/internal-login Temporary internal password gate
+/login       Temporary team password gate
 /dashboard    Internal CRM/TMS shell
 /intake       Audit and quote intake review queue
 /leads        Lead pipeline, follow-ups, activity, create form, and CSV import
@@ -271,7 +271,7 @@ INTERNAL_APP_PASSWORD
 INTERNAL_AUTH_COOKIE
 ```
 
-If `INTERNAL_APP_PASSWORD` is set, internal routes and CRM write APIs require login at `/internal-login`. If it is not set, internal routes remain open for local development. Set this before any public Render deployment until Clerk is wired.
+If `INTERNAL_APP_PASSWORD` is set, internal routes and CRM write APIs require login at `/login`. If it is not set, internal routes remain open for local development. Set this before any public Render deployment until Clerk is wired.
 
 The app currently works without `DATABASE_URL` and `XAI_API_KEY`.
 
@@ -676,7 +676,7 @@ INTERNAL_APP_PASSWORD
 When `INTERNAL_APP_PASSWORD` is set, internal CRM/TMS routes and internal write APIs require login at:
 
 ```txt
-/internal-login
+/login
 ```
 
 This is a deployment safety gate, not the final auth system.

@@ -159,6 +159,7 @@ Expected behavior:
 - AI agent approval and retry controls validate against the logged run state.
 - AI daily brief and exception dashboard load.
 - AI prompt template edits validate and persist when `DATABASE_URL` is configured.
+- quote email template edits validate and persist when `DATABASE_URL` is configured.
 - call intelligence queue loads.
 - create lead works.
 - lead click-to-call validates/logs activity or starts Twilio call when configured.

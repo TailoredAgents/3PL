@@ -53,7 +53,7 @@ export default async function QuoteRequestDetailPage({
     latestRecommendation?.recommendedCustomerRate ??
     quote.latestQuote?.quotedRate ??
     undefined;
-  const quoteEmailDraft = buildQuoteEmailDraft(quote);
+  const quoteEmailDraft = await buildQuoteEmailDraft(quote);
   const quoteDefaults = {
     companyName: quote.company,
     contactName: quote.contact === "No contact" ? undefined : quote.contact,

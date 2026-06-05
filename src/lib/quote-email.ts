@@ -1,4 +1,5 @@
 import type { QuoteRequestDetailView } from "@/lib/crm";
+import { getQuoteEmailTemplate } from "@/lib/settings";
 import { toCurrency } from "@/lib/utils";
 
 export type QuoteEmailDraft = {
@@ -7,9 +8,9 @@ export type QuoteEmailDraft = {
   body: string;
 };
 
-export function buildQuoteEmailDraft(
+export async function buildQuoteEmailDraft(
   quote: QuoteRequestDetailView,
-): QuoteEmailDraft | null {
+): Promise<QuoteEmailDraft | null> {
   const customerQuote = quote.latestQuote;
 
   if (!customerQuote) {
@@ -18,7 +19,8 @@ export function buildQuoteEmailDraft(
 
   const contactName =
     quote.contact === "No contact" ? "there" : quote.contact.split(" ")[0];
-  const validUntil =
+  const quoteEmailTemplate = await getQuoteEmailTemplate();
+  const validUntilMessage =
     customerQuote.validUntil === "Not set"
       ? "This rate is subject to market movement until confirmed."
       : `This rate is valid until ${customerQuote.validUntil}.`;
@@ -35,17 +37,46 @@ export function buildQuoteEmailDraft(
     quote.weight && quote.weight !== "Not set" ? `Weight: ${quote.weight}` : null,
   ].filter(Boolean);
 
+  const variables: Record<string, string> = {
+    brokerageName: "Atlanta Freight OS",
+    companyName: quote.company ?? "",
+    contactFirstName: contactName,
+    originCity: quote.originCity ?? "",
+    originState: quote.originState ?? "",
+    destinationCity: quote.destinationCity ?? "",
+    destinationState: quote.destinationState ?? "",
+    equipment: quote.equipment ?? "",
+    pickup: quote.pickup ?? "",
+    pickupWindow: quote.pickupWindow ?? "",
+    delivery:
+      !quote.delivery || quote.delivery === "Not set" ? "" : quote.delivery,
+    deliveryWindow: quote.deliveryWindow ?? "",
+    commodity:
+      quote.commodity && quote.commodity !== "Commodity needed"
+        ? quote.commodity
+        : "",
+    weight: quote.weight && quote.weight !== "Not set" ? quote.weight : "",
+    quotedRate: toCurrency(customerQuote.quotedRate),
+    validUntil: customerQuote.validUntil === "Not set" ? "" : customerQuote.validUntil,
+    validUntilMessage,
+    serviceDetails: serviceDetails.join("\n"),
+  };
+
   return {
     toEmail: quote.email === "No email" ? "" : quote.email,
-    subject: `Freight quote: ${quote.originCity}, ${quote.originState} to ${quote.destinationCity}, ${quote.destinationState}`,
-    body: [
-      `Hi ${contactName},`,
-      `Thank you for the opportunity. Based on the shipment details provided, we can cover this load for ${toCurrency(customerQuote.quotedRate)}.`,
-      serviceDetails.join("\n"),
-      validUntil,
-      "If this works, reply with approval and any final pickup or delivery instructions. Once approved, we will move it into dispatch and send the required confirmation details.",
-      "Thank you,",
-      "Atlanta Freight OS",
-    ].join("\n\n"),
+    subject: renderQuoteEmailTemplate(quoteEmailTemplate.subject, variables),
+    body: renderQuoteEmailTemplate(quoteEmailTemplate.body, variables),
   };
+}
+
+function renderQuoteEmailTemplate(
+  template: string,
+  variables: Record<string, string>,
+) {
+  return template
+    .replace(/\{\{\s*([a-zA-Z0-9]+)\s*\}\}/g, (_match, key: string) => {
+      return variables[key] ?? "";
+    })
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
 }

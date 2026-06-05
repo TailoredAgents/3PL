@@ -1019,11 +1019,25 @@ Remaining:
 
 Remaining:
 
-- Add reusable quote email templates
 - Add quote email version history
 - Add inbound reply tracking
 - Add Resend webhook handling for delivered, bounced, and complained events
 - Add owner/admin controls for quote email sender domains
+
+### Milestone 13: Quote Email Templates
+
+- Add a configurable quote email subject and body template in Settings
+- Support explicit quote placeholders such as `{{quotedRate}}`, `{{serviceDetails}}`, and `{{validUntilMessage}}`
+- Use the configured template when generating customer quote email drafts
+- Keep quote template updates limited to owner and admin users
+- Preserve no-database validation behavior for local and first-deploy environments
+
+Remaining:
+
+- Add quote email template version history
+- Add separate templates for follow-up, reprice, accepted, and rejected responses
+- Add per-user saved signatures
+- Let AI agents draft from approved templates while preserving human approval
 
 ## Design Principles
 

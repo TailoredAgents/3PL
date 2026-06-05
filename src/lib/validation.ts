@@ -350,6 +350,11 @@ export const appSettingsSchema = z.object({
   callRecordingDisclosure: requiredString,
 });
 
+export const quoteEmailTemplateSettingsSchema = z.object({
+  subject: requiredString,
+  body: requiredString,
+});
+
 export const aiAgentRunRequestSchema = z.object({
   agentName: z.enum(brokerageAgentNames),
   relatedEntityType: z.enum(["Lead", "QuoteRequest", "Load", "Carrier"]),
@@ -404,3 +409,6 @@ export type AgentPromptTemplateInput = z.infer<
   typeof agentPromptTemplateSchema
 >;
 export type AppSettingsInput = z.infer<typeof appSettingsSchema>;
+export type QuoteEmailTemplateSettingsInput = z.infer<
+  typeof quoteEmailTemplateSettingsSchema
+>;

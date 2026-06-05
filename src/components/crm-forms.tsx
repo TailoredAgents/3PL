@@ -1110,6 +1110,27 @@ export function SettingsForm({
   );
 }
 
+export function QuoteEmailTemplateSettingsForm({
+  subject,
+  body,
+}: {
+  subject: string;
+  body: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    "/api/settings/quote-email-template",
+    "PATCH",
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field name="subject" label="Subject template" defaultValue={subject} />
+      <Textarea name="body" label="Body template" defaultValue={body} rows={12} />
+      <FormFooter state={state} buttonLabel="Save quote email template" />
+    </form>
+  );
+}
+
 export function AiAgentRunForm({
   relatedEntityType,
   relatedEntityId,

@@ -82,8 +82,44 @@ export default async function LeadsPage() {
         ))}
       </section>
 
-      <section className="grid items-start gap-6 xl:grid-cols-[1fr_320px]">
-        <article className="self-start rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+        <div className="flex items-center gap-3">
+          <CalendarClock className="h-6 w-6 text-emerald-600" />
+          <div>
+            <h2 className="text-2xl font-semibold">Today&apos;s calls</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Start with these accounts before opening new work.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {followUpLeads.map((lead, index) => (
+            <Link
+              key={lead.id}
+              href={`/leads/${lead.id}`}
+              className="grid gap-2 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold">{lead.company}</p>
+                <span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-600">
+                  #{index + 1}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-slate-700">
+                {lead.nextFollowUp}
+              </p>
+              <p className="line-clamp-3 text-sm leading-6 text-slate-600">
+                {lead.pain}
+              </p>
+              <span className="mt-1 w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
+                Open lead
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -175,80 +211,54 @@ export default async function LeadsPage() {
             })}
             </div>
           </div>
-        </article>
-
-        <div className="grid gap-6">
-          <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-            <div className="flex items-center gap-3">
-              <CalendarClock className="h-6 w-6 text-emerald-600" />
-              <h2 className="text-2xl font-semibold">Today&apos;s calls</h2>
-            </div>
-            <div className="mt-5 grid gap-3">
-              {followUpLeads.map((lead, index) => (
-                <Link
-                  key={lead.id}
-                  href={`/leads/${lead.id}`}
-                  className="grid gap-2 rounded-md border border-slate-100 bg-slate-50 p-4 hover:border-emerald-200 hover:bg-white"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold">{lead.company}</p>
-                    <span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-600">
-                      #{index + 1}
-                    </span>
-                  </div>
-                  <p className="text-sm font-medium text-slate-700">
-                    {lead.nextFollowUp}
-                  </p>
-                  <p className="text-sm leading-6 text-slate-600">
-                    {lead.pain}
-                  </p>
-                  <span className="mt-1 w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
-                    Open lead
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </article>
-
-          <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-            <div className="flex items-center gap-3">
-              <FileUp className="h-6 w-6 text-emerald-600" />
-              <h2 className="text-2xl font-semibold">Contact import</h2>
-            </div>
-            <p className="mt-3 leading-7 text-slate-600">
-              Import a simple CSV of companies, contacts, phone numbers,
-              emails, lanes, and notes.
-            </p>
-            <div className="mt-5 rounded-md border border-dashed border-slate-300 bg-slate-50 p-4">
-              <ContactImportForm />
-            </div>
-          </article>
-        </div>
       </section>
 
-      <details className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <UserPlus className="h-6 w-6" />
+      <section className="grid items-start gap-6 xl:grid-cols-[1fr_360px]">
+        <details className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+                <UserPlus className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold">Create lead</h2>
+                <p className="mt-1 leading-7 text-slate-600">
+                  Add a prospect manually when they come from a call, referral,
+                  outbound list, or savings conversation.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-semibold">Create lead</h2>
-              <p className="mt-1 leading-7 text-slate-600">
-                Add a prospect manually when they come from a call, referral,
-                outbound list, or savings conversation.
-              </p>
-            </div>
+            <span className="flex-none rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white group-open:bg-slate-700">
+              <span className="group-open:hidden">Open form</span>
+              <span className="hidden group-open:inline">Hide form</span>
+            </span>
+          </summary>
+          <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <LeadCreateForm />
           </div>
-          <span className="flex-none rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white group-open:bg-slate-700">
-            <span className="group-open:hidden">Open form</span>
-            <span className="hidden group-open:inline">Hide form</span>
-          </span>
-        </summary>
-        <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <LeadCreateForm />
-        </div>
-      </details>
+        </details>
+
+        <details className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <FileUp className="h-6 w-6 text-emerald-600" />
+              <div>
+                <h2 className="text-2xl font-semibold">Contact import</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Upload CSV contacts when adding a list.
+                </p>
+              </div>
+            </div>
+            <span className="flex-none rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white group-open:bg-slate-700">
+              <span className="group-open:hidden">Open</span>
+              <span className="hidden group-open:inline">Hide</span>
+            </span>
+          </summary>
+          <div className="mt-5 rounded-md border border-dashed border-slate-300 bg-slate-50 p-4">
+            <ContactImportForm />
+          </div>
+        </details>
+      </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">

@@ -150,6 +150,19 @@ export const shipmentEventCreateSchema = z.object({
   occurredAt: z.string().trim().optional(),
 });
 
+export const quoteConvertSchema = z.object({
+  customerRate: z.coerce.number().nonnegative(),
+  carrierCompanyName: z.string().trim().optional(),
+  carrierRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
+});
+
+export const documentCreateSchema = z.object({
+  type: z.enum(["INVOICE", "POD", "RATE_CONFIRMATION", "AUDIT_UPLOAD", "OTHER"]),
+  fileName: requiredString,
+  fileUrl: z.string().trim().optional(),
+  extractedText: z.string().trim().optional(),
+});
+
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
@@ -161,3 +174,5 @@ export type CarrierCreateInput = z.infer<typeof carrierCreateSchema>;
 export type LoadCreateInput = z.infer<typeof loadCreateSchema>;
 export type LoadUpdateInput = z.infer<typeof loadUpdateSchema>;
 export type ShipmentEventCreateInput = z.infer<typeof shipmentEventCreateSchema>;
+export type QuoteConvertInput = z.infer<typeof quoteConvertSchema>;
+export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;

@@ -374,6 +374,43 @@ export function ShipmentEventCreateForm({ loadId }: { loadId: string }) {
   );
 }
 
+export function QuoteConvertForm({ quoteId }: { quoteId: string }) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/quote-requests/${quoteId}/convert-to-load`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="customerRate" label="Customer rate" type="number" required />
+        <Field name="carrierCompanyName" label="Carrier" />
+        <Field name="carrierRate" label="Carrier rate" type="number" />
+      </div>
+      <FormFooter state={state} buttonLabel="Convert to load" />
+    </form>
+  );
+}
+
+export function DocumentCreateForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/documents`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Select
+          name="type"
+          label="Type"
+          options={["POD", "RATE_CONFIRMATION", "INVOICE", "OTHER"]}
+        />
+        <Field name="fileName" label="Document name" required />
+      </div>
+      <Field name="fileUrl" label="File URL" placeholder="Optional until storage is wired" />
+      <Textarea name="extractedText" label="Notes / extracted text" />
+      <FormFooter state={state} buttonLabel="Add document" />
+    </form>
+  );
+}
+
 function Field({
   label,
   name,

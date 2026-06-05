@@ -25,10 +25,15 @@ Included now:
 - Lead stage/update form
 - Lead activity creation
 - Shippers and contacts page
+- Shipper detail page with related leads, quotes, and loads
 - Quote request queue page
+- Quote request detail page
+- Convert accepted quote request to operational load
 - Carrier management page
+- Carrier detail page with compliance context and related loads
 - Load operations page
-- Load detail page with status updates and tracking events
+- Load detail page with status updates, tracking events, document records, and POD event logging
+- Database-backed dashboard metrics with sample-data fallback
 - Database-backed CRM read helpers with sample-data fallback
 - Create lead form and API
 - Create shipper/contact form and API
@@ -55,7 +60,7 @@ Included now:
 Not included yet:
 
 - Clerk production authentication
-- Real document storage
+- Real document storage and file download handling
 - PDF parsing/OCR
 - DAT integration
 - Truckstop integration
@@ -140,42 +145,44 @@ Likely future additions:
 
 ```txt
 .
-├── prisma/
-│   ├── migrations/                # SQL migrations for Render deploy
-│   └── schema.prisma              # Core brokerage data model
-├── docs/
-│   ├── production-env-checklist.md
-│   ├── render-deployment.md
-│   └── sample-contacts.csv
-├── public/
-│   └── freight-hero.png           # Generated hero image used by homepage
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── freight-audit/
-│   │   │   │   └── route.ts       # Audit intake endpoint
-│   │   │   └── quote/
-│   │   │       └── route.ts       # Quote intake endpoint
-│   │   ├── dashboard/
-│   │   │   └── page.tsx           # Internal CRM/TMS shell
-│   │   ├── portal/
-│   │   │   └── page.tsx           # Shipper portal shell
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx               # Public marketing site
-│   ├── components/
-│   │   └── forms.tsx              # Audit and quote client forms
-│   └── lib/
-│       ├── data.ts                # UI copy and placeholder metrics
-│       ├── grok.ts                # xAI/Grok agent wrapper
-│       ├── prisma.ts              # Prisma singleton
-│       ├── utils.ts
-│       └── validation.ts          # Zod schemas
-├── .env.example
-├── package.json
-├── prisma.config.ts               # Prisma 7 database URL config
-├── render.yaml                    # Render Blueprint
-└── README.md
+|-- prisma/
+|   |-- migrations/                # SQL migrations for Render deploy
+|   `-- schema.prisma              # Core brokerage data model
+|-- docs/
+|   |-- production-env-checklist.md
+|   |-- render-deployment.md
+|   `-- sample-contacts.csv
+|-- public/
+|   `-- freight-hero.png           # Generated hero image used by homepage
+|-- src/
+|   |-- app/
+|   |   |-- api/                   # Route handlers for intake and CRM/TMS writes
+|   |   |-- dashboard/             # Internal command center
+|   |   |-- leads/                 # Lead list and detail workflow
+|   |   |-- shippers/              # Shipper list and account detail workflow
+|   |   |-- quote-requests/        # Quote queue and quote-to-load workflow
+|   |   |-- carriers/              # Carrier list and profile workflow
+|   |   |-- loads/                 # Load board, load detail, events, documents
+|   |   |-- portal/                # Shipper portal shell
+|   |   |-- globals.css
+|   |   |-- layout.tsx
+|   |   `-- page.tsx               # Public marketing site
+|   |-- components/
+|   |   |-- crm-forms.tsx          # Internal CRM/TMS forms
+|   |   `-- forms.tsx              # Public audit and quote client forms
+|   `-- lib/
+|       |-- crm.ts                 # Database-backed view helpers
+|       |-- data.ts                # UI copy and sample fallback data
+|       |-- grok.ts                # xAI/Grok agent wrapper
+|       |-- prisma.ts              # Prisma singleton
+|       |-- server-utils.ts
+|       |-- utils.ts
+|       `-- validation.ts          # Zod schemas
+|-- .env.example
+|-- package.json
+|-- prisma.config.ts               # Prisma 7 database URL config
+|-- render.yaml                    # Render Blueprint
+`-- README.md
 ```
 
 ## Local Setup
@@ -220,10 +227,13 @@ Useful local routes:
 /leads        Lead pipeline, follow-ups, activity, create form, and CSV import
 /leads/[id]   Lead detail, update form, and activity logging
 /shippers     Shipper company and contact records
+/shippers/[id] Shipper account detail with related work
 /quote-requests Quote request queue and create form
+/quote-requests/[id] Quote detail and quote-to-load conversion
 /carriers     Carrier management and create form
+/carriers/[id] Carrier profile and related load history
 /loads        Load operations and create form
-/loads/[id]   Load detail, status update, and shipment timeline
+/loads/[id]   Load detail, status update, shipment timeline, and documents
 /portal       Shipper portal shell
 ```
 
@@ -444,6 +454,8 @@ Current behavior:
    - QuoteRequest
    - AiAgentRun
 5. Returns a success response.
+6. Internal users can open the quote request detail page.
+7. Accepted quotes can be converted into load records with customer rate, optional carrier, optional carrier cost, and projected gross profit.
 
 Future behavior:
 
@@ -467,6 +479,7 @@ Current sections:
 
 - Daily command center metrics
 - Lead pipeline summary
+- Database-backed counts for follow-ups, open quotes, active loads, and projected margin
 - AI agent brief shell
 - Operating checklist shell
 - Next build modules
@@ -476,17 +489,33 @@ Current internal CRM routes:
 - Leads
 - Shippers
 - Quote requests
+- Carriers
+- Loads
+- Record detail pages for leads, shippers, quotes, carriers, and loads
 
 Planned modules:
 
-- Loads
-- Carriers
 - Documents
 - Invoices
 - AI command center
 - Settings
 
 The dashboard should become the main operating workspace for sales and brokerage operations.
+
+## TMS Workflow Implemented Now
+
+The current TMS workflow supports the first manual operating loop:
+
+1. Create or receive a quote request.
+2. Open the quote request detail page.
+3. Convert the accepted quote into a load.
+4. Assign a carrier during conversion or leave the load tendered until coverage is found.
+5. Open the load detail page.
+6. Update load status as the shipment moves.
+7. Add tracking events for pickup, location updates, delays, delivery, and POD.
+8. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
+
+The document workflow is metadata-first. It records what document exists and where it should live later. Durable upload storage, OCR, file previews, and signed downloads are still future work.
 
 ## Shipper Portal
 
@@ -732,7 +761,7 @@ Status: complete.
 
 ### Milestone 2: Real CRM
 
-Status: started.
+Status: mostly complete for V1.
 
 - Shared internal layout/navigation
 - Temporary internal password gate
@@ -751,11 +780,14 @@ Status: started.
 - Activities/timeline view
 - Follow-up task view
 - AI sales assistant placeholder
+- Shipper detail page
+- Quote request detail page
+- Carrier detail page
 
 Remaining:
 
 - Replace temporary password gate with Clerk auth
-- Add edit/detail pages for shippers, contacts, and quote requests
+- Add edit pages for shippers, contacts, and quote requests
 - Add contact detail pages
 - Add follow-up completion
 
@@ -773,6 +805,10 @@ Remaining:
 
 - Add quote request queue
 - Add quote detail page
+- Convert accepted quote request to load
+
+Remaining:
+
 - Add customer quote creation
 - Add target buy/sell rate logic
 - Add projected margin
@@ -792,12 +828,13 @@ Status: started.
 - Shipment event API/form
 - Shipment timeline
 - Customer rate, carrier rate, margin, and margin percent views
+- Convert accepted quote to load
+- Add document/POD metadata records
 
 Remaining:
 
-- Convert accepted quote to load
 - Add carrier quotes
-- Add POD upload
+- Add durable POD upload and downloads
 - Add invoice generation
 
 ### Milestone 6: DAT and Truckstop

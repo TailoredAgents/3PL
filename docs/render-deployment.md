@@ -125,6 +125,7 @@ After deploy, open:
 /quote-requests
 /carriers
 /loads
+/loads/[id]
 ```
 
 Expected behavior:
@@ -137,10 +138,14 @@ Expected behavior:
 - create lead works.
 - create shipper works.
 - create quote request works.
+- quote request detail opens.
+- quote request converts to a load.
 - create carrier works.
+- carrier detail opens.
 - create load works.
 - load status updates work.
 - shipment event timeline works.
+- load document/POD metadata logging works.
 - CSV import parses `docs/sample-contacts.csv`.
 - records remain after page refresh.
 
@@ -157,16 +162,21 @@ Test in this order:
 7. Add activity
 8. Create shipper/contact
 9. Create quote request
-10. Create carrier
-11. Create load
-12. Open load detail
-13. Update load status
-14. Add shipment event
-15. Upload CSV contacts
-16. Public savings audit form
-17. Public instant quote form
-18. Intake queue
-19. Health check
+10. Open quote request detail
+11. Convert quote request to load
+12. Create carrier
+13. Open carrier detail
+14. Create load manually
+15. Open load detail
+16. Update load status
+17. Add shipment event
+18. Add load document metadata
+19. Add POD document metadata and confirm POD event appears
+20. Upload CSV contacts
+21. Public savings audit form
+22. Public instant quote form
+23. Intake queue
+24. Health check
 
 ## 8. Known Temporary Choices
 
@@ -179,6 +189,7 @@ Temporary internal gate:
 Document upload:
 
 - Public audit upload currently stores metadata only.
+- Load documents currently store metadata only.
 - Durable storage and OCR are not wired yet.
 
 Integrations:

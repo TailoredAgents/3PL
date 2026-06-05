@@ -1,4 +1,5 @@
 import { Bot, CalendarDays, Gauge, Package, Truck } from "lucide-react";
+import Link from "next/link";
 
 import { QuoteRequestCreateForm } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
@@ -94,9 +95,12 @@ export default async function QuoteRequestsPage() {
                   {request.lane}
                 </p>
               </div>
-              <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+              <Link
+                href={`/quote-requests/${request.id}`}
+                className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              >
                 Open quote
-              </button>
+              </Link>
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-4">

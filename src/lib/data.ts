@@ -303,6 +303,7 @@ export const activities = [
 
 export const shippers = [
   {
+    id: "peachtree-building-supply",
     company: "Peachtree Building Supply",
     status: "Lead",
     industry: "Building materials",
@@ -313,6 +314,7 @@ export const shippers = [
     notes: "Strong recurring dry van opportunity. Wants freight savings review.",
   },
   {
+    id: "southline-foods",
     company: "Southline Foods",
     status: "Lead",
     industry: "Food distribution",
@@ -323,6 +325,7 @@ export const shippers = [
     notes: "Reefer prospect. High service sensitivity.",
   },
   {
+    id: "north-metro-packaging",
     company: "North Metro Packaging",
     status: "Lead",
     industry: "Packaging",
@@ -333,6 +336,7 @@ export const shippers = [
     notes: "Qualified. Needs surge coverage plan.",
   },
   {
+    id: "cobb-industrial-supply",
     company: "Cobb Industrial Supply",
     status: "Lead",
     industry: "Industrial supply",
@@ -346,6 +350,7 @@ export const shippers = [
 
 export const quoteRequests = [
   {
+    id: "quote-southline-sav-nas",
     company: "Southline Foods",
     lane: "Savannah, GA -> Nashville, TN",
     equipment: "Reefer",
@@ -357,6 +362,7 @@ export const quoteRequests = [
       "Confirm temperature, pallet count, and whether detention has been an issue before quoting.",
   },
   {
+    id: "quote-peachtree-atl-dal",
     company: "Peachtree Building Supply",
     lane: "Atlanta, GA -> Dallas, TX",
     equipment: "Dry van",
@@ -368,6 +374,7 @@ export const quoteRequests = [
       "Good candidate for savings audit follow-up and recurring-lane pricing conversation.",
   },
   {
+    id: "quote-cobb-ken-mem",
     company: "Cobb Industrial Supply",
     lane: "Kennesaw, GA -> Memphis, TN",
     equipment: "Flatbed",
@@ -445,6 +452,7 @@ export const loads = [
         time: "Today, 9:15 AM",
       },
     ],
+    documents: [],
   },
   {
     id: "load-sav-nas-002",
@@ -468,5 +476,6 @@ export const loads = [
         time: "Today, 8:40 AM",
       },
     ],
+    documents: [],
   },
 ];

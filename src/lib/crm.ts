@@ -13,8 +13,51 @@ export type ActivityView = (typeof activities)[number];
 export type ShipperView = (typeof shippers)[number];
 export type QuoteRequestView = (typeof quoteRequests)[number];
 export type CarrierView = (typeof carriers)[number];
-export type LoadView = (typeof loads)[number];
+export type LoadDocumentView = {
+  id: string;
+  type: string;
+  fileName: string;
+  fileUrl: string;
+  created: string;
+};
+export type LoadEventView = {
+  type: string;
+  message: string;
+  location: string;
+  time: string;
+};
+export type LoadView = {
+  id: string;
+  shipper: string;
+  carrier: string;
+  lane: string;
+  equipment: string;
+  status: string;
+  pickup: string;
+  delivery: string;
+  customerRate: number;
+  carrierRate: number;
+  margin: number;
+  marginPercent: number;
+  risk: string;
+  events: LoadEventView[];
+  documents: LoadDocumentView[];
+};
 export type LoadDetailView = LoadView;
+export type ShipperDetailView = ShipperView & {
+  leads: LeadView[];
+  quoteRequests: QuoteRequestView[];
+  loads: LoadView[];
+};
+export type CarrierDetailView = CarrierView & {
+  loads: LoadView[];
+};
+export type QuoteRequestDetailView = QuoteRequestView & {
+  id: string;
+  contact: string;
+  email: string;
+  specialRequirements: string;
+};
 
 export type LeadDetailView = LeadView & {
   source: string;
@@ -216,6 +259,82 @@ export async function getIntakeViews() {
   }
 }
 
+export async function getDashboardMetrics() {
+  if (!hasDatabaseUrl() || !prisma) {
+    return {
+      leadsDue: leads.length.toString(),
+      openQuotes: quoteRequests.length.toString(),
+      activeLoads: loads.length.toString(),
+      projectedMargin: `$${loads.reduce((sum, load) => sum + load.margin, 0).toLocaleString()}`,
+      leadPipeline: ["New", "Contacted", "Qualified", "Quoted", "Won"].map(
+        (stage) => ({
+          stage,
+          count: leads.filter((lead) => lead.stage === stage).length,
+          amount: "-",
+        }),
+      ),
+    };
+  }
+
+  try {
+    const now = new Date();
+    const [leadsDue, openQuotes, activeLoads, loadMargins, leadGroups] =
+      await Promise.all([
+        prisma.lead.count({
+          where: {
+            OR: [{ nextFollowUpAt: { lte: now } }, { nextFollowUpAt: null }],
+            stage: { notIn: ["WON", "LOST"] },
+          },
+        }),
+        prisma.quoteRequest.count({
+          where: { status: { in: ["NEW", "PRICING", "QUOTED"] } },
+        }),
+        prisma.load.count({
+          where: {
+            status: {
+              in: ["TENDERED", "BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"],
+            },
+          },
+        }),
+        prisma.load.findMany({
+          select: { grossProfit: true },
+          where: { grossProfit: { not: null } },
+        }),
+        prisma.lead.groupBy({
+          by: ["stage"],
+          _count: true,
+        }),
+      ]);
+    const margin = loadMargins.reduce(
+      (sum, load) => sum + Number(load.grossProfit ?? 0),
+      0,
+    );
+
+    return {
+      leadsDue: leadsDue.toString(),
+      openQuotes: openQuotes.toString(),
+      activeLoads: activeLoads.toString(),
+      projectedMargin: `$${margin.toLocaleString()}`,
+      leadPipeline: ["NEW", "CONTACTED", "QUALIFIED", "QUOTED", "WON"].map(
+        (stage) => ({
+          stage: titleCaseEnum(stage),
+          count:
+            leadGroups.find((group) => group.stage === stage)?._count ?? 0,
+          amount: "-",
+        }),
+      ),
+    };
+  } catch {
+    return {
+      leadsDue: leads.length.toString(),
+      openQuotes: quoteRequests.length.toString(),
+      activeLoads: loads.length.toString(),
+      projectedMargin: `$${loads.reduce((sum, load) => sum + load.margin, 0).toLocaleString()}`,
+      leadPipeline: [],
+    };
+  }
+}
+
 export async function getActivityViews(): Promise<ActivityView[]> {
   if (!hasDatabaseUrl() || !prisma) {
     return activities;
@@ -270,6 +389,7 @@ export async function getShipperViews(): Promise<ShipperView[]> {
       const primary = shipper.contacts[0];
 
       return {
+        id: shipper.id,
         company: shipper.companyName,
         status: titleCaseEnum(shipper.status),
         industry: shipper.industry ?? "Industry needed",
@@ -282,6 +402,87 @@ export async function getShipperViews(): Promise<ShipperView[]> {
     });
   } catch {
     return shippers;
+  }
+}
+
+export async function getShipperDetailView(
+  id: string,
+): Promise<ShipperDetailView | null> {
+  if (!hasDatabaseUrl() || !prisma) {
+    const sample = shippers.find((shipper) => shipper.id === id);
+
+    return sample
+      ? {
+          ...sample,
+          leads: leads.filter((lead) => lead.company === sample.company),
+          quoteRequests: quoteRequests.filter(
+            (quote) => quote.company === sample.company,
+          ),
+          loads: loads.filter((load) => load.shipper === sample.company),
+        }
+      : null;
+  }
+
+  try {
+    const shipper = await prisma.shipper.findUnique({
+      where: { id },
+      include: {
+        contacts: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+        leads: { include: { contact: true }, orderBy: { updatedAt: "desc" } },
+        quoteRequests: { orderBy: { createdAt: "desc" } },
+        loads: {
+          include: { carrier: true, events: { orderBy: { occurredAt: "desc" } } },
+          orderBy: { updatedAt: "desc" },
+        },
+      },
+    });
+
+    if (!shipper) {
+      return null;
+    }
+
+    const primary = shipper.contacts[0];
+    return {
+      id: shipper.id,
+      company: shipper.companyName,
+      status: titleCaseEnum(shipper.status),
+      industry: shipper.industry ?? "Industry needed",
+      primaryContact: formatContactName(primary),
+      email: primary?.email ?? "No email",
+      phone: primary?.phone ?? "No phone",
+      lanes: splitList(extractField(shipper.notes ?? "", "Lanes")),
+      notes: shipper.notes ?? "No notes yet.",
+      leads: shipper.leads.map((lead) => {
+        const notes = `${shipper.notes ?? ""}\n${lead.notes ?? ""}`;
+        return {
+          id: lead.id,
+          company: shipper.companyName,
+          contact: formatContactName(lead.contact),
+          title: lead.contact?.title ?? "Contact",
+          phone: lead.contact?.phone ?? "No phone",
+          email: lead.contact?.email ?? "No email",
+          stage: titleCaseEnum(lead.stage),
+          source: titleCaseEnum(lead.source),
+          priority: formatPriority(lead.priority),
+          lanes: extractField(notes, "Lanes") ?? "Lane details needed",
+          equipment: extractField(notes, "Equipment") ?? "Equipment needed",
+          volume: extractField(notes, "Volume") ?? "Volume unknown",
+          nextFollowUp: lead.nextFollowUpAt
+            ? formatFollowUp(lead.nextFollowUpAt)
+            : "No follow-up set",
+          pain: extractField(notes, "Pain") ?? lead.notes ?? "Needs qualification.",
+          aiNextAction: lead.notes ?? "Qualify next action.",
+        };
+      }),
+      quoteRequests: shipper.quoteRequests.map((request) =>
+        mapQuoteRequest(request, shipper.companyName),
+      ),
+      loads: shipper.loads.map((load) =>
+        mapLoad({ ...load, shipper, events: load.events }),
+      ),
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -303,22 +504,48 @@ export async function getQuoteRequestViews(): Promise<QuoteRequestView[]> {
       return quoteRequests;
     }
 
-    return records.map((request) => ({
-      company: request.shipper.companyName,
-      lane: `${request.originCity}, ${request.originState} -> ${request.destinationCity}, ${request.destinationState}`,
-      equipment: request.equipmentType,
-      pickup: request.pickupDate ? formatDate(request.pickupDate) : "Not set",
-      weight: request.weight ? `${request.weight.toLocaleString()} lbs` : "Not set",
-      status: titleCaseEnum(request.status),
-      details:
-        request.specialRequirements ??
-        request.commodity ??
-        "Needs freight details before pricing.",
-      aiSummary:
-        "Validate service requirements, price the lane, then queue carrier coverage.",
-    }));
+    return records.map((request) =>
+      mapQuoteRequest(request, request.shipper.companyName),
+    );
   } catch {
     return quoteRequests;
+  }
+}
+
+export async function getQuoteRequestDetailView(
+  id: string,
+): Promise<QuoteRequestDetailView | null> {
+  if (!hasDatabaseUrl() || !prisma) {
+    const sample = quoteRequests.find((quote) => quote.id === id);
+    return sample
+      ? {
+          ...sample,
+          contact: "Primary contact",
+          email: "No email",
+          specialRequirements: sample.details,
+        }
+      : null;
+  }
+
+  try {
+    const request = await prisma.quoteRequest.findUnique({
+      where: { id },
+      include: { shipper: true, contact: true },
+    });
+
+    if (!request) {
+      return null;
+    }
+
+    return {
+      ...mapQuoteRequest(request, request.shipper.companyName),
+      contact: formatContactName(request.contact),
+      email: request.contact?.email ?? "No email",
+      specialRequirements:
+        request.specialRequirements ?? request.commodity ?? "No details yet.",
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -359,6 +586,55 @@ export async function getCarrierViews(): Promise<CarrierView[]> {
     }));
   } catch {
     return carriers;
+  }
+}
+
+export async function getCarrierDetailView(
+  id: string,
+): Promise<CarrierDetailView | null> {
+  if (!hasDatabaseUrl() || !prisma) {
+    const sample = carriers.find((carrier) => carrier.id === id);
+    return sample
+      ? {
+          ...sample,
+          loads: loads.filter((load) => load.carrier === sample.company),
+        }
+      : null;
+  }
+
+  try {
+    const carrier = await prisma.carrier.findUnique({
+      where: { id },
+      include: {
+        loads: {
+          include: { shipper: true, carrier: true, events: true },
+          orderBy: { updatedAt: "desc" },
+        },
+      },
+    });
+
+    if (!carrier) {
+      return null;
+    }
+
+    return {
+      id: carrier.id,
+      company: carrier.companyName,
+      mcNumber: carrier.mcNumber ?? "MC needed",
+      dotNumber: carrier.dotNumber ?? "DOT needed",
+      contact: carrier.contactName ?? "Dispatch",
+      phone: carrier.phone ?? "No phone",
+      email: carrier.email ?? "No email",
+      complianceStatus: titleCaseEnum(carrier.complianceStatus),
+      preferredLanes: Array.isArray(carrier.preferredLanes)
+        ? carrier.preferredLanes.map(String)
+        : ["Lane history needed"],
+      notes: carrier.notes ?? "No notes yet.",
+      loadCount: carrier.loads.length,
+      loads: carrier.loads.map((load) => mapLoad(load)),
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -407,6 +683,9 @@ export async function getLoadDetailView(
         events: {
           orderBy: { occurredAt: "desc" },
           take: 50,
+        },
+        documents: {
+          orderBy: { createdAt: "desc" },
         },
       },
     });
@@ -489,6 +768,39 @@ function splitList(value: string | undefined) {
     .filter(Boolean);
 }
 
+function mapQuoteRequest(
+  request: {
+    id: string;
+    originCity: string;
+    originState: string;
+    destinationCity: string;
+    destinationState: string;
+    equipmentType: string;
+    pickupDate?: Date | null;
+    weight?: number | null;
+    status: string;
+    specialRequirements?: string | null;
+    commodity?: string | null;
+  },
+  companyName: string,
+) {
+  return {
+    id: request.id,
+    company: companyName,
+    lane: `${request.originCity}, ${request.originState} -> ${request.destinationCity}, ${request.destinationState}`,
+    equipment: request.equipmentType,
+    pickup: request.pickupDate ? formatDate(request.pickupDate) : "Not set",
+    weight: request.weight ? `${request.weight.toLocaleString()} lbs` : "Not set",
+    status: titleCaseEnum(request.status),
+    details:
+      request.specialRequirements ??
+      request.commodity ??
+      "Needs freight details before pricing.",
+    aiSummary:
+      "Validate service requirements, price the lane, then queue carrier coverage.",
+  };
+}
+
 function mapLoad(load: {
   id: string;
   shipper: { companyName: string };
@@ -509,6 +821,13 @@ function mapLoad(load: {
     message: string;
     location?: string | null;
     occurredAt: Date;
+  }>;
+  documents?: Array<{
+    id: string;
+    type: string;
+    fileName: string;
+    fileUrl: string;
+    createdAt: Date;
   }>;
 }) {
   const customerRate = Number(load.customerRate);
@@ -542,5 +861,12 @@ function mapLoad(load: {
       location: event.location ?? "Location not set",
       time: formatFollowUp(event.occurredAt),
     })),
+    documents: load.documents?.map((document) => ({
+      id: document.id,
+      type: titleCaseEnum(document.type),
+      fileName: document.fileName,
+      fileUrl: document.fileUrl,
+      created: formatFollowUp(document.createdAt),
+    })) ?? [],
   };
 }

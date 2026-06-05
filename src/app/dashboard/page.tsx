@@ -1,9 +1,36 @@
 import { Bot, ClipboardList } from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
-import { agentBriefs, crmMetrics, dashboardCards, pipeline } from "@/lib/data";
+import { getDashboardMetrics } from "@/lib/crm";
+import { agentBriefs } from "@/lib/data";
 
-export default function DashboardPage() {
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const metrics = await getDashboardMetrics();
+  const dashboardCards = [
+    {
+      label: "Leads needing follow-up",
+      value: metrics.leadsDue,
+      note: "Call qualified leads and new audit submissions first.",
+    },
+    {
+      label: "Open quote requests",
+      value: metrics.openQuotes,
+      note: "Review service details before rate work starts.",
+    },
+    {
+      label: "Active loads",
+      value: metrics.activeLoads,
+      note: "Watch pickup, delivery, POD, and customer update needs.",
+    },
+    {
+      label: "Projected margin",
+      value: metrics.projectedMargin,
+      note: "Business margin from loads with carrier costs entered.",
+    },
+  ];
+
   return (
     <InternalShell
       active="Dashboard"
@@ -18,30 +45,11 @@ export default function DashboardPage() {
             key={card.label}
             className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
           >
-            <card.icon className="h-5 w-5 text-emerald-600" />
             <p className="mt-5 text-sm font-medium text-slate-600">
               {card.label}
             </p>
             <p className="mt-2 text-3xl font-semibold">{card.value}</p>
             <p className="mt-3 text-sm leading-6 text-slate-600">{card.note}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {crmMetrics.map((metric) => (
-          <article
-            key={metric.label}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-          >
-            <metric.icon className="h-5 w-5 text-emerald-600" />
-            <p className="mt-5 text-sm font-medium text-slate-600">
-              {metric.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold">{metric.value}</p>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              {metric.note}
-            </p>
           </article>
         ))}
       </section>
@@ -60,7 +68,7 @@ export default function DashboardPage() {
             <Bot className="h-6 w-6 text-slate-400" />
           </div>
           <div className="mt-6 grid gap-3">
-            {pipeline.map((stage) => (
+            {metrics.leadPipeline.map((stage) => (
               <div
                 key={stage.stage}
                 className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-md bg-slate-50 px-4 py-3"

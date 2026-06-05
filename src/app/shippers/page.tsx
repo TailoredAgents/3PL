@@ -1,4 +1,5 @@
 import { Building2, Mail, MapPinned, Phone, UserRound } from "lucide-react";
+import Link from "next/link";
 
 import { ShipperCreateForm } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
@@ -52,8 +53,9 @@ export default async function ShippersPage() {
 
       <section className="grid gap-6 lg:grid-cols-2">
         {shipperViews.map((shipper) => (
-          <article
+          <Link
             key={shipper.company}
+            href={`/shippers/${shipper.id}`}
             className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -112,7 +114,7 @@ export default async function ShippersPage() {
                 {shipper.notes}
               </p>
             </div>
-          </article>
+          </Link>
         ))}
       </section>
     </InternalShell>

@@ -117,7 +117,7 @@ export default async function DashboardPage() {
     },
     {
       icon: Building2,
-      label: "Companies",
+      label: "Shippers",
       href: "/shippers",
       detail: "Company files, contacts, and lanes",
     },

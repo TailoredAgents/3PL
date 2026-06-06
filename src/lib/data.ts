@@ -39,7 +39,7 @@ export const internalNavGroups = [
     label: "Sales & CRM",
     items: [
       { label: "Leads", href: "/leads", icon: Users },
-      { label: "Companies", href: "/shippers", icon: Building2 },
+      { label: "Shippers", href: "/shippers", icon: Building2 },
       { label: "Quotes & Pricing", href: "/quote-requests", icon: FileText },
       { label: "Communications", href: "/communications", icon: MessageSquareText },
     ],

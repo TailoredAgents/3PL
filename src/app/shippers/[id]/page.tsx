@@ -33,7 +33,7 @@ export default async function ShipperDetailPage({
 
   return (
     <InternalShell
-      active="Companies"
+      active="Shippers"
       eyebrow="Shipper account"
       title={shipper.company}
       description="One account file for contacts, lane context, sales opportunities, quote requests, and booked freight."

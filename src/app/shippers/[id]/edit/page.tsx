@@ -29,7 +29,7 @@ export default async function ShipperEditPage({
 
   return (
     <InternalShell
-      active="Companies"
+      active="Shippers"
       eyebrow="Shipper account"
       title={`Edit ${shipper.companyName}`}
       description="Update company name, industry, website, status, and account notes."

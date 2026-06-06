@@ -1,17 +1,19 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   FileCheck2,
   ReceiptText,
   Truck,
 } from "lucide-react";
 
+import {
+  BillingQueueMobileRow,
+  BillingQueueTableRow,
+} from "@/components/billing-queue-row";
 import { InternalShell } from "@/components/internal-shell";
 import { getLoadViews } from "@/lib/crm";
-import { cn, toCurrency } from "@/lib/utils";
+import { toCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -122,62 +124,7 @@ export default async function BillingPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {billingQueue.map((load) => (
-                  <tr key={load.id} className="align-top hover:bg-emerald-50/40">
-                    <Td>
-                      <Link
-                        href={`/loads/${load.id}`}
-                        className="font-semibold text-slate-950 hover:text-emerald-700"
-                      >
-                        {load.shipper}
-                      </Link>
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        Ref {load.customerReference ?? load.id.slice(0, 8)}
-                      </p>
-                    </Td>
-                    <Td>
-                      <p className="font-semibold text-slate-900">
-                        {load.lane}
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        Delivery {load.delivery}
-                      </p>
-                    </Td>
-                    <Td>
-                      <BillingStatus load={load} />
-                    </Td>
-                    <Td>
-                      <p className="font-semibold text-slate-900">
-                        {load.invoice?.status ?? "Not created"}
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        Due {load.invoice?.dueDate ?? "Not set"}
-                      </p>
-                    </Td>
-                    <Td>
-                      <p
-                        className={cn(
-                          "font-bold",
-                          load.marginPercent < 12
-                            ? "text-red-700"
-                            : "text-emerald-700",
-                        )}
-                      >
-                        {toCurrency(load.margin)}
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        {load.marginPercent}%
-                      </p>
-                    </Td>
-                    <Td>
-                      <Link
-                        href={`/loads/${load.id}`}
-                        className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
-                      >
-                        Open
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </Td>
-                  </tr>
+                  <BillingQueueTableRow key={load.id} load={load} />
                 ))}
               </tbody>
             </table>
@@ -185,28 +132,7 @@ export default async function BillingPage() {
 
           <div className="grid gap-3 p-3 lg:hidden">
             {billingQueue.map((load) => (
-              <Link
-                key={load.id}
-                href={`/loads/${load.id}`}
-                className="rounded-md border border-slate-100 bg-slate-50 p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-950">
-                      {load.shipper}
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-700">
-                      {load.lane}
-                    </p>
-                  </div>
-                  <BillingStatus load={load} />
-                </div>
-                <div className="mt-4 grid gap-2 text-sm text-slate-600">
-                  <p>Invoice {load.invoice?.status ?? "Not created"}</p>
-                  <p>Margin {toCurrency(load.margin)}</p>
-                  <p>POD {load.hasPod ? "Received" : "Needed"}</p>
-                </div>
-              </Link>
+              <BillingQueueMobileRow key={load.id} load={load} />
             ))}
           </div>
 
@@ -248,24 +174,6 @@ export default async function BillingPage() {
   );
 }
 
-type BillingLoad = Awaited<ReturnType<typeof getLoadViews>>[number];
-
-function BillingStatus({ load }: { load: BillingLoad }) {
-  const label = load.billingReadiness;
-  const className =
-    label === "Ready to invoice"
-      ? "bg-emerald-100 text-emerald-800"
-      : label === "Needs POD"
-        ? "bg-amber-100 text-amber-800"
-        : "bg-slate-100 text-slate-700";
-
-  return (
-    <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", className)}>
-      {label}
-    </span>
-  );
-}
-
 function BillingFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
@@ -279,6 +187,3 @@ function Th({ children }: { children: ReactNode }) {
   return <th className="px-4 py-3">{children}</th>;
 }
 
-function Td({ children }: { children: ReactNode }) {
-  return <td className="px-4 py-4">{children}</td>;
-}

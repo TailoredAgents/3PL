@@ -302,6 +302,8 @@ export const invoiceCreateSchema = z.object({
   amount: z.coerce.number().positive(),
   status: z.enum(["DRAFT", "SENT", "PARTIAL", "PAID", "OVERDUE"]).default("DRAFT"),
   dueDate: z.string().trim().optional(),
+  invoiceNumber: z.string().trim().optional(),
+  terms: z.string().trim().optional(),
 });
 
 export const carrierQuoteCreateSchema = z.object({

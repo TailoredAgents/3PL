@@ -257,12 +257,20 @@ function CarrierInvoiceCreateForm() {
           className="rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
       </div>
+      <div className="grid gap-1">
+        <label className="text-xs font-semibold text-slate-700">Approval owner</label>
+        <input
+          name="approvalOwner"
+          placeholder="Who approved"
+          className="rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
       <div className="grid gap-1 sm:col-span-2 lg:col-span-3">
-        <label className="text-xs font-semibold text-slate-700">Notes</label>
+        <label className="text-xs font-semibold text-slate-700">Notes / Remittance / QuickPay details</label>
         <textarea
           name="notes"
           rows={2}
-          placeholder="Accessorial charges, dispute details, QuickPay request, etc."
+          placeholder="Accessorial charges, dispute details, QuickPay request, remittance info, etc."
           className="rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
       </div>

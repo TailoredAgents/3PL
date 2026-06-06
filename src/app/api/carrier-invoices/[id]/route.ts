@@ -36,6 +36,10 @@ export async function PATCH(
     const status = fd.get("status")?.toString() ?? null;
     const paymentMethod = fd.get("paymentMethod")?.toString() || null;
     const notes = (fd.get("notes") as string) || null;
+    const disputeReason = (fd.get("disputeReason") as string) || null;
+    const approvalOwner = (fd.get("approvalOwner") as string) || null;
+    const paymentBatch = (fd.get("paymentBatch") as string) || null;
+    const remittanceNotes = (fd.get("remittanceNotes") as string) || null;
 
     if (!isCarrierInvoiceStatus(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -57,6 +61,10 @@ export async function PATCH(
       if (parsedPaymentMethod) update.paymentMethod = parsedPaymentMethod;
     }
     if (notes) update.notes = notes;
+    if (disputeReason) update.disputeReason = disputeReason;
+    if (approvalOwner) update.approvalOwner = approvalOwner;
+    if (paymentBatch) update.paymentBatch = paymentBatch;
+    if (remittanceNotes) update.remittanceNotes = remittanceNotes;
 
     const record = await prisma.carrierInvoice.update({
       where: { id },

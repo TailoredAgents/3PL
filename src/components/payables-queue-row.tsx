@@ -21,6 +21,11 @@ type CarrierInvoiceItem = {
   dueDate: string | null;
   paidAt: string | null;
   isOverdue: boolean;
+  disputeReason?: string | null;
+  approvalOwner?: string | null;
+  paymentBatch?: string | null;
+  remittanceNotes?: string | null;
+  quickPayMetadata?: string | null;
   invoiceDocument: {
     fileName: string;
     downloadHref: string | null;
@@ -94,6 +99,12 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
         <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_CLASS[invoice.status] ?? "bg-slate-100 text-slate-700")}>
           {invoice.status}
         </span>
+        {invoice.approvalOwner ? (
+          <p className="mt-0.5 text-[10px] text-slate-500">Approved by: {invoice.approvalOwner}</p>
+        ) : null}
+        {invoice.disputeReason ? (
+          <p className="mt-0.5 text-[10px] font-semibold text-red-600">Disputed: {invoice.disputeReason}</p>
+        ) : null}
       </Td>
       <Td>
         {invoice.paidAt ? (

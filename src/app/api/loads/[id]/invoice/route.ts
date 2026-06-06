@@ -15,6 +15,8 @@ export async function POST(
     amount: formValue(formData, "amount"),
     status: formValue(formData, "status") ?? "DRAFT",
     dueDate: formValue(formData, "dueDate"),
+    invoiceNumber: formValue(formData, "invoiceNumber"),
+    terms: formValue(formData, "terms"),
   });
 
   if (!parsed.success) {
@@ -72,14 +74,22 @@ export async function POST(
       create: {
         loadId: load.id,
         shipperId: load.shipperId,
+        invoiceNumber: input.invoiceNumber || null,
         amount: input.amount,
+        balance: input.amount,
         status: input.status,
+        terms: input.terms || null,
+        sentAt: input.status === "SENT" || input.status === "PARTIAL" ? new Date() : null,
         dueDate: optionalDate(input.dueDate),
         paidAt,
       },
       update: {
+        invoiceNumber: input.invoiceNumber || undefined,
         amount: input.amount,
+        balance: input.amount,
         status: input.status,
+        terms: input.terms || undefined,
+        sentAt: input.status === "SENT" || input.status === "PARTIAL" ? new Date() : undefined,
         dueDate: optionalDate(input.dueDate),
         paidAt,
       },

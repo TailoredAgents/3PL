@@ -25,8 +25,12 @@ type BillingLoad = {
   customerReference?: string;
   hasPod: boolean;
   invoice: {
+    invoiceNumber?: string | null;
     amount: number;
+    balance?: number | null;
     status: string;
+    terms?: string | null;
+    sentAt?: string | null;
     dueDate?: string | null;
     paidAt?: string | null;
   } | null;
@@ -130,8 +134,11 @@ export function BillingQueueTableRow({ load }: { load: BillingLoad }) {
       </Td>
       <Td>
         <p className="font-semibold text-slate-900">
-          {load.invoice?.status ?? "Not created"}
+          {load.invoice?.invoiceNumber ? `${load.invoice.invoiceNumber} · ` : ""}{load.invoice?.status ?? "Not created"}
         </p>
+        {load.invoice?.terms ? (
+          <p className="mt-0.5 text-xs text-slate-500">{load.invoice.terms}</p>
+        ) : null}
         {load.invoice?.dueDate ? (
           <p className="mt-1 text-xs font-medium text-slate-500">
             Due {load.invoice.dueDate}

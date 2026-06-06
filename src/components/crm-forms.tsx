@@ -1023,7 +1023,8 @@ export function InvoiceCreateForm({
 
   return (
     <form className="grid gap-3" onSubmit={onSubmit}>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="invoiceNumber" label="Invoice #" />
         <Field
           name="amount"
           label="Invoice amount"
@@ -1031,11 +1032,14 @@ export function InvoiceCreateForm({
           required
           defaultValue={defaultAmount.toString()}
         />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
         <Select
           name="status"
           label="Invoice status"
           options={["DRAFT", "SENT", "PARTIAL", "PAID", "OVERDUE"]}
         />
+        <Field name="terms" label="Terms (e.g. Net 30)" />
         <Field name="dueDate" label="Due date" type="date" />
       </div>
       <FormFooter state={state} buttonLabel="Save invoice" />

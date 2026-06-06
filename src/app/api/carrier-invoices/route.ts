@@ -19,6 +19,7 @@ export async function POST(req: Request) {
     const invoiceNumber = (fd.get("invoiceNumber") as string) || null;
     const dueDate = fd.get("dueDate") ? new Date(fd.get("dueDate") as string) : null;
     const notes = (fd.get("notes") as string) || null;
+    const approvalOwner = (fd.get("approvalOwner") as string) || null;
 
     if (!loadId || !carrierId || isNaN(amount)) {
       return NextResponse.json({ error: "loadId, carrierId, and amount are required" }, { status: 400 });
@@ -26,8 +27,8 @@ export async function POST(req: Request) {
 
     const record = await prisma.carrierInvoice.upsert({
       where: { loadId },
-      update: { carrierId, amount, agreedRate, invoiceNumber, dueDate, notes, updatedAt: new Date() },
-      create: { loadId, carrierId, amount, agreedRate, invoiceNumber, dueDate, notes },
+      update: { carrierId, amount, agreedRate, invoiceNumber, dueDate, notes, approvalOwner, updatedAt: new Date() },
+      create: { loadId, carrierId, amount, agreedRate, invoiceNumber, dueDate, notes, approvalOwner },
     });
 
     return NextResponse.json(record, { status: 201 });

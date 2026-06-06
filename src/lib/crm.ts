@@ -99,8 +99,12 @@ export type IntegrationLogView = {
   created: string;
 };
 export type InvoiceView = {
+  invoiceNumber?: string | null;
   amount: number;
+  balance?: number | null;
   status: string;
+  terms?: string | null;
+  sentAt?: string | null;
   dueDate: string;
   paidAt: string;
 };
@@ -3311,6 +3315,11 @@ export type CarrierInvoiceView = {
   approvedAt: string | null;
   paidAt: string | null;
   notes: string | null;
+  disputeReason?: string | null;
+  approvalOwner?: string | null;
+  paymentBatch?: string | null;
+  remittanceNotes?: string | null;
+  quickPayMetadata?: string | null;
   isOverdue: boolean;
   invoiceDocument: LoadDocumentView | null;
   rateConfirmationDocument: LoadDocumentView | null;
@@ -3378,6 +3387,11 @@ export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
       approvedAt: formatMaybe(r.approvedAt),
       paidAt: formatMaybe(r.paidAt),
       notes: r.notes,
+      disputeReason: r.disputeReason,
+      approvalOwner: r.approvalOwner,
+      paymentBatch: r.paymentBatch,
+      remittanceNotes: r.remittanceNotes,
+      quickPayMetadata: r.quickPayMetadata,
       isOverdue: r.dueDate != null && r.dueDate < now && r.paidAt == null,
       invoiceDocument:
         r.load?.documents.find((document) => document.type === "INVOICE")

@@ -1,4 +1,4 @@
-import { Mail, PhoneCall, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Mail, PhoneCall, ShieldCheck } from "lucide-react";
 
 import {
   QuoteEmailTemplateSettingsForm,
@@ -14,6 +14,13 @@ import {
 } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
+
+const OPERATING_RULES = [
+  "AI and Twilio call automation should use the disclosure before recording starts.",
+  "Salespeople still review AI-filled quote drafts before saving customer-facing rates.",
+  "Carrier acceptance stays tied to compliance status and signed rate confirmation.",
+  "Billing readiness depends on carrier assignment, rate confirmation, POD, and invoice state.",
+];
 
 export default async function SettingsPage() {
   const [settings, quoteEmailTemplate, currentUser] = await Promise.all([
@@ -36,83 +43,74 @@ export default async function SettingsPage() {
       action={{ label: "Dashboard", href: "/dashboard" }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <PhoneCall className="h-6 w-6 text-emerald-600" />
-            <h2 className="text-2xl font-semibold">Call recording disclosure</h2>
+        {/* Call recording disclosure */}
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <PhoneCall className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Call recording disclosure</p>
           </div>
-          <p className="mt-3 leading-7 text-slate-600">
-            This message is the configurable notice callers should hear before
-            call recording and transcription begin. Twilio wiring comes later,
-            but the system setting is ready now.
-          </p>
-          {canManageSettings ? (
-            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+          <div className="p-5">
+            {canManageSettings ? (
               <SettingsForm
                 callRecordingDisclosure={settings.callRecordingDisclosure}
               />
-            </div>
-          ) : (
-            <p className="mt-5 rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-              Settings are limited to owner and admin users.
-            </p>
-          )}
+            ) : (
+              <p className="rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+                Settings are limited to owner and admin users.
+              </p>
+            )}
+          </div>
         </article>
 
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Mail className="h-6 w-6 text-emerald-600" />
-            <h2 className="text-2xl font-semibold">Quote email template</h2>
+        {/* Quote email template */}
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Quote email template</p>
+            </div>
+            <span className="text-xs text-slate-400">Used on each quoted request</span>
           </div>
-          <p className="mt-3 leading-7 text-slate-600">
-            This subject and body generate the editable customer quote draft on
-            each quote request after a final customer rate is saved.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {quoteEmailTemplatePlaceholders.map((placeholder) => (
-              <span
-                key={placeholder}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
-              >
-                {`{{${placeholder}}}`}
-              </span>
-            ))}
-          </div>
-          {canManageSettings ? (
-            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+          <div className="p-5">
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {quoteEmailTemplatePlaceholders.map((placeholder) => (
+                <span
+                  key={placeholder}
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600"
+                >
+                  {`{{${placeholder}}}`}
+                </span>
+              ))}
+            </div>
+            {canManageSettings ? (
               <QuoteEmailTemplateSettingsForm
                 subject={quoteEmailTemplate.subject}
                 body={quoteEmailTemplate.body}
               />
-            </div>
-          ) : (
-            <p className="mt-5 rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-              Quote email templates are limited to owner and admin users.
-            </p>
-          )}
+            ) : (
+              <p className="rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+                Quote email templates are limited to owner and admin users.
+              </p>
+            )}
+          </div>
         </article>
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-6 w-6 text-emerald-600" />
-            <h2 className="text-2xl font-semibold">Phase 1 operating rules</h2>
-          </div>
-          <div className="mt-5 grid gap-3 text-sm leading-6 text-slate-700">
-            {[
-              "AI and Twilio call automation should use this disclosure before recording starts.",
-              "Salespeople still review AI-filled quote drafts before saving customer-facing rates.",
-              "Carrier acceptance should stay tied to compliance status and signed rate confirmation state.",
-              "Billing readiness depends on carrier assignment, rate confirmation, POD, and invoice state.",
-            ].map((rule) => (
-              <p key={rule} className="rounded-md bg-slate-50 p-4">
-                {rule}
-              </p>
-            ))}
-          </div>
-        </article>
-      </section>
+      {/* Phase 1 operating rules */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 xl:max-w-[calc(50%-12px)]">
+        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <ShieldCheck className="h-4 w-4 text-slate-400" />
+          <p className="text-sm font-semibold text-slate-700">Phase 1 operating rules</p>
+        </div>
+        <ul className="divide-y divide-slate-100">
+          {OPERATING_RULES.map((rule) => (
+            <li key={rule} className="flex items-start gap-3 px-5 py-3.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              <p className="text-sm leading-6 text-slate-700">{rule}</p>
+            </li>
+          ))}
+        </ul>
+      </article>
     </InternalShell>
   );
 }

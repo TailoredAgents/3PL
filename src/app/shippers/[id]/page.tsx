@@ -37,7 +37,7 @@ export default async function ShipperDetailPage({
       eyebrow="Shipper account"
       title={shipper.company}
       description="One account file for contacts, lane context, sales opportunities, quote requests, and booked freight."
-      action={{ label: "Back to Customers", href: "/shippers" }}
+      action={{ label: "Back to Shippers", href: "/shippers" }}
     >
       <div className="flex items-center justify-between gap-4">
         <Link

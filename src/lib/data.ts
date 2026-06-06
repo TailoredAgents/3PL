@@ -6,8 +6,10 @@ import {
   FileText,
   Headphones,
   LineChart,
+  Mail,
   MapPinned,
   MessageSquareText,
+  PhoneCall,
   Radar,
   ReceiptText,
   Search,
@@ -42,6 +44,7 @@ export const internalNavGroups = [
       { label: "Shippers", href: "/shippers", icon: Building2 },
       { label: "Quotes & Pricing", href: "/quote-requests", icon: FileText },
       { label: "Communications", href: "/communications", icon: MessageSquareText },
+      { label: "Call Intake", href: "/calls", icon: PhoneCall },
     ],
   },
   {
@@ -68,6 +71,7 @@ export const internalNavGroups = [
     label: "Admin / AI",
     items: [
       { label: "AI Command Center", href: "/agents", icon: Bot },
+      { label: "Email Events", href: "/email", icon: Mail },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
   },

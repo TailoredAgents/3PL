@@ -5,7 +5,8 @@ import {
   type DocumentType,
 } from "@prisma/client";
 
-import { uploadFile, type UploadFileResult } from "@/lib/storage";
+import { uploadFile, downloadStoredFile, type UploadFileResult } from "@/lib/storage";
+import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 export const documentTypeOptions: DocumentType[] = [
   "BOL",
@@ -83,6 +84,32 @@ export async function buildDocumentCreateData({
         ? DocumentSource.EXTERNAL_URL
         : DocumentSource.MANUAL_UPLOAD);
 
+  // Prefer explicit extractedText (manual notes at upload).
+  // Otherwise auto-extract for plain text files when the File is available.
+  let resolvedExtractedText = extractedText || null;
+  let resolvedExtractionStatus: DocumentExtractionStatus = extractedText
+    ? DocumentExtractionStatus.COMPLETED
+    : DocumentExtractionStatus.NOT_REQUESTED;
+
+  if (!resolvedExtractedText && uploadedFile) {
+    const candidateMime =
+      uploadResult?.mimeType ??
+      uploadedFile.type ??
+      inferMimeType(fileName);
+    if (isTextExtractableMime(candidateMime, fileName)) {
+      try {
+        const raw = await uploadedFile.text();
+        const trimmed = raw.trim().slice(0, 200000);
+        if (trimmed) {
+          resolvedExtractedText = trimmed;
+          resolvedExtractionStatus = DocumentExtractionStatus.COMPLETED;
+        }
+      } catch {
+        // Leave as NOT_REQUESTED; caller can request later or paste text.
+      }
+    }
+  }
+
   return {
     ...relations,
     type,
@@ -96,10 +123,8 @@ export async function buildDocumentCreateData({
     fileSize: uploadResult?.fileSize ?? uploadedFile?.size ?? null,
     status: getDocumentStatus(resolvedFileUrl, uploadResult),
     source: resolvedSource,
-    extractionStatus: extractedText
-      ? DocumentExtractionStatus.COMPLETED
-      : DocumentExtractionStatus.NOT_REQUESTED,
-    extractedText: extractedText || null,
+    extractionStatus: resolvedExtractionStatus,
+    extractedText: resolvedExtractedText,
   };
 }
 
@@ -137,4 +162,167 @@ function inferMimeType(fileName: string) {
   if (lower.endsWith(".csv")) return "text/csv";
   if (lower.endsWith(".txt")) return "text/plain";
   return null;
+}
+
+export function isTextExtractableMime(mimeType: string | null, fileName: string): boolean {
+  const lower = (fileName || "").toLowerCase();
+  if (mimeType) {
+    if (mimeType.startsWith("text/") || mimeType === "application/csv") {
+      return true;
+    }
+  }
+  return (
+    lower.endsWith(".txt") ||
+    lower.endsWith(".csv") ||
+    lower.endsWith(".log") ||
+    lower.endsWith(".md") ||
+    lower.endsWith(".json")
+  );
+}
+
+export async function extractTextFromBytes(
+  bytes: Uint8Array | Buffer | ArrayBuffer,
+  mimeType: string | null,
+  fileName: string,
+): Promise<{ text: string | null; status: DocumentExtractionStatus; error?: string }> {
+  const buf = bytes instanceof Uint8Array ? bytes : Buffer.from(bytes as ArrayBuffer);
+  if (isTextExtractableMime(mimeType, fileName)) {
+    try {
+      const text = new TextDecoder("utf-8", { fatal: false }).decode(buf);
+      return {
+        text: text.trim().slice(0, 200000),
+        status: DocumentExtractionStatus.COMPLETED,
+      };
+    } catch {
+      return {
+        text: null,
+        status: DocumentExtractionStatus.FAILED,
+        error: "Failed to decode text content from file.",
+      };
+    }
+  }
+
+  const lower = fileName.toLowerCase();
+  const isPdfOrImage =
+    (mimeType && (mimeType === "application/pdf" || mimeType.startsWith("image/"))) ||
+    lower.endsWith(".pdf") ||
+    lower.match(/\.(png|jpe?g|webp|gif)$/i);
+
+  if (isPdfOrImage) {
+    return {
+      text: null,
+      status: DocumentExtractionStatus.FAILED,
+      error:
+        "PDF/image text extraction requires an OCR or vision provider. Use the manual notes field at upload or the review action after upload.",
+    };
+  }
+
+  return {
+    text: null,
+    status: DocumentExtractionStatus.FAILED,
+    error: `Automatic extraction not supported for ${mimeType || "this file type"}. Paste text manually via upload form or review.`,
+  };
+}
+
+export async function runDocumentExtraction(
+  documentId: string,
+  options?: { extractedText?: string | null },
+): Promise<{
+  status: DocumentExtractionStatus;
+  extractedText: string | null;
+  error?: string;
+}> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return {
+      status: DocumentExtractionStatus.FAILED,
+      extractedText: null,
+      error: "Database is not configured.",
+    };
+  }
+
+  const doc = await prisma.document.findUnique({
+    where: { id: documentId },
+    select: {
+      id: true,
+      fileName: true,
+      mimeType: true,
+      storageKey: true,
+      fileUrl: true,
+      extractedText: true,
+    },
+  });
+
+  if (!doc) {
+    return {
+      status: DocumentExtractionStatus.FAILED,
+      extractedText: null,
+      error: "Document not found.",
+    };
+  }
+
+  // Manual/review path: explicit text (including empty string to clear) forces COMPLETED.
+  if (options && Object.prototype.hasOwnProperty.call(options, "extractedText")) {
+    const text = options.extractedText ?? null;
+    await prisma.document.update({
+      where: { id: documentId },
+      data: {
+        extractionStatus: DocumentExtractionStatus.COMPLETED,
+        extractedText: text,
+      },
+    });
+    return { status: DocumentExtractionStatus.COMPLETED, extractedText: text };
+  }
+
+  // Auto-extraction path
+  await prisma.document.update({
+    where: { id: documentId },
+    data: { extractionStatus: DocumentExtractionStatus.PENDING },
+  });
+
+  let finalStatus: DocumentExtractionStatus = DocumentExtractionStatus.FAILED;
+  let finalText: string | null = null;
+  let extractionError: string | undefined;
+
+  try {
+    if (doc.storageKey) {
+      const stored = await downloadStoredFile(doc.storageKey);
+      const { text, status, error } = await extractTextFromBytes(
+        stored.body,
+        doc.mimeType,
+        doc.fileName,
+      );
+      finalStatus = status;
+      finalText = text;
+      extractionError = error;
+    } else if (doc.extractedText) {
+      // Had text from upload-time manual entry or prior; keep it.
+      finalStatus = DocumentExtractionStatus.COMPLETED;
+      finalText = doc.extractedText;
+    } else if (isTextExtractableMime(doc.mimeType, doc.fileName)) {
+      finalStatus = DocumentExtractionStatus.FAILED;
+      extractionError =
+        "Plain text file was uploaded without durable storage; extraction cannot recover original bytes. Re-upload after configuring storage, or paste the text using the upload form.";
+    } else {
+      finalStatus = DocumentExtractionStatus.FAILED;
+      extractionError =
+        "No stored file available (storage not configured). Provide extracted text at upload time or configure durable storage for post-upload extraction.";
+    }
+  } catch (err) {
+    finalStatus = DocumentExtractionStatus.FAILED;
+    extractionError = err instanceof Error ? err.message : "Unexpected extraction error.";
+  }
+
+  await prisma.document.update({
+    where: { id: documentId },
+    data: {
+      extractionStatus: finalStatus,
+      extractedText: finalText,
+    },
+  });
+
+  return {
+    status: finalStatus,
+    extractedText: finalText,
+    error: extractionError,
+  };
 }

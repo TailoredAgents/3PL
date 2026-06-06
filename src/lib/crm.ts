@@ -70,6 +70,7 @@ export type LoadDocumentView = {
   fileSize: string;
   storageState: string;
   created: string;
+  extractedText?: string | null;
 };
 export type DocumentCenterView = LoadDocumentView & {
   relatedLabel: string;
@@ -2532,6 +2533,7 @@ function mapDocumentSummary(document: {
   status?: string | null;
   source?: string | null;
   extractionStatus?: string | null;
+  extractedText?: string | null;
   createdAt: Date;
 }): LoadDocumentView {
   const canDownload = !document.fileUrl.startsWith("pending-storage://");
@@ -2555,6 +2557,7 @@ function mapDocumentSummary(document: {
         ? "Linked"
         : "Missing storage",
     created: formatFollowUp(document.createdAt),
+    extractedText: document.extractedText ?? null,
   };
 }
 

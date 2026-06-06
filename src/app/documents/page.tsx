@@ -9,7 +9,7 @@ import {
   Upload,
 } from "lucide-react";
 
-import { DocumentCreateForm } from "@/components/crm-forms";
+import { DocumentCreateForm, DocumentExtractionControl } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getDocumentCenterViews } from "@/lib/crm";
 
@@ -132,24 +132,40 @@ export default async function DocumentsPage() {
                     <Td>
                       <DocumentPill label={document.extractionStatus} />
                       <p className="mt-1 text-xs text-slate-500">{document.status}</p>
+                      {document.extractedText ? (
+                        <p
+                          className="mt-1 max-w-[220px] truncate text-[10px] text-slate-400"
+                          title={document.extractedText}
+                        >
+                          {document.extractedText.slice(0, 70)}
+                          {document.extractedText.length > 70 ? "…" : ""}
+                        </p>
+                      ) : null}
                     </Td>
                     <Td>
                       <p className="font-medium text-slate-700">{document.created}</p>
                       <p className="mt-1 text-xs text-slate-500">{document.uploadedBy}</p>
                     </Td>
                     <Td>
-                      {document.downloadHref ? (
-                        <Link
-                          href={document.downloadHref}
-                          target="_blank"
-                          className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Download
-                        </Link>
-                      ) : (
-                        <span className="text-xs font-semibold text-slate-400">No file</span>
-                      )}
+                      <div className="flex flex-col gap-2">
+                        {document.downloadHref ? (
+                          <Link
+                            href={document.downloadHref}
+                            target="_blank"
+                            className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Download
+                          </Link>
+                        ) : (
+                          <span className="text-xs font-semibold text-slate-400">No file</span>
+                        )}
+                        <DocumentExtractionControl
+                          documentId={document.id}
+                          extractionStatus={document.extractionStatus}
+                          extractedText={document.extractedText}
+                        />
+                      </div>
                     </Td>
                   </tr>
                 ))}
@@ -166,6 +182,9 @@ export default async function DocumentsPage() {
                     <p className="mt-1 text-xs text-slate-500">
                       {document.type} · {document.storageState}
                     </p>
+                    <div className="mt-1">
+                      <DocumentPill label={document.extractionStatus} />
+                    </div>
                   </div>
                   {document.downloadHref ? (
                     <Link
@@ -188,6 +207,13 @@ export default async function DocumentsPage() {
                 ) : (
                   <p className="mt-3 text-xs text-slate-500">{document.relatedLabel}</p>
                 )}
+                <div className="mt-3">
+                  <DocumentExtractionControl
+                    documentId={document.id}
+                    extractionStatus={document.extractionStatus}
+                    extractedText={document.extractedText}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -214,10 +240,11 @@ export default async function DocumentsPage() {
 }
 
 function DocumentPill({ label }: { label: string }) {
+  const l = label.toLowerCase();
   const className =
-    label === "Stored" || label === "Active" || label === "Completed"
+    l.includes("stored") || l.includes("active") || l.includes("completed")
       ? "bg-emerald-50 text-emerald-800"
-      : label === "Missing storage" || label === "Needs Review"
+      : l.includes("missing") || l.includes("needs review") || l.includes("pending") || l.includes("failed")
         ? "bg-amber-50 text-amber-800"
         : "bg-slate-100 text-slate-700";
 

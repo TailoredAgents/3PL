@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, PlayCircle, FileSearch } from "lucide-react";
 
 type FormState = {
   status: "idle" | "loading" | "success" | "error";
@@ -1876,6 +1876,130 @@ function FormFooter({
       >
         {buttonLabel}
       </button>
+    </div>
+  );
+}
+
+export function DocumentExtractionControl({
+  documentId,
+  extractionStatus,
+  extractedText,
+}: {
+  documentId: string;
+  extractionStatus: string;
+  extractedText?: string | null;
+}) {
+  const [state, setState] = useState<FormState>({ status: "idle" });
+  const [localText, setLocalText] = useState<string>(extractedText ?? "");
+  const [showReview, setShowReview] = useState<boolean>(false);
+  const router = useRouter();
+
+  const normalizedStatus = (extractionStatus || "Not Requested").toLowerCase();
+  const hasText = Boolean(extractedText && extractedText.trim().length > 0);
+  const canReview = hasText || normalizedStatus.includes("completed") || normalizedStatus.includes("pending");
+
+  async function postExtract(body: { extractedText?: string } | null) {
+    setState({ status: "loading" });
+    try {
+      const res = await fetch(`/api/documents/${documentId}/extract`, {
+        method: "POST",
+        headers: body ? { "Content-Type": "application/json" } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const payload = (await res.json()) as { message?: string; error?: string; status?: string };
+      if (!res.ok) {
+        throw new Error(payload.error ?? "Extraction request failed.");
+      }
+      setState({ status: "success", message: payload.message ?? "Done." });
+      // If manual text was sent, sync local
+      if (body?.extractedText !== undefined) {
+        setLocalText(body.extractedText ?? "");
+      }
+      router.refresh();
+    } catch (error) {
+      setState({
+        status: "error",
+        message: error instanceof Error ? error.message : "Extraction failed.",
+      });
+    }
+  }
+
+  async function handleAutoExtract(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await postExtract(null);
+  }
+
+  async function handleSaveReview(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await postExtract({ extractedText: localText });
+    setShowReview(false);
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        {normalizedStatus.includes("not requested") || normalizedStatus.includes("failed") ? (
+          <form onSubmit={handleAutoExtract}>
+            <button
+              type="submit"
+              disabled={state.status === "loading"}
+              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            >
+              <PlayCircle className="h-3.5 w-3.5" />
+              {state.status === "loading" ? "Running..." : "Run extraction"}
+            </button>
+          </form>
+        ) : null}
+
+        {canReview ? (
+          <button
+            type="button"
+            onClick={() => setShowReview((s) => !s)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <FileSearch className="h-3.5 w-3.5" />
+            {showReview ? "Hide review" : hasText ? "Review text" : "Review"}
+          </button>
+        ) : null}
+      </div>
+
+      {state.message ? (
+        <p className="text-[11px] text-slate-600">{state.message}</p>
+      ) : null}
+
+      {showReview ? (
+        <form onSubmit={handleSaveReview} className="grid gap-2">
+          <textarea
+            value={localText}
+            onChange={(e) => setLocalText(e.target.value)}
+            rows={4}
+            className="w-full rounded-md border border-slate-200 bg-white p-2 text-xs font-mono text-slate-800 focus:border-emerald-400 focus:outline-none"
+            placeholder="Paste or edit the extracted document text here for review. This will be stored as the source of truth for later parsing/automation."
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={state.status === "loading"}
+              className="rounded-md bg-emerald-700 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+            >
+              Save reviewed text
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowReview(false);
+                setLocalText(extractedText ?? "");
+              }}
+              className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-500">
+            Saving marks status COMPLETED. Use for manual entry or corrections before structured parsing.
+          </p>
+        </form>
+      ) : null}
     </div>
   );
 }

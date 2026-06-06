@@ -101,7 +101,7 @@ export default async function PayablesPage() {
       )}
 
       {/* Add carrier invoice form */}
-      <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
         <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">

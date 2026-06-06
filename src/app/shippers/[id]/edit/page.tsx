@@ -43,13 +43,15 @@ export default async function ShipperEditPage({
         Back to shipper account
       </Link>
 
-      <article className="max-w-2xl rounded-lg border border-white bg-white p-6 shadow-lg shadow-slate-950/5">
-        <h2 className="text-xl font-semibold">Shipper details</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-600">
-          Changes apply immediately. Lane context lives in the notes field using
-          the format: <code className="rounded bg-slate-100 px-1 text-xs">Lanes: Atlanta to Dallas; Savannah to Nashville</code>
-        </p>
-        <div className="mt-6">
+      <article className="max-w-2xl overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <p className="text-sm font-semibold text-slate-700">Shipper details</p>
+        </div>
+        <div className="p-5">
+          <p className="mb-4 text-xs leading-5 text-slate-500">
+            Lane context lives in the notes field using the format:{" "}
+            <code className="rounded bg-slate-100 px-1">Lanes: Atlanta to Dallas; Savannah to Nashville</code>
+          </p>
           <ShipperEditForm
             shipperId={id}
             defaults={{

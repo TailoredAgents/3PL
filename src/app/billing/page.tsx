@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  DollarSign,
   FileCheck2,
   ReceiptText,
   Truck,
@@ -16,6 +17,14 @@ import { getLoadViews } from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+const CARD_ACCENTS = [
+  { border: "border-l-[3px] border-l-slate-400", icon: "bg-slate-100 text-slate-600" },
+  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
+  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
+  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
+  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+] as const;
 
 export default async function BillingPage() {
   const loadViews = await getLoadViews();
@@ -37,82 +46,55 @@ export default async function BillingPage() {
       queue.findIndex((queuedLoad) => queuedLoad.id === load.id) === index,
   );
 
+  const metrics = [
+    { icon: Truck, label: "Loads", value: loadViews.length.toString() },
+    { icon: FileCheck2, label: "Needs POD", value: needsPod.length.toString() },
+    { icon: ReceiptText, label: "Ready to invoice", value: readyToInvoice.length.toString() },
+    { icon: CheckCircle2, label: "Paid", value: paid.length.toString() },
+    { icon: DollarSign, label: "Total margin", value: toCurrency(totalMargin) },
+  ];
+
   return (
     <InternalShell
       active="Invoicing"
-      eyebrow="Money"
-      title="Billing & Accounting"
-      description="The billing workspace for POD collection, invoice readiness, open invoices, carrier cost visibility, and margin protection."
+      eyebrow="Finance"
+      title="Invoicing"
+      description="POD collection, invoice readiness, open invoices, and margin visibility in one place."
       action={{ label: "Open Load Board", href: "/loads" }}
     >
+      {/* Metrics */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {[
-          {
-            icon: Truck,
-            label: "Loads",
-            value: loadViews.length.toString(),
-            note: "Total managed freight",
-          },
-          {
-            icon: FileCheck2,
-            label: "Needs POD",
-            value: needsPod.length.toString(),
-            note: "Cannot invoice cleanly yet",
-          },
-          {
-            icon: ReceiptText,
-            label: "Ready invoice",
-            value: readyToInvoice.length.toString(),
-            note: "POD received or ready",
-          },
-          {
-            icon: CheckCircle2,
-            label: "Paid",
-            value: paid.length.toString(),
-            note: "Invoices marked paid",
-          },
-          {
-            icon: ReceiptText,
-            label: "Margin",
-            value: toCurrency(totalMargin),
-            note: "Current load margin",
-          },
-        ].map((item) => (
+        {metrics.map((item, i) => (
           <article
             key={item.label}
-            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <item.icon className="h-5 w-5" />
+            <div className="p-5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                <item.icon className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+                {item.value}
+              </p>
             </div>
-            <p className="mt-5 text-sm font-medium text-slate-600">
-              {item.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold">{item.value}</p>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{item.note}</p>
           </article>
         ))}
       </section>
 
-      <section className="grid items-start gap-6 xl:grid-cols-[1fr_360px]">
-        <article className="overflow-hidden rounded-lg border border-white bg-white shadow-lg shadow-slate-950/5">
-          <div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-                Billing queue
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                What needs money attention
-              </h2>
-            </div>
-            <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+      {/* Billing queue + sidebar */}
+      <section className="grid items-start gap-6 xl:grid-cols-[1fr_320px]">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <p className="text-sm font-semibold text-slate-700">Billing queue</p>
+            <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
               {billingQueue.length} loads
-            </p>
+            </span>
           </div>
 
           <div className="hidden overflow-x-auto lg:block">
             <table className="min-w-[900px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500">
+              <thead className="border-b border-slate-100 bg-slate-50/50 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
                 <tr>
                   <Th>Load</Th>
                   <Th>Lane</Th>
@@ -130,34 +112,40 @@ export default async function BillingPage() {
             </table>
           </div>
 
-          <div className="grid gap-3 p-3 lg:hidden">
+          <div className="grid gap-3 p-4 lg:hidden">
             {billingQueue.map((load) => (
               <BillingQueueMobileRow key={load.id} load={load} />
             ))}
           </div>
 
-          {!billingQueue.length ? (
-            <div className="border-t border-dashed border-slate-200 bg-slate-50 p-6 text-sm font-medium text-slate-600">
+          {!billingQueue.length && (
+            <div className="border-t border-slate-100 px-5 py-8 text-center text-sm text-slate-400">
               No billing work is currently waiting.
             </div>
-          ) : null}
+          )}
         </article>
 
         <aside className="grid gap-4">
-          <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-            <AlertTriangle className="h-6 w-6 text-amber-600" />
-            <h2 className="mt-4 text-xl font-semibold">Billing rules</h2>
-            <div className="mt-4 grid gap-3 text-sm leading-6 text-slate-600">
+          {/* Billing rules */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <p className="text-sm font-semibold text-slate-700">Billing rules</p>
+            </div>
+            <div className="grid gap-3 p-4 text-sm leading-6 text-slate-600">
               <p>Collect POD before marking delivered freight invoice-ready.</p>
               <p>Confirm carrier cost before trusting margin reporting.</p>
               <p>Keep invoice status updated so owners can see cash exposure.</p>
             </div>
           </article>
 
-          <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-            <ReceiptText className="h-6 w-6 text-emerald-600" />
-            <h2 className="mt-4 text-xl font-semibold">Invoice summary</h2>
-            <div className="mt-4 grid gap-3">
+          {/* Invoice summary */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <ReceiptText className="h-4 w-4 text-slate-500" />
+              <p className="text-sm font-semibold text-slate-700">Invoice summary</p>
+            </div>
+            <div className="grid gap-2 p-4">
               <BillingFact label="Created" value={invoiced.length.toString()} />
               <BillingFact
                 label="Open"
@@ -176,9 +164,9 @@ export default async function BillingPage() {
 
 function BillingFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
-      <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
+    <div className="flex items-center justify-between rounded-md border border-slate-100 bg-slate-50 px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="text-2xl font-bold text-slate-900">{value}</p>
     </div>
   );
 }
@@ -186,4 +174,3 @@ function BillingFact({ label, value }: { label: string; value: string }) {
 function Th({ children }: { children: ReactNode }) {
   return <th className="px-4 py-3">{children}</th>;
 }
-

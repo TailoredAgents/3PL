@@ -63,6 +63,9 @@ export type CarrierView = (typeof carriers)[number] & {
   additionalContacts?: unknown;
   deliveredLoads?: number;
   avgMargin?: number;
+  // Phase 3.2 scorecard
+  onTimePickupRate?: number | null;
+  issuesCount?: number;
 };
 export type LoadDocumentView = {
   id: string;
@@ -1672,6 +1675,15 @@ export async function getCarrierViews(): Promise<CarrierView[]> {
           ) / withGP.length;
         return Number(avg.toFixed(1));
       })(),
+      // Phase 3.2: Simple performance scorecard (safe fields from list include)
+      onTimePickupRate: (() => {
+        if (!carrier.loads.length) return null;
+        const onTime = carrier.loads.filter(
+          (l) => l.status === "DELIVERED" || l.status === "POD_RECEIVED"
+        ).length;
+        return Math.round((onTime / carrier.loads.length) * 100);
+      })(),
+      issuesCount: (carrier.blockedReason ? 1 : 0),
     }));
   } catch {
     return carriers;
@@ -1755,6 +1767,15 @@ export async function getCarrierDetailView(
           ) / withGP.length;
         return Number(avg.toFixed(1));
       })(),
+      // Phase 3.2: Simple performance scorecard (using full load include in detail)
+      onTimePickupRate: (() => {
+        if (!carrier.loads.length) return null;
+        const onTime = carrier.loads.filter(
+          (l) => l.status === "DELIVERED" || l.status === "POD_RECEIVED"
+        ).length;
+        return Math.round((onTime / carrier.loads.length) * 100);
+      })(),
+      issuesCount: (carrier.blockedReason ? 1 : 0) + carrier.loads.filter((l) => l.status === "IN_TRANSIT").length,
       loads: carrier.loads.map((load) => mapLoad(load)),
       documents: carrier.documents.map(mapDocumentSummary),
     };

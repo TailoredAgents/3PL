@@ -19,6 +19,14 @@ export async function PATCH(
     lastVettedAt: formValue(formData, "lastVettedAt"),
     approvedBy: formValue(formData, "approvedBy"),
     complianceNotes: formValue(formData, "complianceNotes"),
+    insuranceExpiration: formValue(formData, "insuranceExpiration"),
+    w9ReceivedAt: formValue(formData, "w9ReceivedAt"),
+    agreementSignedAt: formValue(formData, "agreementSignedAt"),
+    paymentSetup: formValue(formData, "paymentSetup"),
+    callbackVerifiedAt: formValue(formData, "callbackVerifiedAt"),
+    blockedReason: formValue(formData, "blockedReason"),
+    additionalContacts: formValue(formData, "additionalContacts"),
+    callbackNotes: formValue(formData, "callbackNotes"),
   });
 
   if (!parsed.success) {
@@ -46,13 +54,18 @@ export async function PATCH(
       fraudRiskLevel: nullableString(input.fraudRiskLevel),
       lastVettedAt: optionalDate(input.lastVettedAt),
       approvedBy: nullableString(input.approvedBy),
-      complianceNotes: nullableString(input.complianceNotes),
       insuranceExpiration: optionalDate(input.insuranceExpiration),
       w9ReceivedAt: optionalDate(input.w9ReceivedAt),
       agreementSignedAt: optionalDate(input.agreementSignedAt),
       paymentSetup: nullableString(input.paymentSetup),
       callbackVerifiedAt: optionalDate(input.callbackVerifiedAt),
       blockedReason: nullableString(input.blockedReason),
+      additionalContacts: input.additionalContacts
+        ? (() => { try { return JSON.parse(input.additionalContacts); } catch { return null; } })()
+        : undefined,
+      complianceNotes: input.callbackNotes
+        ? [nullableString(input.complianceNotes) || "", `Callback: ${input.callbackNotes}`].filter(Boolean).join("\n\n")
+        : nullableString(input.complianceNotes),
     },
   });
 

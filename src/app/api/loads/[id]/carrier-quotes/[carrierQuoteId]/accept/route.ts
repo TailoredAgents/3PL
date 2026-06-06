@@ -32,11 +32,14 @@ export async function POST(
     return Response.json({ error: "Carrier offer not found." }, { status: 404 });
   }
 
-  if (carrierQuote.carrier.complianceStatus !== "APPROVED") {
+  const c = carrierQuote.carrier;
+  if (c.complianceStatus !== "APPROVED" || c.blockedReason) {
     return Response.json(
       {
         error:
-          "Carrier must be approved before accepting the offer. Update the carrier compliance checklist first.",
+          c.blockedReason
+            ? `Carrier is blocked: ${c.blockedReason}. Resolve before booking.`
+            : "Carrier must be approved before accepting the offer. Update the carrier compliance checklist first.",
       },
       { status: 400 },
     );

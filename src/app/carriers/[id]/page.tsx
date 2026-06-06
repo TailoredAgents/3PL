@@ -12,6 +12,7 @@ import {
   Phone,
   ReceiptText,
   ShieldCheck,
+  TrendingUp,
   Truck,
   UserRound,
 } from "lucide-react";
@@ -221,6 +222,35 @@ export default async function CarrierDetailPage({
           ))}
         </div>
       </section>
+
+      {/* Performance Scorecard (Phase 3.2) */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <TrendingUp className="h-4 w-4 text-slate-400" />
+          <p className="text-sm font-semibold text-slate-700">Performance scorecard</p>
+        </div>
+        <div className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+          <div>
+            <p className="text-xs text-slate-500">Loads handled</p>
+            <p className="text-2xl font-bold">{carrier.loads.length}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">On-time proxy</p>
+            <p className="text-2xl font-bold">{carrier.onTimePickupRate ?? "—"}%</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Issues / blocks</p>
+            <p className="text-2xl font-bold text-amber-700">{carrier.issuesCount ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Margin handled</p>
+            <p className="text-2xl font-bold">{toCurrency(marginHandled)}</p>
+          </div>
+          <div className="col-span-2 text-xs text-slate-500 mt-2">
+            Scorecard derived from load status and events. On-time uses delivered/POD as proxy. Real ELD integration would improve accuracy (Phase 5).
+          </div>
+        </div>
+      </article>
 
       {/* Update compliance */}
       <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">

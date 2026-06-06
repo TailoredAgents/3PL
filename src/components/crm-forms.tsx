@@ -1281,6 +1281,12 @@ export function CarrierComplianceForm({
       <Field name="paymentSetup" label="Payment setup (ACH / Factoring)" />
       <Field name="blockedReason" label="Blocked reason (if any)" />
       <Textarea name="complianceNotes" label="Compliance notes" />
+      <Textarea
+        name="additionalContacts"
+        label="Additional contacts (JSON array: [{name, title, phone, email}])"
+        placeholder='[{"name":"Dispatch 2","phone":"555-1234"}]'
+      />
+      <Textarea name="callbackNotes" label="Callback verification notes" />
       <FormFooter state={state} buttonLabel="Update compliance" />
     </form>
   );

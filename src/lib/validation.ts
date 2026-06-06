@@ -166,6 +166,8 @@ export const carrierComplianceUpdateSchema = z.object({
   paymentSetup: z.string().trim().optional(),
   callbackVerifiedAt: z.string().trim().optional(),
   blockedReason: z.string().trim().optional(),
+  additionalContacts: z.string().trim().optional(), // JSON string for simplicity
+  callbackNotes: z.string().trim().optional(),
 });
 
 export const loadCreateSchema = z.object({

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ComponentType } from "react";
 import {
   ArrowLeft,
   Bot,

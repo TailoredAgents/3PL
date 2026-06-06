@@ -7,7 +7,11 @@ import {
   shippers,
 } from "@/lib/data";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import type { AiAgentRun, EmailSuppressionReason } from "@prisma/client";
+import {
+  LoadStatus,
+  type AiAgentRun,
+  type EmailSuppressionReason,
+} from "@prisma/client";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -3098,7 +3102,7 @@ export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
   if (!hasDatabaseUrl() || !prisma) return [];
 
   try {
-    const records = await (prisma as any).carrierInvoice.findMany({
+    const records = await prisma.carrierInvoice.findMany({
       include: {
         load: { select: { loadNumber: true, originCity: true, originState: true, destinationCity: true, destinationState: true, deliveryDate: true } },
         carrier: { select: { companyName: true } },
@@ -3108,7 +3112,7 @@ export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
 
     const now = new Date();
 
-    return records.map((r: any) => ({
+    return records.map((r) => ({
       id: r.id,
       loadId: r.loadId,
       loadNumber: `L-${String(r.load?.loadNumber ?? "").padStart(4, "0")}`,
@@ -3142,7 +3146,14 @@ export async function getLoadsNeedingPayable(): Promise<LoadNeedingPayableView[]
       where: {
         carrierId: { not: null },
         carrierRate: { not: null },
-        status: { in: ["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"] as any },
+        status: {
+          in: [
+            LoadStatus.DELIVERED,
+            LoadStatus.POD_RECEIVED,
+            LoadStatus.INVOICED,
+            LoadStatus.PAID,
+          ],
+        },
         carrierInvoice: null,
       },
       include: {

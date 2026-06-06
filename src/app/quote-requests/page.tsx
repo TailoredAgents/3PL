@@ -9,7 +9,6 @@ import {
   Gauge,
   PhoneCall,
   Package,
-  Plus,
   Truck,
 } from "lucide-react";
 

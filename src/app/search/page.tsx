@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   Building2,
-  Package,
   Search,
   ShieldCheck,
   Truck,

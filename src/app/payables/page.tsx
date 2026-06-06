@@ -37,7 +37,6 @@ export default async function PayablesPage() {
   const now = new Date();
   const weekFromNow = new Date(now);
   weekFromNow.setDate(weekFromNow.getDate() + 7);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const outstanding = invoices.filter((i) => i.status !== "Paid" && i.status !== "Disputed");
   const outstandingTotal = outstanding.reduce((sum, i) => sum + i.amount, 0);

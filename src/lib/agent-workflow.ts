@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
 
+import { Prisma } from "@prisma/client";
+
 import {
   brokerageAgentNames,
   type BrokerageAgentName,
@@ -10,8 +12,10 @@ import {
   getLoadDetailView,
   getQuoteRequestDetailView,
 } from "@/lib/crm";
+import { enrichAgentContext } from "@/lib/agent-enrichment";
 import { runBrokerageAgent } from "@/lib/grok";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { getAgentMode } from "@/lib/settings";
 
 export type AgentEntityType = "Lead" | "QuoteRequest" | "Load" | "Carrier";
 
@@ -20,16 +24,25 @@ export async function runAndLogBrokerageAgent(input: {
   relatedEntityType: AgentEntityType;
   relatedEntityId: string;
 }) {
-  const context = await getAgentEntityContext(
+  const baseContext = await getAgentEntityContext(
     input.relatedEntityType,
     input.relatedEntityId,
   );
 
-  if (!context) {
+  if (!baseContext) {
     throw new Error("Record not found.");
   }
 
+  const context = await enrichAgentContext(
+    input.agentName,
+    input.relatedEntityType,
+    input.relatedEntityId,
+    baseContext,
+  );
+
   const startedAt = new Date();
+  const mode = await getAgentMode(input.agentName);
+  const runStatus = mode === "autonomous" ? "COMPLETED" : "NEEDS_HUMAN_APPROVAL";
 
   try {
     const agentResult = await runBrokerageAgent({
@@ -45,11 +58,11 @@ export async function runAndLogBrokerageAgent(input: {
           agentName: input.agentName,
           relatedEntityType: input.relatedEntityType,
           relatedEntityId: input.relatedEntityId,
-          status: "NEEDS_HUMAN_APPROVAL",
+          status: runStatus,
           prompt: `Template: ${input.agentName}`,
           inputJson: {
             requestedAt: startedAt.toISOString(),
-            context,
+            context: context as Prisma.InputJsonValue,
           },
           outputJson: agentResult,
           confidence: agentResult.confidence,
@@ -74,7 +87,7 @@ export async function runAndLogBrokerageAgent(input: {
           prompt: `Template: ${input.agentName}`,
           inputJson: {
             requestedAt: startedAt.toISOString(),
-            context,
+            context: context as Prisma.InputJsonValue,
           },
           errorMessage:
             error instanceof Error ? error.message : "Unknown AI agent error.",

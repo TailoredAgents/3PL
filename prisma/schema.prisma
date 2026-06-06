@@ -230,6 +230,11 @@ enum IntegrationStatus {
   FAILED
 }
 
+enum EmailSuppressionReason {
+  BOUNCED
+  COMPLAINED
+}
+
 model User {
   id          String          @id @default(cuid())
   clerkUserId String?         @unique
@@ -340,6 +345,23 @@ model Activity {
   @@index([externalProvider])
   @@index([externalMessageId])
   @@index([createdAt])
+}
+
+model EmailSuppression {
+  id             String                 @id @default(cuid())
+  email          String                 @unique
+  reason         EmailSuppressionReason
+  sourceProvider String                 @default("RESEND")
+  sourceEventId  String?
+  messageId      String?
+  notes          String?
+  lastEventAt    DateTime              @default(now())
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([reason])
+  @@index([sourceProvider])
+  @@index([lastEventAt])
 }
 
 model SavingsAudit {

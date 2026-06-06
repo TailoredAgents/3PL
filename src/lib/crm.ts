@@ -7,7 +7,7 @@ import {
   shippers,
 } from "@/lib/data";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import type { AiAgentRun } from "@prisma/client";
+import type { AiAgentRun, EmailSuppressionReason } from "@prisma/client";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -217,17 +217,29 @@ export type EmailEventView = {
   eventId: string;
   time: string;
 };
+export type EmailSuppressionView = {
+  id: string;
+  email: string;
+  reason: EmailSuppressionReason;
+  sourceProvider: string;
+  messageId: string;
+  eventId: string;
+  notes: string;
+  lastEvent: string;
+};
 export type EmailEventDashboardView = {
   sentCount: number;
   deliveredCount: number;
   bouncedCount: number;
   complainedCount: number;
   unknownCount: number;
+  suppressedCount: number;
   exceptionCount: number;
   deliveryRate: string;
   webhookConfigured: boolean;
   events: EmailEventView[];
   exceptions: EmailEventView[];
+  suppressions: EmailSuppressionView[];
 };
 export type QuoteRequestDetailView = QuoteRequestView & {
   id: string;
@@ -555,56 +567,73 @@ function getSampleDashboardMetrics() {
 }
 
 function getSampleEmailEventDashboardView(): EmailEventDashboardView {
-  return buildEmailDashboard([
-    {
-      id: "sample-email-sent",
-      company: "Southline Foods",
-      contact: "Erica Walsh",
-      subject: "Freight quote: Savannah, GA to Nashville, TN",
-      recipient: "erica@southline.example",
-      status: "SENT",
-      outcome: "Sent via RESEND (sample-email-southline)",
-      detail:
-        "Quote email sent. Delivery webhooks will replace sample data once Resend is configured.",
-      provider: "RESEND",
-      messageId: "sample-email-southline",
-      eventId: "Not recorded",
-      time: "Today",
-    },
-    {
-      id: "sample-email-delivered",
-      company: "Peachtree Building Supply",
-      contact: "Mason Keller",
-      subject: "Quote email delivered",
-      recipient: "mason@peachtree.example",
-      status: "DELIVERED",
-      outcome: "Delivered by Resend.",
-      detail:
-        "Event: email.delivered\nEmail ID: sample-email-peachtree\nTo: mason@peachtree.example\nSubject: Freight quote: Atlanta, GA to Dallas, TX",
-      provider: "RESEND",
-      messageId: "sample-email-peachtree",
-      eventId: "sample-event-delivered",
-      time: "Today",
-    },
-    {
-      id: "sample-email-bounced",
-      company: "North Metro Packaging",
-      contact: "Chris Duarte",
-      subject: "Quote email bounced",
-      recipient: "chris@northmetro.example",
-      status: "BOUNCED",
-      outcome: "Bounced by Resend. Type: hard. Reason: Mailbox unavailable",
-      detail:
-        "Event: email.bounced\nEmail ID: sample-email-north-metro\nTo: chris@northmetro.example\nSubject: Freight quote follow-up",
-      provider: "RESEND",
-      messageId: "sample-email-north-metro",
-      eventId: "sample-event-bounced",
-      time: "Yesterday",
-    },
-  ]);
+  return buildEmailDashboard(
+    [
+      {
+        id: "sample-email-sent",
+        company: "Southline Foods",
+        contact: "Erica Walsh",
+        subject: "Freight quote: Savannah, GA to Nashville, TN",
+        recipient: "erica@southline.example",
+        status: "SENT",
+        outcome: "Sent via RESEND (sample-email-southline)",
+        detail:
+          "Quote email sent. Delivery webhooks will replace sample data once Resend is configured.",
+        provider: "RESEND",
+        messageId: "sample-email-southline",
+        eventId: "Not recorded",
+        time: "Today",
+      },
+      {
+        id: "sample-email-delivered",
+        company: "Peachtree Building Supply",
+        contact: "Mason Keller",
+        subject: "Quote email delivered",
+        recipient: "mason@peachtree.example",
+        status: "DELIVERED",
+        outcome: "Delivered by Resend.",
+        detail:
+          "Event: email.delivered\nEmail ID: sample-email-peachtree\nTo: mason@peachtree.example\nSubject: Freight quote: Atlanta, GA to Dallas, TX",
+        provider: "RESEND",
+        messageId: "sample-email-peachtree",
+        eventId: "sample-event-delivered",
+        time: "Today",
+      },
+      {
+        id: "sample-email-bounced",
+        company: "North Metro Packaging",
+        contact: "Chris Duarte",
+        subject: "Quote email bounced",
+        recipient: "chris@northmetro.example",
+        status: "BOUNCED",
+        outcome: "Bounced by Resend. Type: hard. Reason: Mailbox unavailable",
+        detail:
+          "Event: email.bounced\nEmail ID: sample-email-north-metro\nTo: chris@northmetro.example\nSubject: Freight quote follow-up",
+        provider: "RESEND",
+        messageId: "sample-email-north-metro",
+        eventId: "sample-event-bounced",
+        time: "Yesterday",
+      },
+    ],
+    [
+      {
+        id: "sample-suppression",
+        email: "chris@northmetro.example",
+        reason: "BOUNCED",
+        sourceProvider: "RESEND",
+        messageId: "sample-email-north-metro",
+        eventId: "sample-event-bounced",
+        notes: "Suppressed after Resend bounce.",
+        lastEvent: "Yesterday",
+      },
+    ],
+  );
 }
 
-function buildEmailDashboard(events: EmailEventView[]): EmailEventDashboardView {
+function buildEmailDashboard(
+  events: EmailEventView[],
+  suppressions: EmailSuppressionView[] = [],
+): EmailEventDashboardView {
   const sentCount = countEmailEvents(events, "SENT");
   const deliveredCount = countEmailEvents(events, "DELIVERED");
   const bouncedCount = countEmailEvents(events, "BOUNCED");
@@ -623,6 +652,7 @@ function buildEmailDashboard(events: EmailEventView[]): EmailEventDashboardView 
     bouncedCount,
     complainedCount,
     unknownCount,
+    suppressedCount: suppressions.length,
     exceptionCount,
     deliveryRate,
     webhookConfigured: Boolean(process.env.RESEND_WEBHOOK_SECRET),
@@ -630,6 +660,7 @@ function buildEmailDashboard(events: EmailEventView[]): EmailEventDashboardView 
     exceptions: events.filter((event) =>
       ["BOUNCED", "COMPLAINED"].includes(event.status),
     ),
+    suppressions,
   };
 }
 
@@ -706,20 +737,26 @@ export async function getEmailEventDashboardView(): Promise<EmailEventDashboardV
   }
 
   try {
-    const records = await prisma.activity.findMany({
-      where: {
-        type: "EMAIL",
-        externalProvider: "RESEND",
-      },
-      include: {
-        shipper: true,
-        contact: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
+    const [records, suppressionRecords] = await Promise.all([
+      prisma.activity.findMany({
+        where: {
+          type: "EMAIL",
+          externalProvider: "RESEND",
+        },
+        include: {
+          shipper: true,
+          contact: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      }),
+      prisma.emailSuppression.findMany({
+        orderBy: { lastEventAt: "desc" },
+        take: 100,
+      }),
+    ]);
 
-    if (!records.length) {
+    if (!records.length && !suppressionRecords.length) {
       return getSampleEmailEventDashboardView();
     }
 
@@ -744,7 +781,18 @@ export async function getEmailEventDashboardView(): Promise<EmailEventDashboardV
       };
     });
 
-    return buildEmailDashboard(events);
+    const suppressions = suppressionRecords.map((suppression) => ({
+      id: suppression.id,
+      email: suppression.email,
+      reason: suppression.reason,
+      sourceProvider: suppression.sourceProvider,
+      messageId: suppression.messageId ?? "Not recorded",
+      eventId: suppression.sourceEventId ?? "Not recorded",
+      notes: suppression.notes ?? "No suppression notes recorded.",
+      lastEvent: formatFollowUp(suppression.lastEventAt),
+    }));
+
+    return buildEmailDashboard(events, suppressions);
   } catch {
     return getSampleEmailEventDashboardView();
   }

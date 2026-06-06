@@ -35,6 +35,12 @@ export default async function EmailPage() {
       note: "Bounces and complaints",
     },
     {
+      icon: Ban,
+      label: "Suppressed",
+      value: dashboard.suppressedCount.toString(),
+      note: "Blocked future sends",
+    },
+    {
       icon: ShieldCheck,
       label: "Delivery rate",
       value: dashboard.deliveryRate,
@@ -52,7 +58,7 @@ export default async function EmailPage() {
       description="Track quote email sends, Resend delivery confirmations, bounces, and complaint events so sales follow-up stays clean."
       action={{ label: "Settings", href: "/settings" }}
     >
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <article
             key={card.label}
@@ -191,6 +197,55 @@ export default async function EmailPage() {
             </table>
           </div>
         </article>
+      </section>
+
+      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
+        <div className="flex items-center gap-3">
+          <Ban className="h-6 w-6 text-red-600" />
+          <div>
+            <h2 className="text-2xl font-semibold">Suppressed recipients</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              These addresses are blocked from future quote emails until the
+              customer provides a corrected address.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {dashboard.suppressions.length ? (
+            dashboard.suppressions.map((suppression) => (
+              <div
+                key={suppression.id}
+                className="rounded-md border border-red-100 bg-red-50 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="break-all font-semibold text-red-950">
+                      {suppression.email}
+                    </p>
+                    <p className="mt-1 text-sm text-red-900">
+                      {suppression.notes}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-800">
+                    {suppression.reason.toLowerCase()}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-1 text-xs leading-5 text-red-800">
+                  <p>{suppression.sourceProvider}</p>
+                  <p>{suppression.messageId}</p>
+                  <p>{suppression.eventId}</p>
+                  <p className="font-bold uppercase tracking-[0.14em]">
+                    {suppression.lastEvent}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600 md:col-span-2 xl:col-span-3">
+              No recipients are currently suppressed.
+            </p>
+          )}
+        </div>
       </section>
     </InternalShell>
   );

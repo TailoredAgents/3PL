@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getCurrentInternalUser } from "@/lib/current-user";
+import { getEmailSuppressionStatus } from "@/lib/email-suppression";
 import type { SendEmailResult } from "@/lib/email";
 import { sendTransactionalEmail } from "@/lib/email";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
@@ -58,6 +59,33 @@ export async function POST(
 
   const input = parsed.data;
   const currentUser = await getCurrentInternalUser();
+  const suppression = await getEmailSuppressionStatus(input.toEmail);
+
+  if (suppression.suppressed) {
+    await prisma.activity.create({
+      data: {
+        shipperId: quoteRequest.shipperId,
+        contactId: quoteRequest.contactId,
+        userId: currentUser?.id,
+        type: "EMAIL",
+        direction: "INTERNAL",
+        subject: `Suppressed quote email to ${suppression.email}`,
+        body: input.body,
+        outcome: `Blocked before send because ${suppression.email} is suppressed after ${suppression.reason?.toLowerCase()}.`,
+      },
+    });
+
+    revalidatePath("/email");
+    revalidatePath(`/quote-requests/${id}`);
+
+    return Response.json(
+      {
+        error: `Email blocked. ${suppression.email} is suppressed after ${suppression.reason?.toLowerCase()}. Use a different customer email before sending.`,
+      },
+      { status: 409 },
+    );
+  }
+
   const emailResult: SendEmailResult = await sendTransactionalEmail({
     to: input.toEmail,
     subject: input.subject,
@@ -107,6 +135,7 @@ export async function POST(
 
   revalidatePath("/quote-requests");
   revalidatePath(`/quote-requests/${id}`);
+  revalidatePath("/email");
   revalidatePath("/dashboard");
 
   return Response.json(

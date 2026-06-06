@@ -170,6 +170,8 @@ Expected behavior:
 - quote email template edits validate and persist when `DATABASE_URL` is configured.
 - call intelligence queue loads.
 - email events dashboard loads.
+- suppressed email recipients appear on the email events dashboard after Resend bounce or complaint webhooks.
+- quote email sends are blocked when the recipient is on the suppression list.
 - create lead works.
 - lead click-to-call validates/logs activity or starts Twilio call when configured.
 - lead SMS validates/logs activity or sends through Twilio when configured.

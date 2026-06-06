@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { upsertEmailSuppressionFromResendEvent } from "@/lib/email-suppression";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import {
   getResendEventBody,
@@ -85,7 +86,10 @@ export async function POST(request: Request) {
     },
   });
 
+  await upsertEmailSuppressionFromResendEvent(event, eventId);
+
   revalidatePath("/dashboard");
+  revalidatePath("/email");
   revalidatePath("/leads");
   revalidatePath("/shippers");
   revalidatePath("/quote-requests");

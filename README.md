@@ -1050,7 +1050,6 @@ Remaining:
 
 Remaining:
 
-- Add bounce/complaint suppression rules before future sends
 - Add inbound reply tracking
 - Add quote email version history
 
@@ -1065,8 +1064,23 @@ Remaining:
 
 Remaining:
 
-- Add bounce/complaint suppression rules before future sends
 - Add owner assignment and follow-up status for email exceptions
+- Add inbound reply tracking
+- Add quote email version history
+
+### Milestone 16: Email Suppression Rules
+
+- Add durable suppressed-recipient records for bounced and complained emails
+- Create or update suppressions from Resend bounce and complaint webhooks
+- Block future quote email sends to suppressed addresses before contacting Resend
+- Log blocked quote email attempts as internal email activity
+- Show suppressed recipients on the Email events dashboard
+- Revalidate the Email dashboard after quote email sends and suppressions
+
+Remaining:
+
+- Add owner assignment and follow-up status for email exceptions
+- Add a reviewed/resolved workflow for corrected recipient addresses
 - Add inbound reply tracking
 - Add quote email version history
 

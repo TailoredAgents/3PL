@@ -180,6 +180,69 @@ export default async function CarrierDetailPage({
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Accounts payable
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Carrier payables</h2>
+          </div>
+          <div className="flex items-center gap-3 text-sm font-semibold text-slate-600">
+            <span>
+              {
+                carrier.loads.filter(
+                  (l) => l.carrierInvoiceNumber && !l.carrierPaidAt,
+                ).length
+              }{" "}
+              outstanding
+            </span>
+            <span>
+              {carrier.loads.filter((l) => l.carrierPaidAt).length} paid
+            </span>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3">
+          {carrier.loads.some((l) => l.carrierInvoiceNumber) ? (
+            carrier.loads
+              .filter((l) => l.carrierInvoiceNumber)
+              .map((load) => (
+                <div
+                  key={`payable-${load.id}`}
+                  className="grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 md:grid-cols-[1fr_auto]"
+                >
+                  <div>
+                    <p className="font-semibold">{load.loadNumber}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {load.lane} | Inv: {load.carrierInvoiceNumber}
+                    </p>
+                    {load.carrierPaymentDue ? (
+                      <p className="mt-1 text-xs font-semibold text-amber-700">
+                        Due: {load.carrierPaymentDue}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="text-right text-sm font-semibold">
+                    <p>{toCurrency(load.carrierRate)}</p>
+                    {load.carrierPaidAt ? (
+                      <p className="mt-1 text-emerald-700">
+                        Paid {load.carrierPaidAt}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-amber-700">Unpaid</p>
+                    )}
+                  </div>
+                </div>
+              ))
+          ) : (
+            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+              No carrier invoices recorded yet. Add invoice numbers to loads
+              from the load detail Billing tab.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-2xl font-semibold">Related loads</h2>
         <div className="mt-5 grid gap-4">
           {carrier.loads.length ? (
@@ -190,7 +253,12 @@ export default async function CarrierDetailPage({
                 className="grid gap-3 rounded-md bg-slate-50 p-4 hover:bg-slate-100 md:grid-cols-[1fr_auto]"
               >
                 <div>
-                  <p className="font-semibold">{load.lane}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500">
+                      {load.loadNumber}
+                    </span>
+                    <p className="font-semibold">{load.lane}</p>
+                  </div>
                   <p className="mt-1 text-sm text-slate-600">
                     {load.shipper} | {load.equipment} | {load.status}
                   </p>

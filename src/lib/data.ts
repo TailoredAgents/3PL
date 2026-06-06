@@ -417,6 +417,8 @@ export const carriers = [
     preferredLanes: ["Atlanta -> Dallas", "Atlanta -> Orlando"],
     notes: "Strong dry van option for Southeast lanes. Good communication.",
     loadCount: 8,
+    deliveredLoads: 7,
+    avgMargin: 18.4,
   },
   {
     id: "magnolia-reefer-lines",
@@ -430,6 +432,8 @@ export const carriers = [
     preferredLanes: ["Savannah -> Nashville", "Atlanta -> Tampa"],
     notes: "Good reefer candidate. Verify insurance before tendering.",
     loadCount: 2,
+    deliveredLoads: 1,
+    avgMargin: 14.2,
   },
   {
     id: "cumberland-flatbed",
@@ -443,6 +447,8 @@ export const carriers = [
     preferredLanes: ["Kennesaw -> Memphis", "Atlanta -> Birmingham"],
     notes: "Flatbed option with securement experience.",
     loadCount: 4,
+    deliveredLoads: 4,
+    avgMargin: 21.1,
   },
 ];
 

@@ -46,6 +46,8 @@ export type CarrierView = (typeof carriers)[number] & {
   lastVettedAt?: string;
   approvedBy?: string;
   complianceNotes?: string;
+  deliveredLoads?: number;
+  avgMargin?: number;
 };
 export type LoadDocumentView = {
   id: string;
@@ -1328,7 +1330,12 @@ export async function getCarrierViews(): Promise<CarrierView[]> {
     const records = await prisma.carrier.findMany({
       include: {
         loads: {
-          select: { id: true },
+          select: {
+            id: true,
+            status: true,
+            grossProfit: true,
+            customerRate: true,
+          },
         },
       },
       orderBy: { updatedAt: "desc" },
@@ -1362,6 +1369,22 @@ export async function getCarrierViews(): Promise<CarrierView[]> {
         : ["Lane history needed"],
       notes: carrier.notes ?? "No notes yet.",
       loadCount: carrier.loads.length,
+      deliveredLoads: carrier.loads.filter((l) => l.status === "DELIVERED")
+        .length,
+      avgMargin: (() => {
+        const withGP = carrier.loads.filter(
+          (l) => l.grossProfit !== null && Number(l.customerRate) > 0,
+        );
+        if (!withGP.length) return 0;
+        const avg =
+          withGP.reduce(
+            (sum, l) =>
+              sum +
+              (Number(l.grossProfit) / Number(l.customerRate)) * 100,
+            0,
+          ) / withGP.length;
+        return Number(avg.toFixed(1));
+      })(),
     }));
   } catch {
     return carriers;
@@ -1413,6 +1436,25 @@ export async function getCarrierDetailView(
         : ["Lane history needed"],
       notes: carrier.notes ?? "No notes yet.",
       loadCount: carrier.loads.length,
+      deliveredLoads: carrier.loads.filter((l) => l.status === "DELIVERED")
+        .length,
+      avgMargin: (() => {
+        const withGP = carrier.loads.filter(
+          (l) =>
+            l.grossProfit !== null &&
+            l.grossProfit !== undefined &&
+            Number(l.customerRate) > 0,
+        );
+        if (!withGP.length) return 0;
+        const avg =
+          withGP.reduce(
+            (sum, l) =>
+              sum +
+              (Number(l.grossProfit) / Number(l.customerRate)) * 100,
+            0,
+          ) / withGP.length;
+        return Number(avg.toFixed(1));
+      })(),
       loads: carrier.loads.map((load) => mapLoad(load)),
     };
   } catch {

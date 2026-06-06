@@ -186,6 +186,98 @@ export function ShipperCreateForm() {
   );
 }
 
+export function ShipperEditForm({
+  shipperId,
+  defaults,
+}: {
+  shipperId: string;
+  defaults: {
+    companyName: string;
+    industry: string;
+    website: string;
+    status: string;
+    notes: string;
+  };
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/shippers/${shipperId}`, "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field name="companyName" label="Company name" required defaultValue={defaults.companyName} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="industry" label="Industry" defaultValue={defaults.industry} />
+        <Field name="website" label="Website" defaultValue={defaults.website} />
+      </div>
+      <Select
+        name="status"
+        label="Status"
+        options={["LEAD", "ACTIVE", "INACTIVE"]}
+        defaultValue={defaults.status}
+      />
+      <Textarea name="notes" label="Notes / lane context" defaultValue={defaults.notes} />
+      <FormFooter state={state} buttonLabel="Save shipper" />
+    </form>
+  );
+}
+
+export function ContactEditForm({
+  contactId,
+  defaults,
+}: {
+  contactId: string;
+  defaults: {
+    firstName: string;
+    lastName: string;
+    title: string;
+    email: string;
+    phone: string;
+  };
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/contacts/${contactId}`, "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="firstName" label="First name" required defaultValue={defaults.firstName} />
+        <Field name="lastName" label="Last name" defaultValue={defaults.lastName} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="title" label="Title" defaultValue={defaults.title} />
+        <Field name="phone" label="Phone" defaultValue={defaults.phone} />
+      </div>
+      <Field name="email" label="Email" type="email" defaultValue={defaults.email} />
+      <FormFooter state={state} buttonLabel="Save contact" />
+    </form>
+  );
+}
+
+export function LeadFollowUpCompleteForm({
+  leadId,
+  currentStage,
+  currentPriority,
+}: {
+  leadId: string;
+  currentStage: string;
+  currentPriority: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/leads/${leadId}`, "PATCH");
+
+  return (
+    <form onSubmit={onSubmit} className="inline-flex">
+      <input type="hidden" name="stage" value={enumValue(currentStage)} />
+      <input type="hidden" name="priority" value={currentPriority} />
+      <input type="hidden" name="nextFollowUpAt" value="" />
+      <button
+        type="submit"
+        disabled={state.status === "loading"}
+        className="inline-flex items-center gap-2 rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+      >
+        {state.status === "loading" ? "Clearing..." : "Complete follow-up"}
+      </button>
+    </form>
+  );
+}
+
 export function QuoteRequestCreateForm() {
   const { state, onSubmit } = useCrmSubmit("/api/quote-requests");
 

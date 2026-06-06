@@ -412,3 +412,22 @@ export type AppSettingsInput = z.infer<typeof appSettingsSchema>;
 export type QuoteEmailTemplateSettingsInput = z.infer<
   typeof quoteEmailTemplateSettingsSchema
 >;
+
+export const shipperUpdateSchema = z.object({
+  companyName: requiredString,
+  industry: z.string().trim().optional(),
+  website: z.string().trim().optional(),
+  status: z.enum(["LEAD", "ACTIVE", "INACTIVE"]).optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const contactUpdateSchema = z.object({
+  firstName: requiredString,
+  lastName: z.string().trim().optional(),
+  title: z.string().trim().optional(),
+  email: z.email().optional().or(z.literal("")),
+  phone: z.string().trim().optional(),
+});
+
+export type ShipperUpdateInput = z.infer<typeof shipperUpdateSchema>;
+export type ContactUpdateInput = z.infer<typeof contactUpdateSchema>;

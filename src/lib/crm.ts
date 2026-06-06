@@ -148,7 +148,31 @@ export type LoadView = {
   documents: LoadDocumentView[];
 };
 export type LoadDetailView = LoadView;
+export type ContactSummaryView = {
+  id: string;
+  fullName: string;
+  title: string;
+  email: string;
+  phone: string;
+  isPrimary: boolean;
+};
+export type ContactDetailView = {
+  id: string;
+  shipperId: string;
+  company: string;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  title: string;
+  email: string;
+  phone: string;
+  isPrimary: boolean;
+  leads: LeadView[];
+  activities: ActivityView[];
+};
 export type ShipperDetailView = ShipperView & {
+  rawNotes: string;
+  contacts: ContactSummaryView[];
   leads: LeadView[];
   quoteRequests: QuoteRequestView[];
   loads: LoadView[];
@@ -975,6 +999,15 @@ export async function getShipperDetailView(
       phone: primary?.phone ?? "No phone",
       lanes: splitList(extractField(shipper.notes ?? "", "Lanes")),
       notes: shipper.notes ?? "No notes yet.",
+      rawNotes: shipper.notes ?? "",
+      contacts: shipper.contacts.map((c) => ({
+        id: c.id,
+        fullName: formatContactName(c),
+        title: c.title ?? "",
+        email: c.email ?? "",
+        phone: c.phone ?? "",
+        isPrimary: c.isPrimary,
+      })),
       leads: shipper.leads.map((lead) => {
         const notes = `${shipper.notes ?? ""}\n${lead.notes ?? ""}`;
         return {
@@ -1779,6 +1812,8 @@ function getSampleShipperDetailView(id: string): ShipperDetailView | null {
   return sample
     ? {
         ...sample,
+        rawNotes: sample.notes,
+        contacts: [],
         leads: leads.filter((lead) => lead.company === sample.company),
         quoteRequests: quoteRequests.filter(
           (quote) => quote.company === sample.company,
@@ -2303,4 +2338,73 @@ function parseAgentOutput(outputJson: unknown) {
     nextAction:
       typeof output.nextAction === "string" ? output.nextAction : undefined,
   };
+}
+
+export async function getContactDetailView(
+  id: string,
+): Promise<ContactDetailView | null> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return null;
+  }
+
+  try {
+    const contact = await prisma.contact.findUnique({
+      where: { id },
+      include: {
+        shipper: true,
+        leads: {
+          include: { contact: true },
+          orderBy: { updatedAt: "desc" },
+        },
+        activities: {
+          orderBy: { createdAt: "desc" },
+          take: 25,
+        },
+      },
+    });
+
+    if (!contact) {
+      return null;
+    }
+
+    return {
+      id: contact.id,
+      shipperId: contact.shipperId,
+      company: contact.shipper.companyName,
+      fullName: formatContactName(contact),
+      firstName: contact.firstName,
+      lastName: contact.lastName ?? "",
+      title: contact.title ?? "",
+      email: contact.email ?? "",
+      phone: contact.phone ?? "",
+      isPrimary: contact.isPrimary,
+      leads: contact.leads.map((lead) => ({
+        id: lead.id,
+        company: contact.shipper.companyName,
+        contact: formatContactName(lead.contact),
+        title: lead.contact?.title ?? "Contact",
+        phone: lead.contact?.phone ?? "No phone",
+        email: lead.contact?.email ?? "No email",
+        stage: titleCaseEnum(lead.stage),
+        source: titleCaseEnum(lead.source),
+        priority: formatPriority(lead.priority),
+        lanes: "Lane details needed",
+        equipment: "Equipment needed",
+        volume: "Volume unknown",
+        nextFollowUp: lead.nextFollowUpAt
+          ? formatFollowUp(lead.nextFollowUpAt)
+          : "No follow-up set",
+        pain: lead.notes ?? "Needs qualification.",
+        aiNextAction: lead.notes ?? "Qualify next action.",
+      })),
+      activities: contact.activities.map((activity) => ({
+        company: contact.shipper.companyName,
+        type: titleCaseEnum(activity.type),
+        detail: activity.body ?? activity.subject ?? "Activity recorded.",
+        time: formatFollowUp(activity.createdAt),
+      })),
+    };
+  } catch {
+    return null;
+  }
 }

@@ -15,6 +15,7 @@ import {
   AiAgentRunForm,
   LeadClickToCallForm,
   LeadEmailForm,
+  LeadFollowUpCompleteForm,
   LeadSmsForm,
   LeadUpdateForm,
 } from "@/components/crm-forms";
@@ -84,9 +85,16 @@ export default async function LeadDetailPage({
                 Source: {lead.source} | Priority: {lead.priority}
               </span>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <CalendarClock className="h-5 w-5 flex-none text-slate-400" />
               <span>Next follow-up: {lead.nextFollowUp}</span>
+              {lead.nextFollowUp !== "No follow-up set" && (
+                <LeadFollowUpCompleteForm
+                  leadId={lead.id}
+                  currentStage={lead.stage}
+                  currentPriority="3"
+                />
+              )}
             </div>
           </div>
 

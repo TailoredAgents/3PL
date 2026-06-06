@@ -214,30 +214,31 @@ Completion criteria (advanced significantly):
 
 Goal: make the back office operational enough to get paid and pay carriers.
 
-Status: not started.
+Status: 4.1 complete (core model expansion + credit + status/aging visibility); remaining for 4.2 (settlement batches, PDF/email, QB sync, exports, commission reporting).
 
-Build:
+Build (Phase 4.1 completed):
 
-- Expand customer invoice records with invoice number, terms, sent date, due
-  date, paid date, balance, and AR aging.
-- Expand carrier invoice records with dispute reason, approval owner, payment
-  batch, remittance notes, and quick-pay/factoring metadata.
-- Add customer credit terms and credit limit on shipper accounts.
-- Add carrier settlement/payment batch workflow.
-- Add commission reporting by user/load/customer.
-- Add invoice PDF generation and email sending.
-- Add financial export views.
+- Expanded Invoice (added invoiceNumber, terms, sentAt, balance) and CarrierInvoice (added disputeReason, approvalOwner, paymentBatch, remittanceNotes, quickPayMetadata) with explicit migration.
+- Added creditTerms and creditLimit to Shipper model.
+- Updated validation schemas, invoice/carrier-invoice APIs and forms (InvoiceCreateForm, payables log form), and PATCH handlers.
+- Enhanced crm views (InvoiceView, CarrierInvoiceView) and queue UIs (billing/payables rows + pages) to surface new fields, approval/dispute details, and better status visibility.
+- Basic AR aging (existing overdue logic + new fields) and status progression (e.g. auto sentAt on SENT) improvements.
+- Builds directly on strong existing /billing and /payables foundations, document links, and load status flows. No duplication of systems.
+- Followed all handoff rules.
 
-Integrations:
+Remaining for full Phase 4:
 
-- Prepare QuickBooks-ready customer/vendor/invoice/bill sync records.
-- Track sync status and errors without blocking the internal workflow.
+- Carrier settlement/payment batch workflow.
+- Invoice PDF generation and email sending (email for SENT already partially present).
+- Commission reporting.
+- QuickBooks-ready sync records + error tracking.
+- Financial export views.
 
-Completion criteria:
+Completion criteria progress:
 
-- Billing can move from delivered/POD received to invoice sent to paid.
-- Payables can move from carrier invoice received to matched to approved to paid.
-- Finance exceptions are visible and assignable.
+- Billing can move from delivered/POD to SENT/INVOICED to PAID with richer details (number, terms, balance).
+- Payables can move RECEIVED → MATCHED → APPROVED → PAID with dispute/approval owner support and variance visibility.
+- Finance exceptions (overdue, variance, dispute) are more visible in queues.
 
 ## Phase 5: Tracking And Visibility Workspace
 

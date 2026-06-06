@@ -1246,6 +1246,64 @@ export function CarrierComplianceForm({
   );
 }
 
+export function ShipperContactCreateForm({
+  shipperId,
+}: {
+  shipperId: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/shippers/${shipperId}/contacts`,
+    "POST",
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="firstName" label="First name" required />
+        <Field name="lastName" label="Last name" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="title" label="Title / role" />
+        <Field name="phone" label="Phone" />
+      </div>
+      <Field name="email" label="Email" type="email" />
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+        <input type="checkbox" name="isPrimary" value="true" className="rounded" />
+        Set as primary contact
+      </label>
+      <FormFooter state={state} buttonLabel="Add contact" />
+    </form>
+  );
+}
+
+export function ShipperLanesForm({
+  shipperId,
+  currentLanes,
+}: {
+  shipperId: string;
+  currentLanes: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/shippers/${shipperId}/lanes`,
+    "PATCH",
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field
+        name="lanes"
+        label="Known lanes"
+        defaultValue={currentLanes === "No lanes on file." ? "" : currentLanes}
+        placeholder="Atlanta to Dallas; Savannah to Nashville"
+      />
+      <p className="text-xs text-slate-500">
+        Separate multiple lanes with semicolons.
+      </p>
+      <FormFooter state={state} buttonLabel="Save lanes" />
+    </form>
+  );
+}
+
 export function SettingsForm({
   callRecordingDisclosure,
 }: {

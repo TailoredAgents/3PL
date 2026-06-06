@@ -15,6 +15,10 @@ import {
   UserRound,
 } from "lucide-react";
 
+import {
+  ShipperContactCreateForm,
+  ShipperLanesForm,
+} from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getShipperDetailView } from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
@@ -197,6 +201,36 @@ export default async function ShipperDetailPage({
           </div>
         </article>
       )}
+
+      {/* Add contact + manage lanes */}
+      <section className="grid gap-6 xl:grid-cols-2">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <UserRound className="h-4 w-4 text-slate-400" />
+              <p className="flex-1 text-sm font-semibold text-slate-700">Add contact</p>
+              <span className="text-xs text-slate-400 group-open:hidden">Expand</span>
+              <span className="hidden text-xs text-slate-400 group-open:inline">Collapse</span>
+            </summary>
+            <div className="p-5">
+              <ShipperContactCreateForm shipperId={shipper.id} />
+            </div>
+          </details>
+        </article>
+
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <MapPinned className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Manage lanes</p>
+          </div>
+          <div className="p-5">
+            <ShipperLanesForm
+              shipperId={shipper.id}
+              currentLanes={shipper.lanes.join("; ")}
+            />
+          </div>
+        </article>
+      </section>
 
       {/* Related: leads, quotes, loads */}
       <section className="grid gap-6 xl:grid-cols-3">

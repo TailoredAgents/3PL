@@ -967,7 +967,15 @@ export function DocumentCreateForm({ loadId }: { loadId: string }) {
         />
         <Field name="fileName" label="Document name" required />
       </div>
-      <Field name="fileUrl" label="File URL" placeholder="Optional until storage is wired" />
+      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        Upload file
+        <input
+          name="file"
+          type="file"
+          accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.csv,.xlsx"
+          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-white hover:border-emerald-300"
+        />
+      </label>
       <Textarea name="extractedText" label="Notes / extracted text" />
       <FormFooter state={state} buttonLabel="Add document" />
     </form>

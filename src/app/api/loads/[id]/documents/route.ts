@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { uploadFile } from "@/lib/storage";
 import { documentCreateSchema } from "@/lib/validation";
 
 export async function POST(
@@ -10,9 +11,14 @@ export async function POST(
 ) {
   const { id } = await context.params;
   const formData = await request.formData();
+
+  const rawFile = formData.get("file");
+  const uploadedFile = isFileLike(rawFile) ? rawFile : null;
+  const derivedFileName = uploadedFile?.name ?? formValue(formData, "fileName");
+
   const parsed = documentCreateSchema.safeParse({
     type: formValue(formData, "type") ?? "OTHER",
-    fileName: formValue(formData, "fileName"),
+    fileName: derivedFileName,
     fileUrl: formValue(formData, "fileUrl"),
     extractedText: formValue(formData, "extractedText"),
   });
@@ -41,13 +47,24 @@ export async function POST(
   }
 
   const input = parsed.data;
+
+  let fileUrl = input.fileUrl;
+  if (!fileUrl && uploadedFile) {
+    const result = await uploadFile(
+      uploadedFile,
+      uploadedFile.name,
+      uploadedFile.type || "application/octet-stream",
+    );
+    fileUrl = result.fileUrl;
+  }
+
   await prisma.document.create({
     data: {
       loadId: load.id,
       shipperId: load.shipperId,
       type: input.type,
       fileName: input.fileName,
-      fileUrl: input.fileUrl || `pending-storage://${input.fileName}`,
+      fileUrl: fileUrl || `pending-storage://${input.fileName}`,
       extractedText: input.extractedText,
     },
   });
@@ -74,4 +91,15 @@ export async function POST(
   revalidatePath("/dashboard");
 
   return Response.json({ message: "Document added to load." });
+}
+
+function isFileLike(value: FormDataEntryValue | null): value is File {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    "size" in value &&
+    typeof (value as File).size === "number" &&
+    (value as File).size > 0
+  );
 }

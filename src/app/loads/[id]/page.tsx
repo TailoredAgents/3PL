@@ -328,7 +328,7 @@ export default async function LoadDetailPage({
             <h2 className="text-2xl font-semibold">Add document</h2>
             <p className="mt-3 leading-7 text-slate-600">
               Log PODs, rate confirmations, invoices, and other load documents.
-              Storage comes later; this records the document metadata now.
+              Upload a file directly or add a name to record the document without a file.
             </p>
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
               <DocumentCreateForm loadId={load.id} />

@@ -1,17 +1,16 @@
 import { runSavingsAuditAgent } from "@/lib/grok";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { uploadFile } from "@/lib/storage";
 import { freightAuditSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
-  const documents = formData
-    .getAll("documents")
-    .filter(isFileLike)
-    .map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    }));
+  const rawFiles = formData.getAll("documents").filter(isFileLike);
+  const documents = rawFiles.map((file) => ({
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  }));
 
   const parsed = freightAuditSchema.safeParse({
     companyName: formData.get("companyName"),
@@ -82,11 +81,16 @@ export async function POST(request: Request) {
         grokConfidence: agentResult.confidence,
         completedAt: new Date(),
         documents: {
-          create: documents.map((document) => ({
-            type: "AUDIT_UPLOAD",
-            fileName: document.name,
-            fileUrl: `pending-storage://${document.name}`,
-          })),
+          create: await Promise.all(
+            rawFiles.map(async (file) => {
+              const result = await uploadFile(file, file.name, file.type || "application/octet-stream");
+              return {
+                type: "AUDIT_UPLOAD" as const,
+                fileName: file.name,
+                fileUrl: result.fileUrl,
+              };
+            }),
+          ),
         },
       },
     });

@@ -34,6 +34,16 @@ libraries wherever practical.
   S3/R2-compatible storage metadata, a download route, file size/MIME/source/
   status/extraction fields, and document links on load, shipper, carrier,
   billing, and payables workflows.
+- Phase 2.1 completed: Document text extraction foundation. Auto-extract for
+  plain text uploads; runDocumentExtraction + clean adapter (text direct,
+  PDF/image provider boundary) in src/lib/documents.ts; POST
+  /api/documents/[id]/extract supporting auto + manual review overrides
+  (sets COMPLETED/FAILED/PENDING using existing fields); review UI with
+  Run/Review/Save flows + text snippets embedded in /documents (desktop +
+  mobile); extractedText surfaced in document views; all without schema
+  changes or duplicate systems. Validations (lint/tsc/prisma/build) and
+  push passed. Prepares raw extractedText for later BOL/POD parsing,
+  carrier invoice matching, and billing automation with human review gate.
 
 ## Multi-Agent Handoff Rules
 
@@ -124,27 +134,49 @@ Completion criteria:
 
 Goal: let the system read important freight paperwork.
 
-Status: not started.
+Status: foundation complete (sub-phase 2.1); structured parsing + exceptions remain.
 
-Build:
+Build (Phase 2.1 completed):
 
-- Add OCR/PDF text extraction for uploaded documents.
-- Add document extraction queue/status.
-- Parse audit uploads, rate confirmations, PODs, BOLs, and carrier invoices.
-- Surface extracted fields with human review before applying them.
-- Add document exception states for missing, unreadable, mismatched, or duplicate
-  paperwork.
+- Added practical text extraction using existing Document.extractionStatus and
+  extractedText (no schema or parallel document changes).
+- Auto-extracts .txt/.csv and similar at upload time for text files.
+- runDocumentExtraction + extractTextFromBytes behind clean adapter in
+  src/lib/documents.ts: direct decode for text mimes/files; PDF/image/other
+  return FAILED with actionable guidance (provider boundary ready for OCR/
+  vision later).
+- POST /api/documents/[id]/extract supports trigger (auto) and review (manual
+  extractedText override forces COMPLETED). Handles PENDING during work,
+  graceful no-storage cases, and revalidates center + linked records.
+- Added DocumentExtractionControl (review UI) on /documents: Run extraction
+  buttons, inline Review/edit textarea + "Save reviewed text", status pills
+  updated, text snippets visible in register (desktop table + mobile cards).
+- Updated document view types/mappers so extractedText flows to UIs without
+  duplicating systems.
+- Followed all handoff rules: pulled, read roadmap, one sub-phase, explicit
+  (no migration), full validation + commit/push before roadmap update.
 
-AI-ready additions:
+Remaining for full Phase 2 / later:
 
-- Savings Audit Agent can use extracted invoice/rate-con text.
-- Billing Readiness Agent can compare POD, carrier invoice, and load records.
-- Conversation Notes Agent can link quote intent to uploaded docs when relevant.
+- Structured field parsing from extractedText (BOL/POD/rate con/invoice
+  specific extractors + exception states).
+- Document exception UI/states (missing, unreadable, mismatched, duplicate).
+- Wire into Savings Audit / Billing Readiness agents with review gates.
+- Optional: provider-backed OCR (e.g. vision LLM when OPENAI/XAI configured,
+  or external service adapter).
 
-Completion criteria:
+AI-ready additions (enabled by 2.1):
 
-- Uploaded PDFs/images can produce stored extracted text.
-- Users can review extracted fields before updates affect operational records.
+- Extracted raw text now stored under review for audit, invoice matching,
+  POD verification, and billing readiness.
+- Future agents can read document.extractedText safely.
+
+Completion criteria (2.1):
+
+- Text files produce stored extracted text automatically.
+- Users can request extraction and review/edit text before any downstream use.
+- Statuses (NOT_REQUESTED / PENDING / COMPLETED / FAILED) fully supported.
+- No AI auto-applies fields; human review is explicit step.
 
 ## Phase 3: Carrier Onboarding And Compliance
 
@@ -389,8 +421,9 @@ Completion criteria:
 
 - `npm run lint` currently fails on existing explicit `any` usage in carrier
   invoice APIs and CRM helpers, plus a few unused imports/variables.
-- Document storage is partially present, but the full document center, OCR, and
-  durable production workflow are not complete.
+- Document storage + extraction foundation complete (Phase 1 + 2.1). Full OCR
+  provider integration, structured BOL/POD/invoice parsing, and autonomous
+  extraction jobs remain for later phases.
 - DAT/Truckstop adapters exist, but final account-specific provider mappings are
   still required.
 - Background workers/queues are not yet implemented.

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Sparkles } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 import { InternalAccount } from "@/components/internal-account";
 import { isClerkAuthConfigured } from "@/lib/auth";
@@ -33,19 +33,7 @@ export async function InternalShell({
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#d1fae5_0,#f1f5f9_34%,#e2e8f0_100%)] text-slate-950">
       <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-slate-950 p-5 text-white shadow-2xl lg:block">
-        <div className="mt-0">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-950/30">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <p className="mt-5 text-xl font-semibold tracking-tight">
-            {platformName}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            Internal CRM/TMS command center for sales, brokerage operations, AI
-            agents, and operating performance.
-          </p>
-        </div>
-        <nav className="mt-8 grid gap-5 text-sm font-medium text-slate-300">
+        <nav className="grid gap-5 text-sm font-medium text-slate-300">
           {internalNavGroups.map((group) => (
             <div key={group.label}>
               <p className="px-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-slate-500">

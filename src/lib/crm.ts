@@ -2696,6 +2696,44 @@ function parseAgentOutput(outputJson: unknown) {
   };
 }
 
+export type ContactListItem = {
+  id: string;
+  fullName: string;
+  title: string;
+  email: string;
+  phone: string;
+  company: string;
+  shipperId: string;
+  isPrimary: boolean;
+};
+
+export async function getContactListViews(): Promise<ContactListItem[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return [];
+  }
+
+  try {
+    const contacts = await prisma.contact.findMany({
+      include: { shipper: { select: { id: true, companyName: true } } },
+      orderBy: [{ shipper: { companyName: "asc" } }, { isPrimary: "desc" }],
+      take: 200,
+    });
+
+    return contacts.map((c) => ({
+      id: c.id,
+      fullName: formatContactName(c),
+      title: c.title ?? "",
+      email: c.email ?? "",
+      phone: c.phone ?? "",
+      company: c.shipper.companyName,
+      shipperId: c.shipper.id,
+      isPrimary: c.isPrimary,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getContactDetailView(
   id: string,
 ): Promise<ContactDetailView | null> {

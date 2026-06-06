@@ -41,6 +41,7 @@ export const internalNavGroups = [
     items: [
       { label: "Leads", href: "/leads", icon: Users },
       { label: "Customers", href: "/shippers", icon: Building2 },
+      { label: "Contacts", href: "/contacts", icon: ClipboardList },
       { label: "Quotes & Pricing", href: "/quote-requests", icon: FileText },
     ],
   },

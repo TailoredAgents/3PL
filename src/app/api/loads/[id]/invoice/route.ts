@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { sendTransactionalEmail } from "@/lib/email";
 import { formValue, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { invoiceCreateSchema } from "@/lib/validation";
@@ -31,7 +32,25 @@ export async function POST(
 
   const load = await prisma.load.findUnique({
     where: { id },
-    select: { id: true, shipperId: true },
+    select: {
+      id: true,
+      shipperId: true,
+      loadNumber: true,
+      originCity: true,
+      originState: true,
+      destinationCity: true,
+      destinationState: true,
+      shipper: {
+        select: {
+          companyName: true,
+          contacts: {
+            where: { isPrimary: true },
+            select: { firstName: true, email: true },
+            take: 1,
+          },
+        },
+      },
+    },
   });
 
   if (!load) {
@@ -86,6 +105,26 @@ export async function POST(
   revalidatePath("/loads");
   revalidatePath(`/loads/${id}`);
   revalidatePath("/dashboard");
+
+  const billingContact = load.shipper?.contacts?.[0];
+  if (input.status === "SENT" && billingContact?.email) {
+    const loadLabel = `LD-${String(load.loadNumber).padStart(4, "0")}`;
+    const lane = `${load.originCity}, ${load.originState} → ${load.destinationCity}, ${load.destinationState}`;
+    await sendTransactionalEmail({
+      to: billingContact.email,
+      subject: `Invoice — ${loadLabel} | ${load.shipper?.companyName ?? "DAO Logistics"}`,
+      idempotencyKey: `invoice-${load.id}-sent`,
+      text: [
+        `Hi ${billingContact.firstName},`,
+        `Your invoice for load ${loadLabel} (${lane}) has been sent.`,
+        `Amount due: $${Number(input.amount).toLocaleString()}`,
+        `Please process payment at your earliest convenience. Reply to this email with any questions.`,
+        `— DAO Logistics`,
+      ].join("\n\n"),
+    }).catch(() => {
+      // Non-fatal: email failure should not block the invoice save response
+    });
+  }
 
   return Response.json({ message: "Invoice saved." });
 }

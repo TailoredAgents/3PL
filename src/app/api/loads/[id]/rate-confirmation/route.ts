@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { sendTransactionalEmail } from "@/lib/email";
 import { formValue, nullableString } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { rateConfirmationUpdateSchema } from "@/lib/validation";
@@ -34,7 +35,17 @@ export async function POST(
 
   const load = await prisma.load.findUnique({
     where: { id },
-    select: { id: true, shipperId: true },
+    select: {
+      id: true,
+      shipperId: true,
+      loadNumber: true,
+      originCity: true,
+      originState: true,
+      destinationCity: true,
+      destinationState: true,
+      pickupDate: true,
+      carrier: { select: { name: true, email: true } },
+    },
   });
 
   if (!load) {
@@ -91,6 +102,33 @@ export async function POST(
   revalidatePath("/loads");
   revalidatePath(`/loads/${id}`);
   revalidatePath("/dashboard");
+
+  if (input.rateConfirmationStatus === "SENT" && load.carrier?.email) {
+    const loadLabel = `LD-${String(load.loadNumber).padStart(4, "0")}`;
+    const lane = `${load.originCity}, ${load.originState} → ${load.destinationCity}, ${load.destinationState}`;
+    const pickup = load.pickupDate
+      ? new Date(load.pickupDate).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "TBD";
+    await sendTransactionalEmail({
+      to: load.carrier.email,
+      subject: `Rate Confirmation — ${loadLabel} | ${lane}`,
+      idempotencyKey: `rate-con-${load.id}-sent`,
+      text: [
+        `Hi ${load.carrier.name},`,
+        `Your rate confirmation for load ${loadLabel} is ready.`,
+        `Lane: ${lane}`,
+        `Pickup: ${pickup}`,
+        `Please review and sign at your earliest convenience. Reply to this email with any questions.`,
+        `— DAO Logistics`,
+      ].join("\n\n"),
+    }).catch(() => {
+      // Non-fatal: email failure should not block the status update response
+    });
+  }
 
   return Response.json({ message: "Rate confirmation updated." });
 }

@@ -246,3 +246,115 @@ function parseCallIntakeResponse(
     };
   }
 }
+
+export type DocumentStructuredFields = {
+  bolNumber?: string | null;
+  proNumber?: string | null;
+  pieces?: number | null;
+  weightLbs?: number | null;
+  originCity?: string | null;
+  originState?: string | null;
+  destinationCity?: string | null;
+  destinationState?: string | null;
+  shipDate?: string | null;
+  deliveryDate?: string | null;
+  commodity?: string | null;
+  rate?: number | null;
+  carrierName?: string | null;
+  customerReference?: string | null;
+  exceptions?: string[];
+  notes?: string | null;
+};
+
+export async function runDocumentStructuredExtraction(input: {
+  documentType: string;
+  extractedText?: string | null;
+  fileName: string;
+  mimeType?: string | null;
+  imageBase64?: string | null; // full data URL preferred for vision
+}): Promise<{
+  fields: DocumentStructuredFields;
+  confidence: number;
+  summary: string;
+}> {
+  if (!client) {
+    return {
+      fields: {},
+      confidence: 0.25,
+      summary: "Structured extraction is a local placeholder (no XAI_API_KEY). Configure credentials for vision + JSON field extraction on PDFs and images.",
+    };
+  }
+
+  const isImage = !!input.imageBase64 &&
+    (input.mimeType?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(input.fileName));
+
+  const system = `You are a precise freight brokerage document parser. 
+Only extract information that is explicitly visible or stated. 
+Return strict JSON with:
+{
+  "fields": {
+    "bolNumber": string|null,
+    "proNumber": string|null,
+    "pieces": number|null,
+    "weightLbs": number|null,
+    "originCity": string|null,
+    "originState": string|null,
+    "destinationCity": string|null,
+    "destinationState": string|null,
+    "shipDate": string|null,
+    "deliveryDate": string|null,
+    "commodity": string|null,
+    "rate": number|null,
+    "carrierName": string|null,
+    "customerReference": string|null
+  },
+  "confidence": number (0-1),
+  "summary": string (one sentence),
+  "exceptions": string[] (e.g. ["Pieces on document do not match load", "Missing BOL number"])
+}`;
+
+  const baseText = `Document Type: ${input.documentType}
+File: ${input.fileName}
+Raw extracted text (may be incomplete or empty):
+${input.extractedText || "(no prior text extraction)"}`;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let userContent: any = baseText;
+
+  if (isImage && input.imageBase64) {
+    const imageUrl = input.imageBase64.startsWith("data:") 
+      ? input.imageBase64 
+      : `data:${input.mimeType || "image/jpeg"};base64,${input.imageBase64}`;
+    userContent = [
+      { type: "text", text: baseText + "\n\nAnalyze the attached image of the freight document and extract the structured fields accurately." },
+      { type: "image_url", image_url: { url: imageUrl } }
+    ];
+  }
+
+  try {
+    const response = await client.chat.completions.create({
+      model: xaiModel,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: userContent },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 900,
+    });
+
+    const raw = response.choices[0]?.message?.content;
+    const parsed = raw ? JSON.parse(raw) : {};
+
+    return {
+      fields: parsed.fields || {},
+      confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.6,
+      summary: parsed.summary || "Structured fields extracted from document.",
+    };
+  } catch (err) {
+    return {
+      fields: {},
+      confidence: 0.2,
+      summary: `Structured extraction encountered an error: ${err instanceof Error ? err.message : "unknown"}. Review raw text manually.`,
+    };
+  }
+}

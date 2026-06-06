@@ -640,6 +640,7 @@ export default async function LoadDetailPage({
                       </p>
                       <p className="mt-0.5 text-xs text-slate-500">
                         AI extraction: {document.extractionStatus}
+                        {document.extractedFields ? " · Structured" : ""}
                       </p>
                       {document.downloadHref ? (
                         <div className="mt-1.5 break-all text-sm">

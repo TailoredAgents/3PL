@@ -7,6 +7,9 @@ import {
 
 import { uploadFile, downloadStoredFile, type UploadFileResult } from "@/lib/storage";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { runDocumentStructuredExtraction, type DocumentStructuredFields } from "@/lib/grok";
+import { Prisma } from "@prisma/client";
+export type { DocumentStructuredFields } from "@/lib/grok";
 
 export const documentTypeOptions: DocumentType[] = [
   "BOL",
@@ -226,10 +229,14 @@ export async function extractTextFromBytes(
 
 export async function runDocumentExtraction(
   documentId: string,
-  options?: { extractedText?: string | null },
+  options?: { 
+    extractedText?: string | null; 
+    extractedFields?: DocumentStructuredFields | null;
+  },
 ): Promise<{
   status: DocumentExtractionStatus;
   extractedText: string | null;
+  extractedFields?: DocumentStructuredFields | null;
   error?: string;
 }> {
   if (!hasDatabaseUrl() || !prisma) {
@@ -249,6 +256,8 @@ export async function runDocumentExtraction(
       storageKey: true,
       fileUrl: true,
       extractedText: true,
+      extractedFields: true,
+      type: true,
     },
   });
 
@@ -260,20 +269,27 @@ export async function runDocumentExtraction(
     };
   }
 
-  // Manual/review path: explicit text (including empty string to clear) forces COMPLETED.
-  if (options && Object.prototype.hasOwnProperty.call(options, "extractedText")) {
-    const text = options.extractedText ?? null;
+  // Manual/review path for text or structured fields (human review gate)
+  if (options && (Object.prototype.hasOwnProperty.call(options, "extractedText") || Object.prototype.hasOwnProperty.call(options, "extractedFields"))) {
+    const text = options.extractedText !== undefined ? options.extractedText : doc.extractedText;
+    const fields = options.extractedFields !== undefined ? options.extractedFields : (doc.extractedFields as DocumentStructuredFields | null);
+
     await prisma.document.update({
       where: { id: documentId },
       data: {
         extractionStatus: DocumentExtractionStatus.COMPLETED,
         extractedText: text,
+        extractedFields: fields ?? Prisma.JsonNull,
       },
     });
-    return { status: DocumentExtractionStatus.COMPLETED, extractedText: text };
+    return { 
+      status: DocumentExtractionStatus.COMPLETED, 
+      extractedText: text, 
+      extractedFields: fields 
+    };
   }
 
-  // Auto-extraction path
+  // Auto-extraction path (text + structured when possible)
   await prisma.document.update({
     where: { id: documentId },
     data: { extractionStatus: DocumentExtractionStatus.PENDING },
@@ -281,9 +297,12 @@ export async function runDocumentExtraction(
 
   let finalStatus: DocumentExtractionStatus = DocumentExtractionStatus.FAILED;
   let finalText: string | null = null;
+  let finalFields: DocumentStructuredFields | null = null;
   let extractionError: string | undefined;
 
   try {
+    let bytesForVision: Uint8Array | null = null;
+
     if (doc.storageKey) {
       const stored = await downloadStoredFile(doc.storageKey);
       const { text, status, error } = await extractTextFromBytes(
@@ -294,18 +313,49 @@ export async function runDocumentExtraction(
       finalStatus = status;
       finalText = text;
       extractionError = error;
+
+      // Prepare for vision if this is an image type (PDFs rely more on prior text or future image conversion)
+      const isImageType = doc.mimeType?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(doc.fileName);
+      if (isImageType) {
+        bytesForVision = stored.body;
+      }
     } else if (doc.extractedText) {
-      // Had text from upload-time manual entry or prior; keep it.
       finalStatus = DocumentExtractionStatus.COMPLETED;
       finalText = doc.extractedText;
     } else if (isTextExtractableMime(doc.mimeType, doc.fileName)) {
       finalStatus = DocumentExtractionStatus.FAILED;
       extractionError =
-        "Plain text file was uploaded without durable storage; extraction cannot recover original bytes. Re-upload after configuring storage, or paste the text using the upload form.";
+        "Plain text file was uploaded without durable storage; extraction cannot recover original bytes.";
     } else {
       finalStatus = DocumentExtractionStatus.FAILED;
       extractionError =
-        "No stored file available (storage not configured). Provide extracted text at upload time or configure durable storage for post-upload extraction.";
+        "No stored file available. Configure storage for full auto extraction of images/PDFs.";
+    }
+
+    // Attempt structured extraction using LLM (text always, vision for images when we have bytes + keys)
+    if (finalText || bytesForVision) {
+      let imageBase64: string | null = null;
+      if (bytesForVision) {
+        const b64 = Buffer.from(bytesForVision).toString("base64");
+        const mime = doc.mimeType || "image/jpeg";
+        imageBase64 = `data:${mime};base64,${b64}`;
+      }
+
+      const structured = await runDocumentStructuredExtraction({
+        documentType: doc.type,
+        extractedText: finalText,
+        fileName: doc.fileName,
+        mimeType: doc.mimeType,
+        imageBase64,
+      });
+
+      finalFields = structured.fields;
+      // If we got good structured data, consider the overall extraction successful even if raw text was partial
+      if (Object.keys(finalFields).length > 0 && structured.confidence > 0.3) {
+        if (finalStatus !== DocumentExtractionStatus.COMPLETED) {
+          finalStatus = DocumentExtractionStatus.COMPLETED;
+        }
+      }
     }
   } catch (err) {
     finalStatus = DocumentExtractionStatus.FAILED;
@@ -317,12 +367,14 @@ export async function runDocumentExtraction(
     data: {
       extractionStatus: finalStatus,
       extractedText: finalText,
+      extractedFields: finalFields ?? Prisma.JsonNull,
     },
   });
 
   return {
     status: finalStatus,
     extractedText: finalText,
+    extractedFields: finalFields,
     error: extractionError,
   };
 }

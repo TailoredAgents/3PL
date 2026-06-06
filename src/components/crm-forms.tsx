@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, PlayCircle, FileSearch } from "lucide-react";
+import type { DocumentStructuredFields } from "@/lib/documents";
 
 type FormState = {
   status: "idle" | "loading" | "success" | "error";
@@ -1884,21 +1885,25 @@ export function DocumentExtractionControl({
   documentId,
   extractionStatus,
   extractedText,
+  extractedFields,
 }: {
   documentId: string;
   extractionStatus: string;
   extractedText?: string | null;
+  extractedFields?: DocumentStructuredFields | null;
 }) {
   const [state, setState] = useState<FormState>({ status: "idle" });
   const [localText, setLocalText] = useState<string>(extractedText ?? "");
+  const [localFields, setLocalFields] = useState<DocumentStructuredFields>(extractedFields ?? {});
   const [showReview, setShowReview] = useState<boolean>(false);
   const router = useRouter();
 
   const normalizedStatus = (extractionStatus || "Not Requested").toLowerCase();
   const hasText = Boolean(extractedText && extractedText.trim().length > 0);
-  const canReview = hasText || normalizedStatus.includes("completed") || normalizedStatus.includes("pending");
+  const hasStructured = extractedFields && Object.keys(extractedFields).length > 0;
+  const canReview = hasText || hasStructured || normalizedStatus.includes("completed") || normalizedStatus.includes("pending");
 
-  async function postExtract(body: { extractedText?: string } | null) {
+  async function postExtract(body: { extractedText?: string; extractedFields?: DocumentStructuredFields } | null) {
     setState({ status: "loading" });
     try {
       const res = await fetch(`/api/documents/${documentId}/extract`, {
@@ -1906,14 +1911,21 @@ export function DocumentExtractionControl({
         headers: body ? { "Content-Type": "application/json" } : {},
         body: body ? JSON.stringify(body) : undefined,
       });
-      const payload = (await res.json()) as { message?: string; error?: string; status?: string };
+      const payload = (await res.json()) as { 
+        message?: string; 
+        error?: string; 
+        status?: string;
+        extractedFields?: DocumentStructuredFields;
+      };
       if (!res.ok) {
         throw new Error(payload.error ?? "Extraction request failed.");
       }
       setState({ status: "success", message: payload.message ?? "Done." });
-      // If manual text was sent, sync local
       if (body?.extractedText !== undefined) {
         setLocalText(body.extractedText ?? "");
+      }
+      if (body?.extractedFields) {
+        setLocalFields(body.extractedFields);
       }
       router.refresh();
     } catch (error) {
@@ -1931,8 +1943,16 @@ export function DocumentExtractionControl({
 
   async function handleSaveReview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await postExtract({ extractedText: localText });
+    await postExtract({ 
+      extractedText: localText, 
+      extractedFields: localFields 
+    });
     setShowReview(false);
+  }
+
+  // Helper to update a field in the structured review
+  function updateField(key: keyof DocumentStructuredFields, value: string | number | null) {
+    setLocalFields(prev => ({ ...prev, [key]: value === "" ? null : value }));
   }
 
   return (
@@ -1958,7 +1978,7 @@ export function DocumentExtractionControl({
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           >
             <FileSearch className="h-3.5 w-3.5" />
-            {showReview ? "Hide review" : hasText ? "Review text" : "Review"}
+            {showReview ? "Hide review" : (hasStructured ? "Review structured" : hasText ? "Review text" : "Review")}
           </button>
         ) : null}
       </div>
@@ -1968,27 +1988,67 @@ export function DocumentExtractionControl({
       ) : null}
 
       {showReview ? (
-        <form onSubmit={handleSaveReview} className="grid gap-2">
-          <textarea
-            value={localText}
-            onChange={(e) => setLocalText(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border border-slate-200 bg-white p-2 text-xs font-mono text-slate-800 focus:border-emerald-400 focus:outline-none"
-            placeholder="Paste or edit the extracted document text here for review. This will be stored as the source of truth for later parsing/automation."
-          />
+        <form onSubmit={handleSaveReview} className="grid gap-3 rounded-md border border-slate-200 bg-white p-3">
+          {/* Raw text review (existing) */}
+          <div>
+            <label className="text-xs font-semibold text-slate-700">Raw extracted text</label>
+            <textarea
+              value={localText}
+              onChange={(e) => setLocalText(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-md border border-slate-200 bg-white p-2 text-xs font-mono text-slate-800 focus:border-emerald-400 focus:outline-none"
+              placeholder="Edit raw text..."
+            />
+          </div>
+
+          {/* Structured fields review (new for Phase 2.2) */}
+          <div>
+            <label className="text-xs font-semibold text-slate-700">Structured fields (review before use in loads/billing)</label>
+            <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
+              {[
+                ["bolNumber", "BOL #"],
+                ["proNumber", "PRO #"],
+                ["pieces", "Pieces"],
+                ["weightLbs", "Weight (lbs)"],
+                ["originCity", "Origin City"],
+                ["originState", "Origin ST"],
+                ["destinationCity", "Dest City"],
+                ["destinationState", "Dest ST"],
+                ["commodity", "Commodity"],
+                ["rate", "Rate"],
+                ["carrierName", "Carrier"],
+                ["customerReference", "Cust Ref"],
+              ].map(([key, label]) => (
+                <label key={key} className="grid gap-0.5">
+                  <span className="text-[10px] text-slate-600">{label}</span>
+                  <input
+                    type="text"
+                    value={String((localFields as Record<string, unknown>)[key] ?? "")}
+                    onChange={(e) => updateField(key as keyof DocumentStructuredFields, e.target.value)}
+                    className="rounded border border-slate-200 px-1.5 py-0.5 text-xs"
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="mt-1 text-[10px] text-amber-700">
+              These fields are for review only. They are not automatically applied to loads or invoices.
+            </p>
+          </div>
+
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={state.status === "loading"}
               className="rounded-md bg-emerald-700 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
             >
-              Save reviewed text
+              Save reviewed text + fields
             </button>
             <button
               type="button"
               onClick={() => {
                 setShowReview(false);
                 setLocalText(extractedText ?? "");
+                setLocalFields(extractedFields ?? {});
               }}
               className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
             >
@@ -1996,7 +2056,7 @@ export function DocumentExtractionControl({
             </button>
           </div>
           <p className="text-[10px] text-slate-500">
-            Saving marks status COMPLETED. Use for manual entry or corrections before structured parsing.
+            Saving marks status COMPLETED. Human review is required before any downstream automation uses these values.
           </p>
         </form>
       ) : null}

@@ -720,6 +720,7 @@ model Document {
   mimeType         String?
   fileSize         Int?
   extractedText    String?
+  extractedFields  Json?
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
 

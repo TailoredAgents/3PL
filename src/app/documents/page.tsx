@@ -141,6 +141,9 @@ export default async function DocumentsPage() {
                           {document.extractedText.length > 70 ? "…" : ""}
                         </p>
                       ) : null}
+                      {document.extractedFields && Object.keys(document.extractedFields).length > 0 ? (
+                        <span className="mt-0.5 inline-block rounded bg-emerald-100 px-1 text-[9px] font-bold text-emerald-800">Structured</span>
+                      ) : null}
                     </Td>
                     <Td>
                       <p className="font-medium text-slate-700">{document.created}</p>
@@ -164,6 +167,7 @@ export default async function DocumentsPage() {
                           documentId={document.id}
                           extractionStatus={document.extractionStatus}
                           extractedText={document.extractedText}
+                          extractedFields={document.extractedFields}
                         />
                       </div>
                     </Td>
@@ -212,6 +216,7 @@ export default async function DocumentsPage() {
                     documentId={document.id}
                     extractionStatus={document.extractionStatus}
                     extractedText={document.extractedText}
+                    extractedFields={document.extractedFields}
                   />
                 </div>
               </div>

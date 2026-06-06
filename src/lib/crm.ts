@@ -71,6 +71,7 @@ export type LoadDocumentView = {
   storageState: string;
   created: string;
   extractedText?: string | null;
+  extractedFields?: import("@/lib/documents").DocumentStructuredFields | null;
 };
 export type DocumentCenterView = LoadDocumentView & {
   relatedLabel: string;
@@ -2558,6 +2559,7 @@ function mapDocumentSummary(document: {
         : "Missing storage",
     created: formatFollowUp(document.createdAt),
     extractedText: document.extractedText ?? null,
+    extractedFields: (document as { extractedFields?: import("@/lib/documents").DocumentStructuredFields | null }).extractedFields ?? null,
   };
 }
 

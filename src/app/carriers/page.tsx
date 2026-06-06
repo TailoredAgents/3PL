@@ -1,9 +1,18 @@
+import { Plus, ShieldCheck, Truck, TrendingUp, Package } from "lucide-react";
+
 import { CarrierCreateForm } from "@/components/crm-forms";
 import { CarrierListFilter } from "@/components/carrier-list-filter";
 import { InternalShell } from "@/components/internal-shell";
 import { getCarrierViews } from "@/lib/crm";
 
 export const dynamic = "force-dynamic";
+
+const CARD_ACCENTS = [
+  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
+  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
+  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
+  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+] as const;
 
 export default async function CarriersPage() {
   const carrierViews = await getCarrierViews();
@@ -16,42 +25,68 @@ export default async function CarriersPage() {
     0,
   );
 
+  const metrics = [
+    { icon: Truck, label: "Carriers", value: carrierViews.length.toString() },
+    { icon: ShieldCheck, label: "Approved", value: approved.toString() },
+    { icon: Package, label: "Loads covered", value: totalLoads.toString() },
+    { icon: TrendingUp, label: "Delivered", value: totalDelivered.toString() },
+  ];
+
   return (
     <InternalShell
       active="Carriers"
-      eyebrow="Carrier desk"
-      title="Carrier management"
-      description="Build a reliable carrier file before tendering loads: authority, contacts, compliance status, preferred lanes, and performance notes."
+      eyebrow="Operations"
+      title="Carriers"
+      description="Authority, contacts, compliance, and preferred lanes — every carrier you can tender to."
       action={{ label: "Open Load Board", href: "/loads" }}
     >
+      {/* Metrics */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "Carriers", value: carrierViews.length.toString() },
-          { label: "Approved", value: approved.toString() },
-          { label: "Loads covered", value: totalLoads.toString() },
-          { label: "Delivered", value: totalDelivered.toString() },
-        ].map((item) => (
+        {metrics.map((item, i) => (
           <article
             key={item.label}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
           >
-            <p className="text-sm font-medium text-slate-600">{item.label}</p>
-            <p className="mt-2 text-3xl font-semibold">{item.value}</p>
+            <div className="p-5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                <item.icon className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+                {item.value}
+              </p>
+            </div>
           </article>
         ))}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-2xl font-semibold">Create carrier</h2>
-        <p className="mt-3 leading-7 text-slate-600">
-          Add carriers before they are assigned to a load. Compliance status
-          should be verified before tendering.
-        </p>
-        <div className="mt-5 rounded-lg bg-slate-50 p-4">
+      {/* Create carrier — collapsed by default */}
+      <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
+              <Plus className="h-4 w-4 text-slate-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Add carrier</p>
+              <p className="text-xs text-slate-500">
+                Verify compliance before tendering loads
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-semibold text-slate-400 group-open:hidden">
+            Expand
+          </span>
+          <span className="hidden text-xs font-semibold text-slate-400 group-open:inline">
+            Collapse
+          </span>
+        </summary>
+        <div className="border-t border-slate-200 p-5">
           <CarrierCreateForm />
         </div>
-      </section>
+      </details>
 
+      {/* Carrier list with search + filter */}
       <CarrierListFilter
         carriers={carrierViews.map((c) => ({
           id: c.id,

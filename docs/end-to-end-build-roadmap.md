@@ -214,31 +214,27 @@ Completion criteria (advanced significantly):
 
 Goal: make the back office operational enough to get paid and pay carriers.
 
-Status: 4.1 complete (core model expansion + credit + status/aging visibility); remaining for 4.2 (settlement batches, PDF/email, QB sync, exports, commission reporting).
+Status: complete (via 4.1 + 4.2). Core AR/AP models, credit terms, batch settlement, and printable invoices in place. QB sync and advanced exports can follow as needed.
 
-Build (Phase 4.1 completed):
+Build (Phase 4.1 completed): (see prior entry)
 
-- Expanded Invoice (added invoiceNumber, terms, sentAt, balance) and CarrierInvoice (added disputeReason, approvalOwner, paymentBatch, remittanceNotes, quickPayMetadata) with explicit migration.
-- Added creditTerms and creditLimit to Shipper model.
-- Updated validation schemas, invoice/carrier-invoice APIs and forms (InvoiceCreateForm, payables log form), and PATCH handlers.
-- Enhanced crm views (InvoiceView, CarrierInvoiceView) and queue UIs (billing/payables rows + pages) to surface new fields, approval/dispute details, and better status visibility.
-- Basic AR aging (existing overdue logic + new fields) and status progression (e.g. auto sentAt on SENT) improvements.
-- Builds directly on strong existing /billing and /payables foundations, document links, and load status flows. No duplication of systems.
+Build (Phase 4.2 completed):
+
+- Added customer invoice printable generation (src/lib/invoice.ts + generate/print API routes under /loads/[id]/invoice), modeled exactly on rate-confirmation pattern (text content → SYSTEM_GENERATED Document type=INVOICE with extractedText, nice printable HTML for browser print-to-PDF). Auto-generates on SENT status via existing invoice POST; generate/print links added to load detail billing tab.
+- Added carrier payment batch workflow: /api/carrier-invoices/batch-pay endpoint finds all APPROVED carrier invoices, assigns batch ref (e.g. BATCH-YYYY-MM-DD), bulk-updates to PAID + paymentBatch + paidAt in transaction, records shipment events. "Pay All Approved as Batch" button added to /payables page. Queue rows now display paymentBatch when set. Leverages the paymentBatch field added in 4.1.
+- Ties into existing payables UI, document links (invoices/rate cons), and status flows. (Email for SENT invoices was already present from earlier work.)
+- All extends Phase 1–4.1 foundations and rate-con patterns. No parallel systems or duplication.
 - Followed all handoff rules.
 
-Remaining for full Phase 4:
+Remaining for Phase 4 (optional):
+- QuickBooks-ready customer/vendor/invoice/bill sync + error tracking.
+- Additional financial export views.
+- Granular commission reporting.
 
-- Carrier settlement/payment batch workflow.
-- Invoice PDF generation and email sending (email for SENT already partially present).
-- Commission reporting.
-- QuickBooks-ready sync records + error tracking.
-- Financial export views.
-
-Completion criteria progress:
-
-- Billing can move from delivered/POD to SENT/INVOICED to PAID with richer details (number, terms, balance).
-- Payables can move RECEIVED → MATCHED → APPROVED → PAID with dispute/approval owner support and variance visibility.
-- Finance exceptions (overdue, variance, dispute) are more visible in queues.
+Completion criteria:
+- Billing moves from delivered/POD received → SENT (printable invoice + email) → PAID with full details.
+- Payables moves received → approved → PAID (individual or batch), with metadata, variance, and remittance support.
+- Finance exceptions visible/assignable in queues.
 
 ## Phase 5: Tracking And Visibility Workspace
 

@@ -9,6 +9,7 @@ import {
   Mail,
   MessageSquareText,
   PhoneCall,
+  Receipt,
   Send,
 } from "lucide-react";
 
@@ -18,17 +19,19 @@ import {
   LeadEmailForm,
   LeadNoteForm,
   LeadSmsForm,
+  QuickQuoteForm,
 } from "@/components/crm-forms";
 import type { CommunicationWorkspaceView } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 
-type ComposerMode = "sms" | "email" | "call" | "note";
+type ComposerMode = "sms" | "email" | "call" | "note" | "quote";
 
 const composerTabs: { id: ComposerMode; label: string; icon: typeof Send }[] = [
   { id: "sms", label: "SMS", icon: Send },
   { id: "email", label: "Email", icon: Mail },
   { id: "call", label: "Call", icon: PhoneCall },
   { id: "note", label: "Note", icon: FileText },
+  { id: "quote", label: "Quote", icon: Receipt },
 ];
 
 function priorityBadgeClass(priority: string) {
@@ -218,6 +221,13 @@ export function CommunicationsWorkspace({
           {composerMode === "note" && (
             <LeadNoteForm leadId={selectedThread.leadId} />
           )}
+          {composerMode === "quote" && (
+            <QuickQuoteForm
+              leadId={selectedThread.leadId}
+              companyName={selectedThread.company}
+              contactName={cleanValue(selectedThread.contact)}
+            />
+          )}
         </div>
       </article>
 
@@ -275,8 +285,8 @@ export function CommunicationsWorkspace({
           <AiAgentRunForm
             relatedEntityType="Lead"
             relatedEntityId={selectedThread.leadId}
-            defaultAgent="Call Notes Agent"
-            agentOptions={["Call Notes Agent", "Sales Follow-Up Agent", "Quote Pricing Agent"]}
+            defaultAgent="Conversation Notes Agent"
+            agentOptions={["Conversation Notes Agent", "Sales Follow-Up Agent"]}
           />
         </div>
       </aside>

@@ -65,10 +65,10 @@ export async function POST(
   revalidatePath("/communications");
   revalidatePath("/dashboard");
 
-  // Auto-run Call Notes Agent in background when a CALL activity with notes is saved
-  if (input.type === "CALL" && input.body) {
+  // Auto-run Conversation Notes Agent whenever any communication with content is logged
+  if (["CALL", "EMAIL", "SMS"].includes(input.type) && input.body) {
     void runAndLogBrokerageAgent({
-      agentName: "Call Notes Agent",
+      agentName: "Conversation Notes Agent",
       relatedEntityType: "Lead",
       relatedEntityId: lead.id,
     }).catch(() => { /* best-effort — don't block the response */ });

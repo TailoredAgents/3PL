@@ -1571,6 +1571,150 @@ export function CallQuoteCreateForm({
   );
 }
 
+// ─── Quick Quote (Communications workspace) ────────────────────────────────
+
+type QuickQuoteState = {
+  status: "idle" | "loading" | "success" | "error";
+  message?: string;
+  quoteRequestId?: string;
+  pricingSummary?: string;
+};
+
+function useQuickQuoteSubmit(leadId: string) {
+  const router = useRouter();
+  const [state, setState] = useState<QuickQuoteState>({ status: "idle" });
+
+  function reset() {
+    setState({ status: "idle" });
+  }
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setState({ status: "loading" });
+
+    try {
+      const response = await fetch(`/api/leads/${leadId}/quick-quote`, {
+        method: "POST",
+        body: new FormData(form),
+      });
+      const payload = (await response.json()) as {
+        message?: string;
+        error?: string;
+        quoteRequestId?: string;
+        pricingSummary?: string | null;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to create quote.");
+      }
+
+      form.reset();
+      setState({
+        status: "success",
+        message: payload.message ?? "Quote created.",
+        quoteRequestId: payload.quoteRequestId,
+        pricingSummary: payload.pricingSummary ?? undefined,
+      });
+      router.refresh();
+    } catch (error) {
+      setState({
+        status: "error",
+        message: error instanceof Error ? error.message : "Failed to create quote.",
+      });
+    }
+  }
+
+  return { state, onSubmit, reset };
+}
+
+export function QuickQuoteForm({
+  leadId,
+  companyName,
+  contactName,
+}: {
+  leadId: string;
+  companyName: string;
+  contactName?: string;
+}) {
+  const { state, onSubmit, reset } = useQuickQuoteSubmit(leadId);
+
+  if (state.status === "success") {
+    return (
+      <div className="grid gap-3">
+        <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
+            <CheckCircle2 className="h-4 w-4" />
+            Quote created &amp; priced
+          </p>
+          {state.pricingSummary && (
+            <p className="mt-2 text-sm leading-6 text-emerald-900">{state.pricingSummary}</p>
+          )}
+          {state.quoteRequestId && (
+            <a
+              href={`/quote-requests/${state.quoteRequestId}`}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800"
+            >
+              Open full quote →
+            </a>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={reset}
+          className="text-xs font-semibold text-slate-500 hover:text-slate-700 text-left"
+        >
+          + Create another quote
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="grid gap-2" onSubmit={onSubmit}>
+      <input type="hidden" name="companyName" value={companyName} />
+      {contactName && <input type="hidden" name="contactName" value={contactName} />}
+      <input type="hidden" name="intakeChannel" value="COMMS" />
+      <div className="grid grid-cols-2 gap-2">
+        <Field name="originCity" label="Origin city" required />
+        <Field name="originState" label="State" required placeholder="GA" />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Field name="destinationCity" label="Dest city" required />
+        <Field name="destinationState" label="State" required placeholder="TX" />
+      </div>
+      <Select
+        name="equipmentType"
+        label="Equipment"
+        options={["Dry Van", "Reefer", "Flatbed", "Step Deck", "RGN", "Power Only", "Conestoga"]}
+        required
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <Field name="pickupDate" label="Pickup date" type="date" />
+        <Field name="weight" label="Weight (lbs)" type="number" />
+      </div>
+      <Field name="commodity" label="Commodity" placeholder="General freight" />
+      {state.status === "error" && (
+        <p className="text-xs font-medium text-red-600">{state.message}</p>
+      )}
+      <button
+        type="submit"
+        disabled={state.status === "loading"}
+        className="mt-1 inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+      >
+        {state.status === "loading" ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Pricing...
+          </>
+        ) : (
+          "Create & price quote"
+        )}
+      </button>
+    </form>
+  );
+}
+
 function Field({
   label,
   name,
@@ -1664,16 +1808,18 @@ function Select({
   name,
   options,
   defaultValue,
+  required = false,
 }: {
   label: string;
   name: string;
   options: string[];
   defaultValue?: string;
+  required?: boolean;
 }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-slate-800">
       {label}
-      <select name={name} className={inputClass} defaultValue={defaultValue}>
+      <select name={name} className={inputClass} defaultValue={defaultValue} required={required}>
         {options.map((option) => (
           <option key={option} value={option}>
             {option.replace("_", " ")}

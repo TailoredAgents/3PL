@@ -39,8 +39,8 @@ export async function enrichAgentContext(
         return enrichBillingReadiness(entityId, baseContext);
       case "Carrier Compliance Agent":
         return enrichCarrierCompliance(entityId, baseContext);
-      case "Call Notes Agent":
-        return enrichCallNotes(entityId, baseContext);
+      case "Conversation Notes Agent":
+        return enrichConversationNotes(entityId, baseContext);
       default:
         return { base: baseContext, enrichment: {}, dataAvailability: {} };
     }
@@ -331,9 +331,11 @@ async function enrichQuotePricingFromLead(
   return { base, enrichment, dataAvailability };
 }
 
-// ─── Call Notes Agent ──────────────────────────────────────────────────────
+// ─── Conversation Notes Agent ─────────────────────────────────────────────
 
-async function enrichCallNotes(
+const COMMS_TYPES = ["CALL", "EMAIL", "SMS"];
+
+async function enrichConversationNotes(
   leadId: string,
   base: unknown,
 ): Promise<EnrichedAgentContext> {
@@ -353,9 +355,9 @@ async function enrichCallNotes(
     });
 
     if (lead) {
-      const latestCall = lead.activities.find((a) => a.type === "CALL");
-      const latestActivity = lead.activities[0];
-      const source = latestCall ?? latestActivity ?? null;
+      // Prefer most recent CALL/EMAIL/SMS, fall back to any activity
+      const latestComms = lead.activities.find((a) => COMMS_TYPES.includes(a.type));
+      const source = latestComms ?? lead.activities[0] ?? null;
 
       enrichment.rawCallNotes = source?.body ?? null;
       enrichment.callSubject = source?.subject ?? null;
@@ -371,9 +373,10 @@ async function enrichCallNotes(
 
       dataAvailability.rawCallNotes = Boolean(source?.body);
       dataAvailability.activityHistory = lead.activities.length > 0;
+      dataAvailability.channelType = source?.type ?? "unknown";
     }
   } catch {
-    dataAvailability.callNotes = "failed";
+    dataAvailability.conversationNotes = "failed";
   }
 
   return { base, enrichment, dataAvailability };

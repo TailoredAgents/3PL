@@ -5,8 +5,8 @@ import {
   Bot,
   CheckCircle2,
   ClipboardCheck,
-  FileWarning,
   ExternalLink,
+  FileWarning,
   ListChecks,
   RefreshCcw,
   Sparkles,
@@ -25,6 +25,13 @@ import { getAgentPromptTemplates } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
+const CARD_ACCENTS = [
+  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
+  { border: "border-l-[3px] border-l-red-400", icon: "bg-red-50 text-red-700" },
+  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
+  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+] as const;
+
 export default async function AgentsPage() {
   const [commandCenter, promptTemplates, currentUser] = await Promise.all([
     getAiCommandCenterView(),
@@ -36,128 +43,94 @@ export default async function AgentsPage() {
     !clerkEnabled ||
     currentUser?.role === "OWNER" ||
     currentUser?.role === "ADMIN";
+
   const metrics = [
-    {
-      label: "Awaiting approval",
-      value: commandCenter.metrics.needsApproval,
-      note: "Agent output waiting on a person before action.",
-      icon: ClipboardCheck,
-    },
-    {
-      label: "Failed runs",
-      value: commandCenter.metrics.failed,
-      note: "Runs that can be retried after reviewing context.",
-      icon: AlertTriangle,
-    },
-    {
-      label: "Approved",
-      value: commandCenter.metrics.completed,
-      note: "Recommendations accepted into the workflow.",
-      icon: CheckCircle2,
-    },
-    {
-      label: "Avg confidence",
-      value: commandCenter.metrics.averageConfidence,
-      note: `${commandCenter.metrics.total} recent runs reviewed.`,
-      icon: Sparkles,
-    },
+    { label: "Awaiting approval", value: commandCenter.metrics.needsApproval, icon: ClipboardCheck },
+    { label: "Failed runs", value: commandCenter.metrics.failed, icon: AlertTriangle },
+    { label: "Approved", value: commandCenter.metrics.completed, icon: CheckCircle2 },
+    { label: "Avg confidence", value: commandCenter.metrics.averageConfidence, icon: Sparkles },
   ];
 
   return (
     <InternalShell
       active="AI Command Center"
-      eyebrow="AI operations"
+      eyebrow="Admin / AI"
       title="AI Command Center"
-      description="Review agent recommendations, approve human-checked output, retry failed work, and keep automation visible before it acts on customers or carriers."
+      description="Review agent recommendations, approve output, retry failed work, and keep automation visible."
       action={{ label: "Run from a record", href: "/dashboard#ai" }}
     >
+      {/* Metrics */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => (
+        {metrics.map((metric, i) => (
           <article
             key={metric.label}
-            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <metric.icon className="h-5 w-5" />
+            <div className="p-5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                <metric.icon className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600">{metric.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+                {metric.value}
+              </p>
             </div>
-            <p className="mt-5 text-sm font-medium text-slate-600">
-              {metric.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold">{metric.value}</p>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              {metric.note}
-            </p>
           </article>
         ))}
       </section>
 
+      {/* Management snapshot + Exception dashboard */}
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-                Daily brief
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Management snapshot
-              </h2>
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Management snapshot</p>
             </div>
-            <ListChecks className="h-6 w-6 text-slate-400" />
+            <span className="text-xs text-slate-400">Daily brief</span>
           </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 p-4 sm:grid-cols-2">
             {commandCenter.dailyBrief.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`rounded-md border p-4 hover:-translate-y-0.5 hover:shadow-md ${getBriefClass(
-                  item.tone,
-                )}`}
+                className={`rounded-md border p-4 hover:-translate-y-0.5 hover:shadow-md ${getBriefClass(item.tone)}`}
               >
                 <p className="text-sm font-medium">{item.label}</p>
-                <p className="mt-2 text-3xl font-semibold">{item.value}</p>
-                <p className="mt-3 text-sm leading-6">{item.detail}</p>
+                <p className="mt-1 text-3xl font-bold">{item.value}</p>
+                <p className="mt-2 text-xs leading-5">{item.detail}</p>
               </Link>
             ))}
           </div>
         </article>
 
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-700">
-                Exception dashboard
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Work that needs attention
-              </h2>
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <FileWarning className="h-4 w-4 text-red-400" />
+              <p className="text-sm font-semibold text-slate-700">Work that needs attention</p>
             </div>
-            <FileWarning className="h-6 w-6 text-slate-400" />
+            <span className="text-xs text-slate-400">Exceptions</span>
           </div>
-          <div className="mt-6 grid gap-3">
+          <div className="grid gap-3 p-4">
             {commandCenter.exceptions.length ? (
               commandCenter.exceptions.map((exception) => (
                 <Link
                   key={exception.id}
                   href={exception.href}
-                  className="grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md lg:grid-cols-[150px_1fr_auto]"
+                  className="grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md lg:grid-cols-[140px_1fr_auto]"
                 >
                   <div>
-                    <p className="font-semibold">{exception.type}</p>
-                    <p
-                      className={`mt-2 w-fit rounded-full px-3 py-1 text-xs font-bold ${getSeverityClass(
-                        exception.severity,
-                      )}`}
-                    >
+                    <p className="text-sm font-semibold text-slate-900">{exception.type}</p>
+                    <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${getSeverityClass(exception.severity)}`}>
                       {exception.severity}
-                    </p>
+                    </span>
                   </div>
                   <div>
-                    <p className="font-semibold">{exception.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {exception.detail}
-                    </p>
+                    <p className="text-sm font-semibold text-slate-900">{exception.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">{exception.detail}</p>
                   </div>
-                  <ExternalLink className="h-4 w-4 text-emerald-700" />
+                  <ExternalLink className="h-4 w-4 text-slate-400" />
                 </Link>
               ))
             ) : (
@@ -167,28 +140,22 @@ export default async function AgentsPage() {
         </article>
       </section>
 
+      {/* Approval queue + Retry queue */}
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-                Approval queue
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Recommendations needing review
-              </h2>
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Bot className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Recommendations needing review</p>
             </div>
-            <Bot className="h-6 w-6 text-slate-400" />
+            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              {commandCenter.approvalQueue.length}
+            </span>
           </div>
-
-          <div className="mt-6 grid gap-4">
+          <div className="grid gap-3 p-4">
             {commandCenter.approvalQueue.length ? (
               commandCenter.approvalQueue.map((run) => (
-                <RunReviewCard
-                  key={run.id}
-                  run={run}
-                  action={<AgentRunApproveForm runId={run.id} />}
-                />
+                <RunReviewCard key={run.id} run={run} action={<AgentRunApproveForm runId={run.id} />} />
               ))
             ) : (
               <EmptyState message="No AI recommendations are waiting for approval." />
@@ -196,26 +163,20 @@ export default async function AgentsPage() {
           </div>
         </article>
 
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-700">
-                Retry queue
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">Failed agent work</h2>
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <RefreshCcw className="h-4 w-4 text-red-400" />
+              <p className="text-sm font-semibold text-slate-700">Failed agent work</p>
             </div>
-            <RefreshCcw className="h-6 w-6 text-slate-400" />
+            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              {commandCenter.failedRuns.length}
+            </span>
           </div>
-
-          <div className="mt-6 grid gap-4">
+          <div className="grid gap-3 p-4">
             {commandCenter.failedRuns.length ? (
               commandCenter.failedRuns.map((run) => (
-                <RunReviewCard
-                  key={run.id}
-                  run={run}
-                  tone="danger"
-                  action={<AgentRunRetryForm runId={run.id} />}
-                />
+                <RunReviewCard key={run.id} run={run} tone="danger" action={<AgentRunRetryForm runId={run.id} />} />
               ))
             ) : (
               <EmptyState message="No failed AI agent runs need attention." />
@@ -224,108 +185,88 @@ export default async function AgentsPage() {
         </article>
       </section>
 
-      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-              Run explorer
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">Recent AI work</h2>
+      {/* Run explorer */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Recent AI work</p>
           </div>
-          <p className="text-sm leading-6 text-slate-600">
-            Track what each agent recommended, where it belongs, and what needs
-            to happen next.
-          </p>
+          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+            {commandCenter.recentRuns.length}
+          </span>
         </div>
-
-        <div className="mt-6 overflow-hidden rounded-md border border-slate-100">
-          {commandCenter.recentRuns.length ? (
-            <div className="divide-y divide-slate-100">
-              {commandCenter.recentRuns.map((run) => (
-                <div
-                  key={run.id}
-                  className="grid gap-4 bg-slate-50 p-4 lg:grid-cols-[220px_1fr_150px_auto]"
-                >
-                  <div>
-                    <p className="font-semibold">{run.agentName}</p>
-                    <p className="mt-1 text-sm text-slate-600">{run.created}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm leading-6 text-slate-700">
-                      {run.summary}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-emerald-800">
-                      Next: {run.nextAction}
-                    </p>
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    <p className="font-semibold text-slate-900">
-                      {run.relatedEntityType}
-                    </p>
-                    <p className="mt-1">
-                      {run.confidence === null
-                        ? "Confidence n/a"
-                        : `${Math.round(run.confidence * 100)}% confidence`}
-                    </p>
-                    <p className="mt-2 w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">
-                      {run.status}
-                    </p>
-                  </div>
-                  <Link
-                    href={getAgentRunHref(
-                      run.relatedEntityType,
-                      run.relatedEntityId,
-                    )}
-                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:border-emerald-200 hover:text-emerald-700"
-                  >
-                    Open
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
+        {commandCenter.recentRuns.length ? (
+          <div className="divide-y divide-slate-100">
+            {commandCenter.recentRuns.map((run) => (
+              <div
+                key={run.id}
+                className="grid gap-4 p-4 lg:grid-cols-[200px_1fr_140px_auto]"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{run.agentName}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{run.created}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState message="No AI agent runs have been logged yet." />
-          )}
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-              Prompt templates
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">
-              Tune agent instructions
-            </h2>
+                <div>
+                  <p className="text-sm leading-6 text-slate-700">{run.summary}</p>
+                  <p className="mt-1 text-xs font-semibold text-emerald-700">Next: {run.nextAction}</p>
+                </div>
+                <div className="text-sm text-slate-600">
+                  <p className="text-xs font-semibold text-slate-900">{run.relatedEntityType}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {run.confidence === null
+                      ? "Confidence n/a"
+                      : `${Math.round(run.confidence * 100)}% confidence`}
+                  </p>
+                  <span className="mt-1.5 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                    {run.status}
+                  </span>
+                </div>
+                <Link
+                  href={getAgentRunHref(run.relatedEntityType, run.relatedEntityId)}
+                  className="inline-flex items-center gap-1.5 self-start rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                >
+                  Open
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+            ))}
           </div>
-          <p className="text-sm leading-6 text-slate-600">
-            These templates control future Grok agent runs while keeping every
-            output approval-first.
-          </p>
+        ) : (
+          <EmptyState message="No AI agent runs have been logged yet." />
+        )}
+      </article>
+
+      {/* Prompt templates */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <Bot className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Prompt templates</p>
+          </div>
+          <span className="text-xs text-slate-400">Controls future Grok agent runs</span>
         </div>
         {canManagePrompts ? (
-          <div className="mt-6 grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-3 p-4 xl:grid-cols-2">
             {promptTemplates.map((template) => (
               <details
                 key={template.agentName}
-                className="rounded-md border border-slate-100 bg-slate-50 p-4 open:bg-white open:shadow-md"
+                className="group overflow-hidden rounded-md border border-slate-100 bg-slate-50 open:bg-white open:shadow-sm"
               >
-                <summary className="cursor-pointer list-none">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold">{template.agentName}</p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {template.task}
-                      </p>
-                    </div>
-                    <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700 shadow-sm">
-                      {template.isCustomized ? "Custom" : "Default"}
-                    </span>
+                <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 hover:bg-slate-50">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{template.agentName}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{template.task}</p>
                   </div>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    template.isCustomized
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-slate-200 text-slate-600"
+                  }`}>
+                    {template.isCustomized ? "Custom" : "Default"}
+                  </span>
                 </summary>
-                <div className="mt-5 border-t border-slate-100 pt-4">
+                <div className="border-t border-slate-100 p-4">
                   <AgentPromptTemplateForm
                     agentName={template.agentName}
                     systemPrompt={template.systemPrompt}
@@ -337,36 +278,24 @@ export default async function AgentsPage() {
             ))}
           </div>
         ) : (
-          <p className="mt-6 rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+          <p className="m-4 rounded-md border border-amber-100 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
             Prompt template editing is limited to owner and admin users.
           </p>
         )}
-      </section>
+      </article>
     </InternalShell>
   );
 }
 
 function getBriefClass(tone: "default" | "warning" | "danger") {
-  if (tone === "danger") {
-    return "border-red-100 bg-red-50 text-red-950";
-  }
-
-  if (tone === "warning") {
-    return "border-amber-100 bg-amber-50 text-amber-950";
-  }
-
+  if (tone === "danger") return "border-red-100 bg-red-50 text-red-950";
+  if (tone === "warning") return "border-amber-100 bg-amber-50 text-amber-950";
   return "border-slate-100 bg-slate-50 text-slate-950";
 }
 
 function getSeverityClass(severity: "High" | "Medium" | "Low") {
-  if (severity === "High") {
-    return "bg-red-50 text-red-700";
-  }
-
-  if (severity === "Medium") {
-    return "bg-amber-50 text-amber-700";
-  }
-
+  if (severity === "High") return "bg-red-50 text-red-700";
+  if (severity === "Medium") return "bg-amber-50 text-amber-700";
   return "bg-slate-100 text-slate-700";
 }
 
@@ -380,70 +309,51 @@ function RunReviewCard({
   tone?: "default" | "danger";
 }) {
   const badgeClass =
-    tone === "danger"
-      ? "bg-red-50 text-red-700"
-      : "bg-emerald-50 text-emerald-700";
+    tone === "danger" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700";
 
   return (
     <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold">{run.agentName}</p>
-            <span className={`rounded-full px-3 py-1 text-xs font-bold ${badgeClass}`}>
+            <p className="text-sm font-semibold text-slate-900">{run.agentName}</p>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}>
               {run.status}
             </span>
           </div>
-          <p className="mt-2 text-sm text-slate-600">
-            {run.relatedEntityType} | {run.created}
+          <p className="mt-0.5 text-xs text-slate-500">
+            {run.relatedEntityType} · {run.created}
           </p>
         </div>
         <Link
           href={getAgentRunHref(run.relatedEntityType, run.relatedEntityId)}
-          className="inline-flex items-center gap-2 text-sm font-bold text-emerald-700"
+          className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700"
         >
-          Open record
-          <ExternalLink className="h-4 w-4" />
+          Open <ExternalLink className="h-3 w-3" />
         </Link>
       </div>
-      <p className="mt-4 text-sm leading-6 text-slate-700">{run.summary}</p>
-      {run.errorMessage ? (
-        <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
+      <p className="mt-3 text-sm leading-6 text-slate-700">{run.summary}</p>
+      {run.errorMessage && (
+        <p className="mt-2 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
           {run.errorMessage}
         </p>
-      ) : null}
-      <p className="mt-3 text-sm font-semibold text-emerald-800">
-        Next: {run.nextAction}
-      </p>
-      <div className="mt-4">{action}</div>
+      )}
+      <p className="mt-2 text-xs font-semibold text-emerald-700">Next: {run.nextAction}</p>
+      <div className="mt-3">{action}</div>
     </div>
   );
 }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-      {message}
-    </div>
+    <p className="py-8 text-center text-sm text-slate-400">{message}</p>
   );
 }
 
 function getAgentRunHref(entityType: string, id: string) {
-  if (entityType === "Lead") {
-    return `/leads/${id}`;
-  }
-
-  if (entityType === "QuoteRequest") {
-    return `/quote-requests/${id}`;
-  }
-
-  if (entityType === "Load") {
-    return `/loads/${id}`;
-  }
-
-  if (entityType === "Carrier") {
-    return `/carriers/${id}`;
-  }
-
+  if (entityType === "Lead") return `/leads/${id}`;
+  if (entityType === "QuoteRequest") return `/quote-requests/${id}`;
+  if (entityType === "Load") return `/loads/${id}`;
+  if (entityType === "Carrier") return `/carriers/${id}`;
   return "/agents";
 }

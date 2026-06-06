@@ -801,6 +801,13 @@ Before first production deploy:
 
 ## Development Roadmap
 
+The historical milestone list below shows how the current app was built. The
+active forward-looking execution plan now lives in:
+
+```txt
+docs/end-to-end-build-roadmap.md
+```
+
 ### Milestone 1: Foundation
 
 Status: complete.

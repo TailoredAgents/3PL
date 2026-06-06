@@ -1,0 +1,380 @@
+# End-to-End Build Roadmap
+
+This is the active build roadmap for finishing the freight brokerage operating
+system. The README keeps historical context and completed milestones; this file
+is the forward-looking execution plan.
+
+## Current Build Position
+
+The app already has the main internal brokerage spine:
+
+```txt
+Communications
+-> Leads / Shippers / Contacts
+-> Quotes & Pricing
+-> Load Board
+-> Carriers
+-> Tracking / POD
+-> Invoicing / Payables
+-> Analytics
+-> AI Command Center
+```
+
+The next work should deepen the operating system around documents, compliance,
+accounting, integrations, portals, and AI automation. Do not restart the project
+or duplicate existing flows. Extend the current pages, APIs, models, and helper
+libraries wherever practical.
+
+## Multi-Agent Handoff Rules
+
+Use these rules when switching between Codex, Grok terminal agent, and Claude
+Code on the same local machine:
+
+1. Start every session with `git pull`, `git status --short --branch`, and a
+   quick read of this file.
+2. Check the latest commits before editing so the agent knows what the previous
+   agent changed.
+3. Work one phase or sub-phase at a time.
+4. Prefer existing modules and patterns over new duplicate code.
+5. Commit and push after each completed phase or meaningful sub-phase.
+6. Keep migrations explicit and do not rewrite existing migrations that are
+   already pushed.
+7. Run the relevant validation before committing. At minimum:
+
+```bash
+npx tsc --noEmit --incremental false
+npm run build
+```
+
+8. If `npm run lint` fails because of known pre-existing lint debt, note the
+   exact failures in the final message and continue only when TypeScript/build
+   pass.
+9. Update this roadmap when a phase is completed, partially completed, or
+   intentionally deferred.
+
+## Phase 0: Repo Health And Handoff Foundation
+
+Goal: make the repo easier for every agent to continue safely.
+
+Status: not started.
+
+Build:
+
+- Fix current lint debt so `npm run lint` passes.
+- Add a concise current-state section to this roadmap after every phase.
+- Keep README as the high-level project summary, not the detailed task tracker.
+- Confirm Render build command and production deployment flow still work.
+
+Completion criteria:
+
+- `npm run lint` passes.
+- `npx tsc --noEmit --incremental false` passes.
+- `npm run build` passes.
+- Roadmap reflects the current phase status.
+
+## Phase 1: Document Center Foundation
+
+Goal: make documents real, downloadable, and usable by operations and AI.
+
+Status: not started.
+
+Build:
+
+- Add a dedicated internal Documents page.
+- Add durable file storage configuration using the existing storage boundary.
+- Support upload/download for load, shipper, quote, audit, invoice, BOL, POD,
+  and rate confirmation documents.
+- Store file size, MIME type, uploader, source, and document status.
+- Add document preview/download links on load, shipper, carrier, billing, and
+  payables workflows.
+- Generate signed rate confirmation PDFs or durable printable documents.
+- Keep document metadata tied to existing `Document` records instead of creating
+  parallel document systems.
+
+AI-ready additions:
+
+- Store extracted text when available.
+- Add extraction status so OCR/PDF parsing can run later without changing the
+  document model again.
+
+Completion criteria:
+
+- Users can upload, view, and download POD/BOL/rate confirmation documents.
+- Load billing readiness uses actual document presence.
+- No duplicate document tables or one-off file handling paths.
+
+## Phase 2: OCR And Document Automation
+
+Goal: let the system read important freight paperwork.
+
+Status: not started.
+
+Build:
+
+- Add OCR/PDF text extraction for uploaded documents.
+- Add document extraction queue/status.
+- Parse audit uploads, rate confirmations, PODs, BOLs, and carrier invoices.
+- Surface extracted fields with human review before applying them.
+- Add document exception states for missing, unreadable, mismatched, or duplicate
+  paperwork.
+
+AI-ready additions:
+
+- Savings Audit Agent can use extracted invoice/rate-con text.
+- Billing Readiness Agent can compare POD, carrier invoice, and load records.
+- Conversation Notes Agent can link quote intent to uploaded docs when relevant.
+
+Completion criteria:
+
+- Uploaded PDFs/images can produce stored extracted text.
+- Users can review extracted fields before updates affect operational records.
+
+## Phase 3: Carrier Onboarding And Compliance
+
+Goal: turn carriers from simple records into fully vetted partner files.
+
+Status: not started.
+
+Build:
+
+- Add carrier onboarding checklist.
+- Track W-9, certificate of insurance, broker-carrier agreement, payment setup,
+  factoring company, insurance expiration, authority age, and compliance notes.
+- Add compliance expiration alerts.
+- Add blocked/conditional carrier reasons.
+- Add callback verification workflow for new carriers.
+- Add carrier performance scorecard: on-time pickup, on-time delivery,
+  communication quality, claims/issues, and load count.
+- Add carrier contacts beyond one main contact.
+
+Integrations:
+
+- Prepare clean adapter boundaries for Carrier411, Highway, RMIS, CarrierOk,
+  FMCSA, and Truckstop SaferWatch style data.
+
+Completion criteria:
+
+- A load cannot be booked with a carrier that fails required compliance gates.
+- Compliance status is explainable from documents, external checks, and internal
+  decisions.
+
+## Phase 4: Accounting, AR, AP, And Settlements
+
+Goal: make the back office operational enough to get paid and pay carriers.
+
+Status: not started.
+
+Build:
+
+- Expand customer invoice records with invoice number, terms, sent date, due
+  date, paid date, balance, and AR aging.
+- Expand carrier invoice records with dispute reason, approval owner, payment
+  batch, remittance notes, and quick-pay/factoring metadata.
+- Add customer credit terms and credit limit on shipper accounts.
+- Add carrier settlement/payment batch workflow.
+- Add commission reporting by user/load/customer.
+- Add invoice PDF generation and email sending.
+- Add financial export views.
+
+Integrations:
+
+- Prepare QuickBooks-ready customer/vendor/invoice/bill sync records.
+- Track sync status and errors without blocking the internal workflow.
+
+Completion criteria:
+
+- Billing can move from delivered/POD received to invoice sent to paid.
+- Payables can move from carrier invoice received to matched to approved to paid.
+- Finance exceptions are visible and assignable.
+
+## Phase 5: Tracking And Visibility Workspace
+
+Goal: make active loads easy to monitor without opening each load.
+
+Status: not started.
+
+Build:
+
+- Add a dedicated Tracking/Visibility page or expand Load Board saved views.
+- Show pickup risk, delivery risk, no recent update, missing check call, late
+  pickup, late delivery, missing POD, and customer update due.
+- Add customer update templates for email/SMS.
+- Add carrier check-call logging from load detail and tracking board.
+- Add public tracking link foundation for shipper visibility.
+- Add internal exception ownership and resolution states.
+
+Integrations:
+
+- Prepare visibility adapter boundaries for ELD/GPS providers, Truckstop ELD,
+  MacroPoint, TruckerTools, Samsara, Motive, or similar providers.
+
+Completion criteria:
+
+- An operations user can manage active tracking from one workspace.
+- Exceptions are visible, assigned, and resolvable.
+
+## Phase 6: Integration Admin And Monitoring
+
+Goal: make external provider connectivity manageable from inside the app.
+
+Status: not started.
+
+Build:
+
+- Add Integrations page or expand Settings with provider-specific panels.
+- Show credential presence, webhook status, last successful sync, last failure,
+  and test actions.
+- Add integration logs by provider/action/entity.
+- Add retry actions for failed integrations where safe.
+- Add DAT and Truckstop final payload mappings once account documentation is
+  available.
+- Add SMS delivery callbacks and inbound SMS reply handling.
+- Add inbound email reply tracking.
+
+Completion criteria:
+
+- Admins can tell whether DAT, Truckstop, Twilio, Resend, xAI, FMCSA, HERE,
+  EIA, and carrier vetting providers are configured and healthy.
+- Integration failures are visible without checking server logs.
+
+## Phase 7: Customer Portal
+
+Goal: give shippers a professional self-service experience.
+
+Status: not started.
+
+Build:
+
+- Add customer login/portal account model.
+- Let customers request quotes, view quotes, approve/reject quotes, and view
+  quote history.
+- Let customers view active loads, tracking, documents, invoices, and shipment
+  history.
+- Add saved addresses, contacts, facilities, lanes, and preferences.
+- Add customer-facing tracking links before exposing full portal login if useful.
+
+Completion criteria:
+
+- Customers can see their own records only.
+- Internal users can control which customers have portal access.
+- The portal reduces routine calls/emails for status, PODs, and invoices.
+
+## Phase 8: Carrier Portal
+
+Goal: reduce manual carrier paperwork, updates, and document chasing.
+
+Status: not started.
+
+Build:
+
+- Let carriers submit onboarding documents.
+- Let carriers accept or decline tender/rate confirmation.
+- Let carriers upload POD/BOL/invoices.
+- Let carriers send tracking/check-call updates.
+- Let carriers view payment status for their loads.
+
+Completion criteria:
+
+- Carrier paperwork and POD collection no longer require only internal manual
+  entry.
+- Uploaded carrier documents flow into the existing Document Center.
+
+## Phase 9: Lane Intelligence And Revenue Growth
+
+Goal: help salespeople quote better and build repeat lanes.
+
+Status: not started.
+
+Build:
+
+- Add lane profile records or structured lane history derived from quotes/loads.
+- Show customer lane history, carrier lane history, margin history, win/loss,
+  seasonality, and quote confidence.
+- Add saved quote templates for recurring lanes.
+- Add target margin rules by customer, lane, equipment, and urgency.
+- Add sales opportunity insights: dormant shippers, repeat-lane opportunities,
+  underpriced lanes, and customers needing follow-up.
+
+Completion criteria:
+
+- Sales can price repeat freight faster using internal history and DAT/Truckstop
+  benchmarks.
+- Management can see which lanes/customers are profitable.
+
+## Phase 10: AI Automation Expansion
+
+Goal: automate repetitive work only after the data and workflows are stable.
+
+Status: not started.
+
+Build:
+
+- Add scheduled Daily Brief Agent delivery.
+- Add autonomous document extraction jobs with human review for exceptions.
+- Add AI draft suggestions inside communications composer.
+- Add AI carrier shortlist generation based on compliance, lane history, and
+  pricing.
+- Add AI tracking exception triage.
+- Add AI billing exception triage.
+- Add prompt version history and agent output audit views.
+- Add clear approval gates for any AI action that contacts customers/carriers,
+  posts loads, books carriers, changes money, or changes compliance status.
+
+Completion criteria:
+
+- AI saves salesperson and operator time without hiding decisions.
+- Every autonomous action is logged, reversible where practical, and visible in
+  `AiAgentRun` or related audit records.
+
+## Phase 11: Permissions, Audit Logs, And Admin Controls
+
+Goal: protect sensitive workflows as real users operate the system.
+
+Status: not started.
+
+Build:
+
+- Add owner/admin user management.
+- Add invitations for internal users.
+- Add per-route and per-action permissions.
+- Add audit logs for settings, pricing overrides, compliance decisions, invoice
+  changes, carrier payments, and AI approvals.
+- Add Clerk webhook user sync.
+
+Completion criteria:
+
+- Owners can manage users and roles without database access.
+- Sensitive changes are attributable and reviewable.
+
+## Phase 12: Final QA, Test Pass, And Launch Hardening
+
+Goal: stabilize the finished product after all major functionality exists.
+
+Status: not started.
+
+Build:
+
+- Create a full manual test script for each workflow.
+- Add automated tests around high-risk APIs where practical.
+- Test Render deployment after each major phase.
+- Verify real environment variables and webhook URLs.
+- Fix all bugs found during workflow testing.
+- Remove stale sample copy where production data should appear.
+- Confirm no former-employer terminology exists anywhere.
+
+Completion criteria:
+
+- Every page and workflow has been tested with real or realistic records.
+- Production build, typecheck, and lint pass.
+- Render deploy is stable.
+
+## Current Known Technical Debt
+
+- `npm run lint` currently fails on existing explicit `any` usage in carrier
+  invoice APIs and CRM helpers, plus a few unused imports/variables.
+- Document storage is partially present, but the full document center, OCR, and
+  durable production workflow are not complete.
+- DAT/Truckstop adapters exist, but final account-specific provider mappings are
+  still required.
+- Background workers/queues are not yet implemented.
+

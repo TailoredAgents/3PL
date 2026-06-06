@@ -89,7 +89,7 @@ export default async function DashboardPage() {
     "Mark ready for invoice",
   ];
   const workQueues = [
-    { label: "Intake", href: "/intake", detail: "Intake, calls, and email events" },
+    { label: "Communications", href: "/communications", detail: "Calls, email, SMS, and requests" },
     { label: "Quotes & Pricing", href: "/quote-requests", detail: "Price work and quote-to-load" },
     { label: "Load Board", href: "/loads", detail: "Tracking, POD, margin" },
     { label: "Customers", href: "/customers", detail: "Relationships, contacts, lanes" },

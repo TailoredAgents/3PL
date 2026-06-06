@@ -232,7 +232,8 @@ Useful local routes:
 /             Public site
 /login       Temporary team password gate
 /dashboard    Internal CRM/TMS shell
-/intake       Audit and quote intake review queue
+/communications Calls, email events, SMS paths, and request review queue
+/intake       Redirects to /communications
 /leads        Lead pipeline, follow-ups, activity, create form, and CSV import
 /leads/[id]   Lead detail, update form, and activity logging
 /shippers     Shipper company and contact records
@@ -819,7 +820,7 @@ Status: mostly complete for V1.
 
 - Shared internal layout/navigation
 - Clerk auth with temporary internal password fallback
-- Intake queue for public audits and quote requests
+- Communications hub for public requests, calls, email events, and SMS paths
 - Leads page
 - Lead detail page
 - Lead stage/update form

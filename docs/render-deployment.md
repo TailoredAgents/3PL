@@ -143,6 +143,7 @@ After deploy, open:
 /login
 /dashboard
 /agents
+/communications
 /intake
 /calls
 /email
@@ -259,7 +260,7 @@ Test in this order:
 45. Upload CSV contacts
 46. Public savings audit form
 47. Public instant quote form
-48. Intake queue
+48. Communications hub
 49. Health check
 
 ## 8. Known Temporary Choices

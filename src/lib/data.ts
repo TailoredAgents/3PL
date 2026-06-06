@@ -31,7 +31,7 @@ export const internalNavGroups = [
     label: "Command Center",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: Headphones },
-      { label: "Intake", href: "/intake", icon: ClipboardList },
+      { label: "Communications", href: "/communications", icon: MessageSquareText },
     ],
   },
   {

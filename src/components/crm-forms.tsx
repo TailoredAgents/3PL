@@ -1423,6 +1423,40 @@ export function AgentRunRetryForm({ runId }: { runId: string }) {
   );
 }
 
+export function AgentModeToggleForm({
+  agentName,
+  currentMode,
+}: {
+  agentName: string;
+  currentMode: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit("/api/settings/agent-mode", "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="agentName" value={agentName} />
+      <div className="flex gap-5">
+        {(["approve_first", "autonomous"] as const).map((mode) => (
+          <label
+            key={mode}
+            className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700"
+          >
+            <input
+              type="radio"
+              name="mode"
+              value={mode}
+              defaultChecked={currentMode === mode}
+              className="accent-emerald-600"
+            />
+            {mode === "approve_first" ? "Approve first" : "Autonomous"}
+          </label>
+        ))}
+      </div>
+      <FormFooter state={state} buttonLabel="Save" />
+    </form>
+  );
+}
+
 export function AgentPromptTemplateForm({
   agentName,
   systemPrompt,

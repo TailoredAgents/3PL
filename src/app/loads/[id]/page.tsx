@@ -305,6 +305,21 @@ export default async function LoadDetailPage({
         <>
           <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
             <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <Bot className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">AI coverage agent</p>
+            </div>
+            <div className="p-5">
+              <AiAgentRunForm
+                relatedEntityType="Load"
+                relatedEntityId={load.id}
+                defaultAgent="Carrier Coverage Agent"
+                agentOptions={["Carrier Coverage Agent"]}
+              />
+            </div>
+          </article>
+
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
               <Truck className="h-4 w-4 text-slate-400" />
               <p className="text-sm font-semibold text-slate-700">Carrier coverage</p>
             </div>

@@ -1,4 +1,5 @@
 import {
+  brokerageAgentNames,
   defaultBrokerageAgentTemplates,
   getDefaultBrokerageAgentTemplate,
   type BrokerageAgentName,
@@ -8,7 +9,10 @@ import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 export const CALL_RECORDING_DISCLOSURE_KEY = "callRecordingDisclosure";
 export const AGENT_PROMPT_TEMPLATE_KEY_PREFIX = "agentPromptTemplate:";
+export const AGENT_MODE_KEY_PREFIX = "agentMode:";
 export const QUOTE_EMAIL_TEMPLATE_KEY = "quoteEmailTemplate";
+
+export type AgentMode = "approve_first" | "autonomous";
 
 export const defaultCallRecordingDisclosure =
   "This call may be recorded and transcribed to help our team capture shipment details, improve service, and follow up accurately. By continuing, you consent to this recording.";
@@ -268,6 +272,66 @@ function parsePromptTemplateSetting(
   } catch {
     return null;
   }
+}
+
+export async function getAgentModes(): Promise<Record<BrokerageAgentName, AgentMode>> {
+  const defaultModes = Object.fromEntries(
+    brokerageAgentNames.map((name) => [name, "approve_first" as AgentMode]),
+  ) as Record<BrokerageAgentName, AgentMode>;
+
+  if (!hasDatabaseUrl() || !prisma) {
+    return defaultModes;
+  }
+
+  try {
+    const settings = await prisma.appSetting.findMany({
+      where: { key: { startsWith: AGENT_MODE_KEY_PREFIX } },
+    });
+    const byAgent = new Map(
+      settings.map((s) => [s.key.replace(AGENT_MODE_KEY_PREFIX, ""), s.value]),
+    );
+
+    return Object.fromEntries(
+      brokerageAgentNames.map((name) => {
+        const stored = byAgent.get(name);
+        const mode: AgentMode = stored === "autonomous" ? "autonomous" : "approve_first";
+        return [name, mode];
+      }),
+    ) as Record<BrokerageAgentName, AgentMode>;
+  } catch {
+    return defaultModes;
+  }
+}
+
+export async function getAgentMode(agentName: BrokerageAgentName): Promise<AgentMode> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return "approve_first";
+  }
+
+  try {
+    const setting = await prisma.appSetting.findUnique({
+      where: { key: `${AGENT_MODE_KEY_PREFIX}${agentName}` },
+    });
+    return setting?.value === "autonomous" ? "autonomous" : "approve_first";
+  } catch {
+    return "approve_first";
+  }
+}
+
+export async function saveAgentMode(
+  agentName: BrokerageAgentName,
+  mode: AgentMode,
+): Promise<void> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return;
+  }
+
+  const key = `${AGENT_MODE_KEY_PREFIX}${agentName}`;
+  await prisma.appSetting.upsert({
+    where: { key },
+    create: { key, value: mode },
+    update: { value: mode },
+  });
 }
 
 function parseQuoteEmailTemplateSetting(

@@ -9,6 +9,22 @@ import type {
   MarketplacePostResult,
   NormalizedCapacityMatch,
 } from "@/lib/marketplace/types";
+import { fetchClientCredentialsToken } from "./oauth";
+
+const TRUCKSTOP_DEFAULT_TOKEN_URL =
+  "https://identity.api.truckstop.com/connect/token";
+
+async function getTruckstopHeaders(
+  clientId: string,
+  clientSecret: string,
+): Promise<Record<string, string>> {
+  const tokenUrl = process.env.TRUCKSTOP_TOKEN_URL ?? TRUCKSTOP_DEFAULT_TOKEN_URL;
+  const token = await fetchClientCredentialsToken(tokenUrl, clientId, clientSecret);
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 export async function fetchTruckstopRates(
   request: MarketRateRequest,
@@ -30,11 +46,7 @@ export async function fetchTruckstopRates(
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-TRUCKSTOP-CLIENT-ID": clientId,
-        "X-TRUCKSTOP-CLIENT-SECRET": clientSecret,
-      },
+      headers: await getTruckstopHeaders(clientId, clientSecret),
       body: JSON.stringify(request),
     });
 
@@ -87,7 +99,7 @@ export async function searchTruckstopCapacity(
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: truckstopHeaders(clientId, clientSecret),
+      headers: await getTruckstopHeaders(clientId, clientSecret),
       body: JSON.stringify(request),
     });
 
@@ -141,7 +153,7 @@ export async function postTruckstopLoad(
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: truckstopHeaders(clientId, clientSecret),
+      headers: await getTruckstopHeaders(clientId, clientSecret),
       body: JSON.stringify(request),
     });
 
@@ -167,7 +179,10 @@ export async function postTruckstopLoad(
       provider: "TRUCKSTOP",
       configured: true,
       posted: true,
-      externalId: stringValue(post.externalId) ?? stringValue(post.postId) ?? stringValue(post.id),
+      externalId:
+        stringValue(post.externalId) ??
+        stringValue(post.postId) ??
+        stringValue(post.id),
       message: stringValue(post.message) ?? stringValue(post.status),
       raw: payload,
     };
@@ -211,7 +226,9 @@ function normalizeTruckstopRates(payload: unknown): NormalizedMarketRate[] {
   ];
 }
 
-function normalizeTruckstopCapacity(payload: unknown): NormalizedCapacityMatch[] {
+function normalizeTruckstopCapacity(
+  payload: unknown,
+): NormalizedCapacityMatch[] {
   return recordsFromPayload(payload).flatMap((record) => {
     const companyName =
       stringValue(record.companyName) ??
@@ -265,15 +282,9 @@ function recordsFromPayload(payload: unknown) {
     objectPayload.results ??
     objectPayload.data;
 
-  return Array.isArray(records) ? (records as Array<Record<string, unknown>>) : [];
-}
-
-function truckstopHeaders(clientId: string, clientSecret: string) {
-  return {
-    "Content-Type": "application/json",
-    "X-TRUCKSTOP-CLIENT-ID": clientId,
-    "X-TRUCKSTOP-CLIENT-SECRET": clientSecret,
-  };
+  return Array.isArray(records)
+    ? (records as Array<Record<string, unknown>>)
+    : [];
 }
 
 function stringValue(value: unknown) {

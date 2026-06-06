@@ -9,6 +9,22 @@ import type {
   MarketplacePostResult,
   NormalizedCapacityMatch,
 } from "@/lib/marketplace/types";
+import { fetchClientCredentialsToken } from "./oauth";
+
+const DAT_DEFAULT_TOKEN_URL =
+  "https://identity.api.dat.com/access/v1/token/organization";
+
+async function getDatHeaders(
+  clientId: string,
+  clientSecret: string,
+): Promise<Record<string, string>> {
+  const tokenUrl = process.env.DAT_TOKEN_URL ?? DAT_DEFAULT_TOKEN_URL;
+  const token = await fetchClientCredentialsToken(tokenUrl, clientId, clientSecret);
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 export async function fetchDatRates(
   request: MarketRateRequest,
@@ -30,11 +46,7 @@ export async function fetchDatRates(
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-DAT-CLIENT-ID": clientId,
-        "X-DAT-CLIENT-SECRET": clientSecret,
-      },
+      headers: await getDatHeaders(clientId, clientSecret),
       body: JSON.stringify(request),
     });
 
@@ -85,7 +97,7 @@ export async function searchDatCapacity(
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: datHeaders(clientId, clientSecret),
+      headers: await getDatHeaders(clientId, clientSecret),
       body: JSON.stringify(request),
     });
 
@@ -137,7 +149,7 @@ export async function postDatLoad(
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: datHeaders(clientId, clientSecret),
+      headers: await getDatHeaders(clientId, clientSecret),
       body: JSON.stringify(request),
     });
 
@@ -163,7 +175,10 @@ export async function postDatLoad(
       provider: "DAT",
       configured: true,
       posted: true,
-      externalId: stringValue(post.externalId) ?? stringValue(post.postId) ?? stringValue(post.id),
+      externalId:
+        stringValue(post.externalId) ??
+        stringValue(post.postId) ??
+        stringValue(post.id),
       message: stringValue(post.message) ?? stringValue(post.status),
       raw: payload,
     };
@@ -260,15 +275,9 @@ function recordsFromPayload(payload: unknown) {
     objectPayload.results ??
     objectPayload.data;
 
-  return Array.isArray(records) ? (records as Array<Record<string, unknown>>) : [];
-}
-
-function datHeaders(clientId: string, clientSecret: string) {
-  return {
-    "Content-Type": "application/json",
-    "X-DAT-CLIENT-ID": clientId,
-    "X-DAT-CLIENT-SECRET": clientSecret,
-  };
+  return Array.isArray(records)
+    ? (records as Array<Record<string, unknown>>)
+    : [];
 }
 
 function stringValue(value: unknown) {

@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
 import {
   ArrowLeft,
+  Building2,
   ClipboardList,
   Mail,
   MapPinned,
+  Package,
   Pencil,
   Phone,
   Star,
@@ -19,6 +21,12 @@ import { toCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+const CARD_ACCENTS = [
+  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
+  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
+  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+] as const;
+
 export default async function ShipperDetailPage({
   params,
 }: {
@@ -30,6 +38,12 @@ export default async function ShipperDetailPage({
   if (!shipper) {
     notFound();
   }
+
+  const summaryCards = [
+    { icon: ClipboardList, label: "Open leads", value: shipper.leads.length.toString() },
+    { icon: MapPinned, label: "Quote requests", value: shipper.quoteRequests.length.toString() },
+    { icon: Truck, label: "Loads", value: shipper.loads.length.toString() },
+  ];
 
   return (
     <InternalShell
@@ -57,82 +71,96 @@ export default async function ShipperDetailPage({
       </div>
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">{shipper.primaryContact}</h2>
-              <p className="mt-2 text-sm font-medium text-slate-600">
-                {shipper.industry}
-              </p>
+        {/* Profile card */}
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">{shipper.company}</p>
             </div>
-            <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
               {shipper.status}
             </span>
           </div>
+          <div className="p-5">
+            <p className="text-xs font-medium text-slate-500">{shipper.industry}</p>
+            <div className="mt-4 grid gap-3 text-sm text-slate-700">
+              <div className="flex gap-3">
+                <UserRound className="h-4 w-4 flex-none text-slate-400" />
+                <span>{shipper.primaryContact}</span>
+              </div>
+              <div className="flex gap-3">
+                <Mail className="h-4 w-4 flex-none text-slate-400" />
+                <span>{shipper.email}</span>
+              </div>
+              <div className="flex gap-3">
+                <Phone className="h-4 w-4 flex-none text-slate-400" />
+                <span>{shipper.phone}</span>
+              </div>
+            </div>
 
-          <div className="mt-6 grid gap-3 text-sm text-slate-700">
-            <div className="flex gap-3">
-              <UserRound className="h-5 w-5 flex-none text-slate-400" />
-              <span>{shipper.primaryContact}</span>
+            <div className="mt-5 rounded-md bg-slate-50 p-4">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                <MapPinned className="h-3.5 w-3.5" />
+                Known lanes
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {shipper.lanes.length ? (
+                  shipper.lanes.map((lane) => (
+                    <span
+                      key={lane}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700"
+                    >
+                      {lane}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400">No lanes on file.</p>
+                )}
+              </div>
             </div>
-            <div className="flex gap-3">
-              <Mail className="h-5 w-5 flex-none text-slate-400" />
-              <span>{shipper.email}</span>
-            </div>
-            <div className="flex gap-3">
-              <Phone className="h-5 w-5 flex-none text-slate-400" />
-              <span>{shipper.phone}</span>
-            </div>
-          </div>
 
-          <div className="mt-6 rounded-md bg-slate-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <MapPinned className="h-4 w-4 text-emerald-600" />
-              Known lanes
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {shipper.lanes.map((lane) => (
-                <span
-                  key={lane}
-                  className="rounded-full bg-white px-3 py-1 text-sm font-medium text-slate-700"
-                >
-                  {lane}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-md border border-slate-200 p-4">
-            <p className="text-sm font-semibold text-slate-700">Account notes</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {shipper.notes}
-            </p>
+            {shipper.notes && (
+              <div className="mt-4 rounded-md border border-slate-100 bg-slate-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Account notes</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{shipper.notes}</p>
+              </div>
+            )}
           </div>
         </article>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <SummaryCard
-            icon={ClipboardList}
-            label="Open leads"
-            value={shipper.leads.length.toString()}
-          />
-          <SummaryCard
-            icon={MapPinned}
-            label="Quote requests"
-            value={shipper.quoteRequests.length.toString()}
-          />
-          <SummaryCard
-            icon={Truck}
-            label="Loads"
-            value={shipper.loads.length.toString()}
-          />
+        {/* Summary metric cards */}
+        <div className="grid content-start gap-4 md:grid-cols-3 xl:grid-cols-1 xl:grid-rows-3">
+          {summaryCards.map((card, i) => (
+            <article
+              key={card.label}
+              className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
+            >
+              <div className="p-5">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                  <card.icon className="h-4 w-4" />
+                </div>
+                <p className="mt-4 text-sm font-medium text-slate-600">{card.label}</p>
+                <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{card.value}</p>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
+      {/* Contacts */}
       {shipper.contacts.length > 0 && (
-        <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <h2 className="text-xl font-semibold">Contacts</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <UserRound className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Contacts</p>
+            </div>
+            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              {shipper.contacts.length}
+            </span>
+          </div>
+          <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
             {shipper.contacts.map((contact) => (
               <Link
                 key={contact.id}
@@ -167,73 +195,86 @@ export default async function ShipperDetailPage({
               </Link>
             ))}
           </div>
-        </section>
+        </article>
       )}
 
+      {/* Related: leads, quotes, loads */}
       <section className="grid gap-6 xl:grid-cols-3">
-        <RelatedPanel title="Leads">
+        <RelatedPanel
+          title="Leads"
+          icon={ClipboardList}
+          count={shipper.leads.length}
+        >
           {shipper.leads.length ? (
             shipper.leads.map((lead) => (
               <Link
                 key={lead.id}
                 href={`/leads/${lead.id}`}
-                className="block rounded-md bg-slate-50 p-4 hover:bg-slate-100"
+                className="block px-5 py-4 hover:bg-slate-50"
               >
-                <p className="font-semibold">{lead.contact}</p>
+                <p className="font-semibold text-slate-900">{lead.contact}</p>
                 <p className="mt-1 text-sm text-slate-600">
                   {lead.stage} | {lead.nextFollowUp}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">
                   {lead.pain}
                 </p>
               </Link>
             ))
           ) : (
-            <EmptyState message="No leads tied to this shipper yet." />
+            <p className="py-8 text-center text-sm text-slate-400">No leads tied to this shipper yet.</p>
           )}
         </RelatedPanel>
 
-        <RelatedPanel title="Quote requests">
+        <RelatedPanel
+          title="Quote requests"
+          icon={Package}
+          count={shipper.quoteRequests.length}
+        >
           {shipper.quoteRequests.length ? (
             shipper.quoteRequests.map((quote) => (
               <Link
                 key={quote.id}
                 href={`/quote-requests/${quote.id}`}
-                className="block rounded-md bg-slate-50 p-4 hover:bg-slate-100"
+                className="block px-5 py-4 hover:bg-slate-50"
               >
-                <p className="font-semibold">{quote.lane}</p>
+                <p className="font-semibold text-slate-900">{quote.lane}</p>
                 <p className="mt-1 text-sm text-slate-600">
                   {quote.status} | {quote.equipment} | {quote.pickup}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">
                   {quote.details}
                 </p>
               </Link>
             ))
           ) : (
-            <EmptyState message="No quote requests tied to this shipper yet." />
+            <p className="py-8 text-center text-sm text-slate-400">No quote requests tied to this shipper yet.</p>
           )}
         </RelatedPanel>
 
-        <RelatedPanel title="Loads">
+        <RelatedPanel
+          title="Loads"
+          icon={Truck}
+          count={shipper.loads.length}
+        >
           {shipper.loads.length ? (
             shipper.loads.map((load) => (
               <Link
                 key={load.id}
                 href={`/loads/${load.id}`}
-                className="block rounded-md bg-slate-50 p-4 hover:bg-slate-100"
+                className="block px-5 py-4 hover:bg-slate-50"
               >
-                <p className="font-semibold">{load.lane}</p>
+                <p className="font-semibold text-slate-900">{load.lane}</p>
                 <p className="mt-1 text-sm text-slate-600">
                   {load.status} | {load.carrier}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-1.5 text-sm text-slate-600">
                   Margin: {toCurrency(load.margin)} ({load.marginPercent}%)
                 </p>
               </Link>
             ))
           ) : (
-            <EmptyState message="No loads tied to this shipper yet." />
+            <p className="py-8 text-center text-sm text-slate-400">No loads tied to this shipper yet.</p>
           )}
         </RelatedPanel>
       </section>
@@ -241,43 +282,29 @@ export default async function ShipperDetailPage({
   );
 }
 
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <Icon className="h-5 w-5 text-emerald-600" />
-      <p className="mt-3 text-sm font-medium text-slate-600">{label}</p>
-      <p className="mt-1 text-3xl font-semibold">{value}</p>
-    </article>
-  );
-}
-
 function RelatedPanel({
   title,
+  icon: Icon,
+  count,
   children,
 }: {
   title: string;
+  icon: ComponentType<{ className?: string }>;
+  count: number;
   children: ReactNode;
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-2xl font-semibold">{title}</h2>
-      <div className="mt-5 grid gap-3">{children}</div>
+    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-slate-400" />
+          <p className="text-sm font-semibold text-slate-700">{title}</p>
+        </div>
+        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+          {count}
+        </span>
+      </div>
+      <div className="divide-y divide-slate-100">{children}</div>
     </article>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <p className="rounded-md bg-slate-50 p-4 text-sm text-slate-600">
-      {message}
-    </p>
   );
 }

@@ -105,136 +105,144 @@ export default async function QuoteRequestDetailPage({
         Back to quote queue
       </Link>
 
+      {/* Quote details + actions */}
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">{quote.lane}</h2>
-              <p className="mt-2 text-sm font-medium text-slate-600">
-                {quote.contact} | {quote.phone} | {quote.email}
-              </p>
+        {/* Left: quote info */}
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">{quote.lane}</p>
             </div>
-            <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(quote.status)}`}>
               {quote.status}
             </span>
           </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <Metric icon={Truck} label="Equipment" value={quote.equipment} />
-            <Metric icon={CalendarDays} label="Pickup" value={quote.pickup} />
-            <Metric icon={Package} label="Weight" value={quote.weight} />
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <Metric icon={Phone} label="Best next action" value="Call with rate" />
-            <Metric
-              icon={DollarSign}
-              label="Latest quoted rate"
-              value={
-                quote.latestQuote
-                  ? `$${quote.latestQuote.quotedRate.toLocaleString()}`
-                : "Not quoted yet"
-              }
-            />
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <Metric
-              icon={MapPinIcon}
-              label="Pickup address"
-              value={quote.originAddress ?? "Pickup address needed"}
-            />
-            <Metric
-              icon={MapPinIcon}
-              label="Delivery address"
-              value={quote.destinationAddress ?? "Delivery address needed"}
-            />
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-4">
-            <Metric
-              icon={CalendarDays}
-              label="Pickup window"
-              value={quote.pickupWindow ?? "Window needed"}
-            />
-            <Metric
-              icon={CalendarDays}
-              label="Delivery"
-              value={`${quote.delivery ?? "Not set"} / ${
-                quote.deliveryWindow ?? "Window needed"
-              }`}
-            />
-            <Metric
-              icon={Package}
-              label="Pieces / pallets"
-              value={`${quote.pieceCount ?? "Not set"} / ${
-                quote.palletCount ?? "Not set"
-              }`}
-            />
-            <Metric
-              icon={Package}
-              label="Customer ref"
-              value={quote.customerReference ?? "Not set"}
-            />
-          </div>
-
-          <div className="mt-6 rounded-md bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-700">
-              Freight details
+          <div className="p-5">
+            <p className="text-sm font-medium text-slate-600">
+              {quote.contact} · {quote.phone} · {quote.email}
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {quote.specialRequirements}
-            </p>
-            <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-              <p>Commodity: {quote.commodity ?? "Commodity needed"}</p>
-              <p>Dimensions: {quote.dimensions ?? "Not set"}</p>
-              <p>Hazmat: {quote.hazmat ?? "No"}</p>
-              <p>Temperature: {quote.temperatureRequirement ?? "None"}</p>
-              <p>Appointment: {quote.appointmentRequired ?? "No"}</p>
-              <p>Urgency: {quote.urgency ?? "Normal"}</p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <Metric icon={Truck} label="Equipment" value={quote.equipment} />
+              <Metric icon={CalendarDays} label="Pickup" value={quote.pickup} />
+              <Metric icon={Package} label="Weight" value={quote.weight} />
             </div>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Accessorials: {quote.accessorials ?? "None"}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Pricing notes: {quote.pricingNotes ?? "No pricing notes yet."}
-            </p>
-          </div>
 
-          <div className="mt-6 rounded-md border border-emerald-100 bg-emerald-50 p-4">
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-emerald-700" />
-              <p className="text-sm font-semibold text-emerald-900">
-                AI pricing note
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Metric icon={Phone} label="Best next action" value="Call with rate" />
+              <Metric
+                icon={DollarSign}
+                label="Latest quoted rate"
+                value={
+                  quote.latestQuote
+                    ? `$${quote.latestQuote.quotedRate.toLocaleString()}`
+                    : "Not quoted yet"
+                }
+              />
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Metric
+                icon={MapPinIcon}
+                label="Pickup address"
+                value={quote.originAddress ?? "Pickup address needed"}
+              />
+              <Metric
+                icon={MapPinIcon}
+                label="Delivery address"
+                value={quote.destinationAddress ?? "Delivery address needed"}
+              />
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-4">
+              <Metric
+                icon={CalendarDays}
+                label="Pickup window"
+                value={quote.pickupWindow ?? "Window needed"}
+              />
+              <Metric
+                icon={CalendarDays}
+                label="Delivery"
+                value={`${quote.delivery ?? "Not set"} / ${
+                  quote.deliveryWindow ?? "Window needed"
+                }`}
+              />
+              <Metric
+                icon={Package}
+                label="Pieces / pallets"
+                value={`${quote.pieceCount ?? "Not set"} / ${
+                  quote.palletCount ?? "Not set"
+                }`}
+              />
+              <Metric
+                icon={Package}
+                label="Customer ref"
+                value={quote.customerReference ?? "Not set"}
+              />
+            </div>
+
+            <div className="mt-5 rounded-md bg-slate-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                Freight details
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {quote.specialRequirements}
+              </p>
+              <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                <p>Commodity: {quote.commodity ?? "Commodity needed"}</p>
+                <p>Dimensions: {quote.dimensions ?? "Not set"}</p>
+                <p>Hazmat: {quote.hazmat ?? "No"}</p>
+                <p>Temperature: {quote.temperatureRequirement ?? "None"}</p>
+                <p>Appointment: {quote.appointmentRequired ?? "No"}</p>
+                <p>Urgency: {quote.urgency ?? "Normal"}</p>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Accessorials: {quote.accessorials ?? "None"}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Pricing notes: {quote.pricingNotes ?? "No pricing notes yet."}
               </p>
             </div>
-            <p className="mt-2 text-sm leading-6 text-emerald-900">
-              {quote.aiSummary}
-            </p>
+
+            <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50 p-4">
+              <div className="flex items-center gap-2">
+                <Bot className="h-4 w-4 text-emerald-700" />
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
+                  AI pricing note
+                </p>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-emerald-900">
+                {quote.aiSummary}
+              </p>
+            </div>
           </div>
         </article>
 
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <details className="mb-6 rounded-md border border-slate-200 bg-slate-50 p-4">
-            <summary className="cursor-pointer text-sm font-bold text-slate-800">
-              Edit quote details before pricing
-            </summary>
-            <div className="mt-4">
-              <QuoteRequestEditForm quoteId={quote.id} defaults={quoteDefaults} />
-            </div>
-          </details>
+        {/* Right: action cards */}
+        <div className="grid gap-6">
+          {/* Edit details */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+                <Package className="h-4 w-4 text-slate-400" />
+                <p className="flex-1 text-sm font-semibold text-slate-700">Edit quote details before pricing</p>
+                <span className="text-xs text-slate-400 group-open:hidden">Expand</span>
+                <span className="hidden text-xs text-slate-400 group-open:inline">Collapse</span>
+              </summary>
+              <div className="p-5">
+                <QuoteRequestEditForm quoteId={quote.id} defaults={quoteDefaults} />
+              </div>
+            </details>
+          </article>
 
-          <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4">
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-emerald-700" />
-              <p className="text-sm font-semibold text-emerald-900">
-                Run pricing agent
-              </p>
+          {/* Run pricing agent */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <Bot className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Run pricing agent</p>
             </div>
-            <p className="mt-2 text-sm leading-6 text-emerald-900">
-              Ask Grok to review this quote request before the rate is sent.
-            </p>
-            <div className="mt-4 rounded-md bg-white/70 p-3">
+            <div className="p-5">
               <AiAgentRunForm
                 relatedEntityType="QuoteRequest"
                 relatedEntityId={quote.id}
@@ -242,35 +250,27 @@ export default async function QuoteRequestDetailPage({
                 agentOptions={["Quote Pricing Agent"]}
               />
             </div>
-          </div>
+          </article>
 
-          <div className="mt-6 border-t border-slate-100 pt-6">
-            <h2 className="text-2xl font-semibold">Pricing workspace</h2>
-            <p className="mt-3 leading-7 text-slate-600">
-              Add lane benchmarks, generate a recommended buy/sell rate, then
-              save the final customer quote after the pricing call or email.
-            </p>
-            <div className="mt-5 rounded-lg bg-slate-50 p-4">
-              <div className="mb-4 rounded-md border border-sky-100 bg-sky-50 p-4">
-                <p className="text-sm font-semibold text-sky-900">
-                  Market rates first
-                </p>
+          {/* Pricing workspace */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <DollarSign className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Pricing workspace</p>
+            </div>
+            <div className="grid gap-4 p-5">
+              <div className="rounded-md border border-sky-100 bg-sky-50 p-4">
+                <p className="text-sm font-semibold text-sky-900">Market rates first</p>
                 <p className="mt-2 text-sm leading-6 text-sky-900">
                   Fetch DAT/Truckstop benchmarks after confirming the lane,
-                  equipment, timing, and requirements above. Manual benchmarks
-                  are fallback when provider credentials or endpoints are not
-                  configured.
+                  equipment, timing, and requirements above.
                 </p>
                 <div className="mt-4">
                   <MarketRateFetchForm quoteId={quote.id} />
                 </div>
               </div>
               <RateBenchmarkCreateForm quoteId={quote.id} />
-            </div>
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
               <PricingRecommendationGenerateForm quoteId={quote.id} />
-            </div>
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
               <PricingRecommendationCreateForm
                 quoteId={quote.id}
                 defaultCarrierCost={defaultCarrierCost ?? undefined}
@@ -278,34 +278,30 @@ export default async function QuoteRequestDetailPage({
                 defaultTargetMarginPercent={quote.targetMarginPercent}
               />
             </div>
-          </div>
+          </article>
 
-          <div className="mt-6 border-t border-slate-100 pt-6" />
-          <h2 className="text-2xl font-semibold">Record customer quote</h2>
-          <p className="mt-3 leading-7 text-slate-600">
-            Save the sell rate you gave the shipper. This moves the request to
-            quoted status and keeps rate history attached to the account.
-          </p>
-          <div className="mt-5 rounded-lg bg-slate-50 p-4">
-            <CustomerQuoteCreateForm
-              quoteId={quote.id}
-              defaultQuotedRate={defaultCustomerRate}
-              defaultTargetCarrierCost={
-                defaultCarrierCost ?? undefined
-              }
-            />
-          </div>
-
-          <div className="mt-6 border-t border-slate-100 pt-6">
-            <div className="flex items-center gap-3">
-              <Mail className="h-6 w-6 text-emerald-600" />
-              <h3 className="text-lg font-semibold">Quote email draft</h3>
+          {/* Record customer quote */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <DollarSign className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Record customer quote</p>
             </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Review the drafted customer email before sending it to the
-              shipper and logging it to the timeline.
-            </p>
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+            <div className="p-5">
+              <CustomerQuoteCreateForm
+                quoteId={quote.id}
+                defaultQuotedRate={defaultCustomerRate}
+                defaultTargetCarrierCost={defaultCarrierCost ?? undefined}
+              />
+            </div>
+          </article>
+
+          {/* Quote email draft */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <Mail className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Quote email draft</p>
+            </div>
+            <div className="p-5">
               {quoteEmailDraft ? (
                 <QuoteEmailSendForm
                   quoteId={quote.id}
@@ -314,21 +310,21 @@ export default async function QuoteRequestDetailPage({
                   body={quoteEmailDraft.body}
                 />
               ) : (
-                <p className="rounded-md border border-dashed border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+                <p className="text-sm leading-6 text-slate-500">
                   Save a customer quote first. The email draft will use the
                   latest quoted rate, lane, equipment, timing, and validity.
                 </p>
               )}
             </div>
-          </div>
+          </article>
 
-          <div className="mt-6 border-t border-slate-100 pt-6">
-            <h3 className="text-lg font-semibold">Customer decision</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Update the quote state after the shipper responds. Accepted
-              quotes can be converted to loads from the section below.
-            </p>
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          {/* Customer decision */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <CheckCircle2 className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Customer decision</p>
+            </div>
+            <div className="grid gap-4 p-5 sm:grid-cols-3">
               <div className="rounded-lg bg-emerald-50 p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-900">
                   <CheckCircle2 className="h-4 w-4" />
@@ -366,40 +362,36 @@ export default async function QuoteRequestDetailPage({
                 />
               </div>
             </div>
-          </div>
+          </article>
 
-          <div className="mt-6 border-t border-slate-100 pt-6">
-            <h3 className="text-lg font-semibold">Convert accepted quote</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Use this only after the shipper says yes. Confirm the details
-              below are correct — they will be copied to the new load
-              automatically.
-            </p>
-            <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
-                Carries over to load
-              </p>
-              <div className="mt-3 grid gap-1.5 text-sm text-emerald-900 sm:grid-cols-2">
-                <p>Lane: {quote.lane}</p>
-                <p>Equipment: {quote.equipment}</p>
-                <p>Pickup: {quote.pickup}</p>
-                <p>
-                  Delivery:{" "}
-                  {quote.deliveryDateInput ?? "Not set"}
-                </p>
-                <p>Weight: {quote.weight}</p>
-                <p>Commodity: {quote.commodity ?? "Not set"}</p>
-                {quote.customerReference ? (
-                  <p>Customer ref: {quote.customerReference}</p>
-                ) : null}
-                {quote.hazmat ? <p>Hazmat: Yes</p> : null}
-                {quote.temperatureRequirement &&
-                quote.temperatureRequirement !== "Not set" ? (
-                  <p>Temp: {quote.temperatureRequirement}</p>
-                ) : null}
-              </div>
+          {/* Convert accepted quote */}
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <Truck className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Convert accepted quote</p>
             </div>
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+            <div className="p-5">
+              <div className="mb-4 rounded-md border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+                  Carries over to load
+                </p>
+                <div className="mt-3 grid gap-1.5 text-sm text-emerald-900 sm:grid-cols-2">
+                  <p>Lane: {quote.lane}</p>
+                  <p>Equipment: {quote.equipment}</p>
+                  <p>Pickup: {quote.pickup}</p>
+                  <p>Delivery: {quote.deliveryDateInput ?? "Not set"}</p>
+                  <p>Weight: {quote.weight}</p>
+                  <p>Commodity: {quote.commodity ?? "Not set"}</p>
+                  {quote.customerReference ? (
+                    <p>Customer ref: {quote.customerReference}</p>
+                  ) : null}
+                  {quote.hazmat ? <p>Hazmat: Yes</p> : null}
+                  {quote.temperatureRequirement &&
+                  quote.temperatureRequirement !== "Not set" ? (
+                    <p>Temp: {quote.temperatureRequirement}</p>
+                  ) : null}
+                </div>
+              </div>
               <QuoteConvertForm
                 quoteId={quote.id}
                 defaultCustomerRate={quote.latestQuote?.quotedRate}
@@ -408,26 +400,20 @@ export default async function QuoteRequestDetailPage({
                 }
               />
             </div>
-          </div>
-        </article>
+          </article>
+        </div>
       </section>
 
+      {/* Rate benchmarks + buy/sell guidance */}
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-                Pricing intelligence
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Rate benchmarks
-              </h2>
-            </div>
-            <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <p className="text-sm font-semibold text-slate-700">Rate benchmarks</p>
+            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
               {quote.rateBenchmarks.length} saved
-            </p>
+            </span>
           </div>
-          <div className="mt-5 grid gap-3">
+          <div className="grid gap-3 p-5">
             {quote.rateBenchmarks.length ? (
               quote.rateBenchmarks.map((benchmark) => (
                 <div
@@ -476,30 +462,21 @@ export default async function QuoteRequestDetailPage({
                 </div>
               ))
             ) : (
-              <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                No benchmarks yet. Add a manual benchmark from DAT,
-                Truckstop, a carrier quote, or internal lane knowledge before
-                generating a system recommendation.
+              <p className="py-8 text-center text-sm text-slate-400">
+                No benchmarks yet. Add from the pricing workspace above.
               </p>
             )}
           </div>
         </article>
 
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-                Recommendations
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Buy / sell guidance
-              </h2>
-            </div>
-            <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <p className="text-sm font-semibold text-slate-700">Buy / sell guidance</p>
+            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
               {quote.pricingRecommendations.length} saved
-            </p>
+            </span>
           </div>
-          <div className="mt-5 grid gap-3">
+          <div className="grid gap-3 p-5">
             {quote.pricingRecommendations.length ? (
               quote.pricingRecommendations.map((recommendation) => (
                 <div
@@ -542,30 +519,23 @@ export default async function QuoteRequestDetailPage({
                 </div>
               ))
             ) : (
-              <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-                No pricing recommendations yet. Add at least one benchmark,
-                then generate a system recommendation or save a manual one.
+              <p className="py-8 text-center text-sm text-slate-400">
+                No pricing recommendations yet. Add at least one benchmark, then generate one.
               </p>
             )}
           </div>
         </article>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-              Lane history
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">
-              Similar completed or active loads
-            </h2>
-          </div>
-          <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+      {/* Lane history */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <p className="text-sm font-semibold text-slate-700">Lane history</p>
+          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
             {quote.laneHistory.length} loads
-          </p>
+          </span>
         </div>
-        <div className="mt-5 grid gap-3">
+        <div className="grid gap-3 p-5">
           {quote.laneHistory.length ? (
             quote.laneHistory.map((load) => (
               <Link
@@ -594,30 +564,22 @@ export default async function QuoteRequestDetailPage({
               </Link>
             ))
           ) : (
-            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-              No same-lane load history yet. Manual benchmarks will drive this
-              pricing recommendation until history accumulates.
+            <p className="py-8 text-center text-sm text-slate-400">
+              No same-lane load history yet. Manual benchmarks will drive pricing until history accumulates.
             </p>
           )}
         </div>
-      </section>
+      </article>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-              Quote history
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">
-              Rates offered to the shipper
-            </h2>
-          </div>
-          <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+      {/* Quote history */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <p className="text-sm font-semibold text-slate-700">Quote history</p>
+          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
             {quote.customerQuotes.length} saved
-          </p>
+          </span>
         </div>
-
-        <div className="mt-5 grid gap-3">
+        <div className="grid gap-3 p-5">
           {quote.customerQuotes.length ? (
             quote.customerQuotes.map((customerQuote) => (
               <div
@@ -657,15 +619,21 @@ export default async function QuoteRequestDetailPage({
               </div>
             ))
           ) : (
-            <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-              No customer quotes have been saved yet. Record the rate after the
-              pricing call or email, then follow up for acceptance.
-            </div>
+            <p className="py-8 text-center text-sm text-slate-400">
+              No customer quotes saved yet. Record the rate after the pricing call, then follow up for acceptance.
+            </p>
           )}
         </div>
-      </section>
+      </article>
     </InternalShell>
   );
+}
+
+function getStatusBadgeClass(status: string) {
+  if (status === "ACCEPTED" || status === "Accepted") return "bg-emerald-100 text-emerald-800";
+  if (status === "REJECTED" || status === "Rejected" || status === "Lost") return "bg-red-100 text-red-800";
+  if (status === "QUOTED" || status === "Quoted") return "bg-sky-100 text-sky-800";
+  return "bg-amber-100 text-amber-800";
 }
 
 function Metric({
@@ -679,9 +647,9 @@ function Metric({
 }) {
   return (
     <div className="rounded-md bg-slate-50 p-4">
-      <Icon className="h-5 w-5 text-emerald-600" />
-      <p className="mt-3 text-sm font-semibold text-slate-600">{label}</p>
-      <p className="mt-1 font-medium">{value}</p>
+      <Icon className="h-4 w-4 text-emerald-600" />
+      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
     </div>
   );
 }

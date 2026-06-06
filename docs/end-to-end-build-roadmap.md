@@ -248,31 +248,36 @@ Completion criteria:
 
 Goal: make active loads easy to monitor without opening each load.
 
-Status: 5.1 complete (internal workspace + risk groupings using existing data); public links, persistent ownership, and provider adapters deferred.
+Status: 5.1 + 5.2 complete. Internal workspace with computed risks + persistent exception model with ownership/resolution. Public links and adapters deferred.
 
-Build (Phase 5.1 completed):
+Build (Phase 5.1 completed): (see prior)
 
-- Added dedicated internal /tracking page (src/app/tracking/page.tsx) using InternalShell.
-- "Tracking" entry added to Operations nav in src/lib/data.ts.
-- New getTrackingWorkspaceView() in src/lib/crm.ts (reuses/extends getLoadViews + LoadView with raw dates; computes risk groups server-side from existing Load, ShipmentEvent, customerUpdateStatus, documents (for hasPod), pickup/delivery dates, and statuses. No new schema or migration).
-- Risk groups implemented exactly as scoped: pickup today, delivery today, no recent check call/update, customer update due, delivered but missing POD, late pickup/delivery risk, uncovered/not booked.
-- Each load entry shows key context and quick action links that reuse the existing system (open load, add check call / tracking update, customer update, upload POD via /documents).
-- All exceptions/risks are computed (no new ownership/resolution model).
-- Explicitly internal-only: no public tracking links or customer-facing surface (documented as future in page footer and roadmap).
-- Builds 100% on prior phases' data and patterns (Load Board, load detail events/forms, documents, crm views). No duplication.
+Build (Phase 5.2 completed):
 
-Deferred per scope (5.2+):
-- 5.2: Persistent exception ownership/resolution model + migration.
-- 5.3: Public tracking link foundation (secure tokens, expiration, customer data scoping).
-- 5.4: ELD/GPS/tracking provider adapter boundaries.
-- 5.5: Automated customer updates and agent workflows.
+- Added LoadException model + LoadExceptionStatus enum to prisma/schema (explicit migration 20260610100000_phase5_tracking_exceptions_model).
+- Added relations on Load and User.
+- Updated crm.ts: LoadExceptionView type, included in LoadView, mapLoad now maps exceptions (with owner), queries in getLoadViews/getLoadDetailView include exceptions with owner.
+- Added loadExceptionCreate/Update schemas in validation.ts.
+- New API route /api/loads/[id]/exceptions supporting POST create and PATCH update (status, owner, notes).
+- Added LoadExceptionCreateForm and LoadExceptionUpdateForm in crm-forms.tsx.
+- Integrated in loads/[id]/page.tsx: exceptions section with list + update forms, create form.
+- Enhanced tracking/page.tsx: per-load exceptions display (from persistent model), inline create/update forms using the new components.
+- Persistent model supports ownership (assign to user), status (OPEN/ASSIGNED/RESOLVED), notes, resolvedAt.
+- Computed risks from 5.1 remain alongside persistent exceptions.
+- All internal-only, reuses existing user, load, forms, revalidation patterns. No duplication.
+- Followed handoff rules.
+
+Deferred:
+- 5.3: Public tracking links.
+- 5.4: Provider adapters.
+- 5.5: Agent workflows.
 
 Completion criteria progress:
-- Internal operators now have one workspace to monitor active loads by the listed risks without opening every record.
-- Quick actions tie back to existing check-call, customer update, POD, and load detail workflows.
-- Exceptions are visible and actionable (computed).
+- Exceptions now have persistent ownership and resolution states.
+- Visible/assignable in tracking workspace and per-load.
+- Operators can manage active loads + exceptions in one place.
 
-Next: 5.2 when ready for ownership model.
+Next: 5.3 for public foundation when ready.
 
 ## Phase 6: Integration Admin And Monitoring
 

@@ -18,6 +18,7 @@ import { InternalShell } from "@/components/internal-shell";
 import {
   getDashboardMetrics,
   getRecentAiAgentRunViews,
+  getStaleLoadAlerts,
   getTodayScheduleView,
 } from "@/lib/crm";
 import { agentBriefs } from "@/lib/data";
@@ -25,11 +26,13 @@ import { agentBriefs } from "@/lib/data";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [metrics, recentAgentRuns, todaySchedule] = await Promise.all([
-    getDashboardMetrics(),
-    getRecentAiAgentRunViews(),
-    getTodayScheduleView(),
-  ]);
+  const [metrics, recentAgentRuns, todaySchedule, staleAlerts] =
+    await Promise.all([
+      getDashboardMetrics(),
+      getRecentAiAgentRunViews(),
+      getTodayScheduleView(),
+      getStaleLoadAlerts(),
+    ]);
   const pickups = todaySchedule.filter((item) => item.eventType === "Pickup");
   const deliveries = todaySchedule.filter(
     (item) => item.eventType === "Delivery",
@@ -170,6 +173,59 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {staleAlerts.length > 0 && (
+        <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 flex-none text-red-600" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-700">
+                  Attention required
+                </p>
+                <h2 className="mt-1 text-xl font-semibold text-red-950">
+                  {staleAlerts.length} load
+                  {staleAlerts.length !== 1 ? "s" : ""} with no update in 24h+
+                </h2>
+              </div>
+            </div>
+            <Link
+              href="/loads"
+              className="inline-flex items-center gap-1 text-sm font-bold text-red-700 hover:text-red-900"
+            >
+              Open load board <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid gap-2">
+            {staleAlerts.map((alert) => (
+              <Link
+                key={alert.id}
+                href={`/loads/${alert.id}`}
+                className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-md border border-red-200 bg-white px-4 py-3 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="grid gap-1 sm:grid-cols-[auto_1fr_1fr_1fr] sm:items-center sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900">
+                      {alert.loadNumber}
+                    </span>
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
+                      {alert.status}
+                    </span>
+                  </div>
+                  <p className="truncate text-sm text-slate-700">{alert.lane}</p>
+                  <p className="text-sm text-slate-600">{alert.shipper}</p>
+                  <p className="text-sm text-slate-500">{alert.carrier}</p>
+                </div>
+                <p className="text-right text-xs font-semibold text-red-700">
+                  {alert.lastEventAt
+                    ? `Last update ${alert.hoursStale}h ago`
+                    : "No tracking yet"}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">

@@ -992,6 +992,72 @@ function getSampleTodaySchedule(): TodayScheduleItem[] {
   ];
 }
 
+export type StaleLoadAlert = {
+  id: string;
+  loadNumber: string;
+  lane: string;
+  status: string;
+  shipper: string;
+  carrier: string;
+  lastEventAt: string | null;
+  hoursStale: number;
+};
+
+export async function getStaleLoadAlerts(): Promise<StaleLoadAlert[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return [];
+  }
+  try {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const loads = await prisma.load.findMany({
+      where: {
+        status: { in: ["TENDERED", "BOOKED", "PICKED_UP", "IN_TRANSIT"] },
+      },
+      select: {
+        id: true,
+        loadNumber: true,
+        status: true,
+        originCity: true,
+        originState: true,
+        destinationCity: true,
+        destinationState: true,
+        shipper: { select: { companyName: true } },
+        carrier: { select: { companyName: true } },
+        events: {
+          orderBy: { occurredAt: "desc" },
+          take: 1,
+          select: { occurredAt: true },
+        },
+      },
+    });
+
+    const stale: StaleLoadAlert[] = [];
+    for (const load of loads) {
+      const lastEvent = load.events[0];
+      const lastAt = lastEvent?.occurredAt ?? null;
+      if (lastAt && lastAt >= cutoff) continue;
+      const hoursAgo = lastAt
+        ? Math.floor((Date.now() - lastAt.getTime()) / (1000 * 60 * 60))
+        : 999;
+      stale.push({
+        id: load.id,
+        loadNumber: load.loadNumber
+          ? `LD-${String(load.loadNumber).padStart(4, "0")}`
+          : "LD-????",
+        lane: `${load.originCity}, ${load.originState} → ${load.destinationCity}, ${load.destinationState}`,
+        status: titleCaseEnum(load.status),
+        shipper: load.shipper.companyName,
+        carrier: load.carrier?.companyName ?? "No carrier",
+        lastEventAt: lastAt ? formatDate(lastAt) : null,
+        hoursStale: hoursAgo,
+      });
+    }
+    return stale.sort((a, b) => b.hoursStale - a.hoursStale);
+  } catch {
+    return [];
+  }
+}
+
 function getSampleEmailEventDashboardView(): EmailEventDashboardView {
   return buildEmailDashboard(
     [

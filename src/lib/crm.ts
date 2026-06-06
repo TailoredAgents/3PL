@@ -54,6 +54,13 @@ export type CarrierView = (typeof carriers)[number] & {
   lastVettedAt?: string;
   approvedBy?: string;
   complianceNotes?: string;
+  insuranceExpiration?: string;
+  w9ReceivedAt?: string;
+  agreementSignedAt?: string;
+  paymentSetup?: string;
+  callbackVerifiedAt?: string;
+  blockedReason?: string;
+  additionalContacts?: unknown;
   deliveredLoads?: number;
   avgMargin?: number;
 };
@@ -1637,6 +1644,13 @@ export async function getCarrierViews(): Promise<CarrierView[]> {
         : "Not vetted",
       approvedBy: carrier.approvedBy ?? "Not approved",
       complianceNotes: carrier.complianceNotes ?? "No compliance notes yet.",
+      insuranceExpiration: carrier.insuranceExpiration ? formatDate(carrier.insuranceExpiration) : undefined,
+      w9ReceivedAt: carrier.w9ReceivedAt ? formatDate(carrier.w9ReceivedAt) : undefined,
+      agreementSignedAt: carrier.agreementSignedAt ? formatDate(carrier.agreementSignedAt) : undefined,
+      paymentSetup: carrier.paymentSetup ?? undefined,
+      callbackVerifiedAt: carrier.callbackVerifiedAt ? formatDate(carrier.callbackVerifiedAt) : undefined,
+      blockedReason: carrier.blockedReason ?? undefined,
+      additionalContacts: carrier.additionalContacts ?? undefined,
       preferredLanes: Array.isArray(carrier.preferredLanes)
         ? carrier.preferredLanes.map(String)
         : ["Lane history needed"],
@@ -1710,6 +1724,13 @@ export async function getCarrierDetailView(
         : "Not vetted",
       approvedBy: carrier.approvedBy ?? "Not approved",
       complianceNotes: carrier.complianceNotes ?? "No compliance notes yet.",
+      insuranceExpiration: carrier.insuranceExpiration ? formatDate(carrier.insuranceExpiration) : undefined,
+      w9ReceivedAt: carrier.w9ReceivedAt ? formatDate(carrier.w9ReceivedAt) : undefined,
+      agreementSignedAt: carrier.agreementSignedAt ? formatDate(carrier.agreementSignedAt) : undefined,
+      paymentSetup: carrier.paymentSetup ?? undefined,
+      callbackVerifiedAt: carrier.callbackVerifiedAt ? formatDate(carrier.callbackVerifiedAt) : undefined,
+      blockedReason: carrier.blockedReason ?? undefined,
+      additionalContacts: carrier.additionalContacts ?? undefined,
       preferredLanes: Array.isArray(carrier.preferredLanes)
         ? carrier.preferredLanes.map(String)
         : ["Lane history needed"],

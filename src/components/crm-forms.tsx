@@ -566,6 +566,10 @@ export function CarrierCreateForm() {
         <Field name="approvedBy" label="Approved by" />
       </div>
       <Textarea name="complianceNotes" label="Compliance notes" rows={2} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="insuranceExpiration" label="Insurance expiration" type="date" />
+        <Field name="paymentSetup" label="Payment setup (e.g. ACH, Factoring Co)" />
+      </div>
       <Field
         name="preferredLanes"
         label="Preferred lanes"
@@ -988,7 +992,7 @@ export function DocumentCreateForm({
         <Select
           name="type"
           label="Type"
-          options={["BOL", "POD", "RATE_CONFIRMATION", "INVOICE", "AUDIT_UPLOAD", "OTHER"]}
+          options={["BOL", "POD", "RATE_CONFIRMATION", "INVOICE", "AUDIT_UPLOAD", "W9", "CERTIFICATE_OF_INSURANCE", "BROKER_CARRIER_AGREEMENT", "OTHER"]}
         />
         <Field name="fileName" label="Document name" required />
       </div>
@@ -1266,6 +1270,16 @@ export function CarrierComplianceForm({
         <Field name="lastVettedAt" label="Last vetted" type="date" />
         <Field name="approvedBy" label="Approved by" />
       </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="insuranceExpiration" label="Insurance expiration" type="date" />
+        <Field name="w9ReceivedAt" label="W-9 received" type="date" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="agreementSignedAt" label="Broker-Carrier agreement signed" type="date" />
+        <Field name="callbackVerifiedAt" label="Callback verified" type="date" />
+      </div>
+      <Field name="paymentSetup" label="Payment setup (ACH / Factoring)" />
+      <Field name="blockedReason" label="Blocked reason (if any)" />
       <Textarea name="complianceNotes" label="Compliance notes" />
       <FormFooter state={state} buttonLabel="Update compliance" />
     </form>

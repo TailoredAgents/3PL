@@ -56,7 +56,15 @@ export default async function CarrierDetailPage({
     { label: "Fraud risk", value: carrier.fraudRiskLevel },
     { label: "Last vetted", value: carrier.lastVettedAt },
     { label: "Approved by", value: carrier.approvedBy },
+    { label: "Insurance expires", value: carrier.insuranceExpiration },
+    { label: "W-9 received", value: carrier.w9ReceivedAt },
+    { label: "Agreement signed", value: carrier.agreementSignedAt },
+    { label: "Payment setup", value: carrier.paymentSetup },
+    { label: "Callback verified", value: carrier.callbackVerifiedAt },
   ];
+
+  const hasBlocked = !!carrier.blockedReason;
+  const isApproved = carrier.complianceStatus === "Approved" && !hasBlocked;
 
   const outstandingCount = carrier.loads.filter(
     (l) => l.carrierInvoiceNumber && !l.carrierPaidAt,
@@ -88,11 +96,13 @@ export default async function CarrierDetailPage({
               <p className="text-sm font-semibold text-slate-700">{carrier.contact}</p>
             </div>
             <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-              carrier.complianceStatus === "Approved"
+              isApproved
                 ? "bg-emerald-50 text-emerald-700"
-                : "bg-amber-50 text-amber-700"
+                : hasBlocked
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-50 text-amber-700"
             }`}>
-              {carrier.complianceStatus}
+              {hasBlocked ? "BLOCKED" : carrier.complianceStatus}
             </span>
           </div>
           <div className="p-5">
@@ -141,8 +151,11 @@ export default async function CarrierDetailPage({
             )}
 
             <div className="mt-4 overflow-hidden rounded-md border border-slate-100 bg-white">
-              <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Compliance checklist</p>
+              <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5 flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Compliance checklist &amp; onboarding</p>
+                {hasBlocked && (
+                  <span className="text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded">BLOCKED: {carrier.blockedReason}</span>
+                )}
               </div>
               <div className="grid gap-0 sm:grid-cols-2">
                 {complianceItems.map((item, i) => (
@@ -154,9 +167,36 @@ export default async function CarrierDetailPage({
                   </div>
                 ))}
               </div>
+              {/* Required compliance documents status (tied to Document Center) */}
+              <div className="border-t border-slate-100 px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">Required documents (upload via Documents or carrier form)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  {[
+                    { type: "W9", label: "W-9" },
+                    { type: "CERTIFICATE_OF_INSURANCE", label: "COI" },
+                    { type: "BROKER_CARRIER_AGREEMENT", label: "Broker-Carrier Agreement" },
+                  ].map(req => {
+                    const hasDoc = carrier.documents.some(d => d.type === req.type);
+                    return (
+                      <div key={req.type} className={`px-2 py-1 rounded border ${hasDoc ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                        {req.label}: {hasDoc ? "✓ On file" : "Missing"}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-1 text-[10px] text-slate-500">Use the + document on this carrier or central Documents page with matching type.</p>
+              </div>
               {carrier.complianceNotes && (
                 <div className="border-t border-slate-100 px-4 py-3">
                   <p className="text-xs leading-5 text-slate-600">{carrier.complianceNotes}</p>
+                </div>
+              )}
+              {Array.isArray(carrier.additionalContacts) && (carrier.additionalContacts as unknown[]).length > 0 && (
+                <div className="border-t border-slate-100 px-4 py-3 text-xs">
+                  <p className="font-bold text-slate-500">Additional contacts</p>
+                  {(carrier.additionalContacts as unknown[]).map((c: any, i: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                    <div key={i} className="mt-1 text-slate-700">{c?.name || "Contact"} · {c?.phone || ""} {c?.email || ""}</div>
+                  ))}
                 </div>
               )}
             </div>

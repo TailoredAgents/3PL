@@ -17,6 +17,9 @@ export const documentTypeOptions: DocumentType[] = [
   "RATE_CONFIRMATION",
   "INVOICE",
   "AUDIT_UPLOAD",
+  "W9",
+  "CERTIFICATE_OF_INSURANCE",
+  "BROKER_CARRIER_AGREEMENT",
   "OTHER",
 ];
 

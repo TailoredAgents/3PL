@@ -160,6 +160,12 @@ export const carrierComplianceUpdateSchema = z.object({
   lastVettedAt: z.string().trim().optional(),
   approvedBy: z.string().trim().optional(),
   complianceNotes: z.string().trim().optional(),
+  insuranceExpiration: z.string().trim().optional(),
+  w9ReceivedAt: z.string().trim().optional(),
+  agreementSignedAt: z.string().trim().optional(),
+  paymentSetup: z.string().trim().optional(),
+  callbackVerifiedAt: z.string().trim().optional(),
+  blockedReason: z.string().trim().optional(),
 });
 
 export const loadCreateSchema = z.object({

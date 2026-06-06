@@ -113,6 +113,9 @@ enum DocumentType {
   BOL
   RATE_CONFIRMATION
   AUDIT_UPLOAD
+  W9
+  CERTIFICATE_OF_INSURANCE
+  BROKER_CARRIER_AGREEMENT
   OTHER
 }
 
@@ -598,6 +601,13 @@ model Carrier {
   lastVettedAt       DateTime?
   approvedBy         String?
   complianceNotes    String?
+  insuranceExpiration DateTime?
+  w9ReceivedAt       DateTime?
+  agreementSignedAt  DateTime?
+  paymentSetup       String?
+  callbackVerifiedAt DateTime?
+  blockedReason      String?
+  additionalContacts Json?
   fmcsaSnapshot      Json?
   fmcsaSnapshotAt    DateTime?
   preferredLanes     Json?

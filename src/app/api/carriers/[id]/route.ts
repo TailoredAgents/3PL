@@ -47,6 +47,12 @@ export async function PATCH(
       lastVettedAt: optionalDate(input.lastVettedAt),
       approvedBy: nullableString(input.approvedBy),
       complianceNotes: nullableString(input.complianceNotes),
+      insuranceExpiration: optionalDate(input.insuranceExpiration),
+      w9ReceivedAt: optionalDate(input.w9ReceivedAt),
+      agreementSignedAt: optionalDate(input.agreementSignedAt),
+      paymentSetup: nullableString(input.paymentSetup),
+      callbackVerifiedAt: optionalDate(input.callbackVerifiedAt),
+      blockedReason: nullableString(input.blockedReason),
     },
   });
 

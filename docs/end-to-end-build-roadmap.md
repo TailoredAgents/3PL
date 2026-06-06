@@ -187,30 +187,28 @@ Completion criteria for full Phase 2:
 
 Goal: turn carriers from simple records into fully vetted partner files.
 
-Status: 3.1 complete (core model + checklist + docs + alerts + gate foundation); remaining items (performance scorecard depth, full callback workflow, external vetting adapters) for follow-on sub-phases.
+Status: 3.1 + 3.2 complete. Onboarding checklist, docs integration, alerts, scorecard, callback workflow, and hard booking gate largely in place. External adapters remain for later.
 
-Build (Phase 3.1 completed):
+Build (Phase 3.1 completed): (see prior entry)
 
-- Extended DocumentType with W9, CERTIFICATE_OF_INSURANCE, BROKER_CARRIER_AGREEMENT (explicit migration) — compliance docs now flow into the existing Document Center from Phase 1/2 (upload, download, extraction, review all work for them).
-- Extended Carrier model (explicit migration) with insuranceExpiration, w9ReceivedAt, agreementSignedAt, paymentSetup, callbackVerifiedAt, blockedReason, additionalContacts.
-- Updated schemas (carrierComplianceUpdateSchema), API (PATCH /api/carriers/[id]), forms (CarrierComplianceForm + CreateForm) to persist new fields.
-- Rich onboarding checklist + compliance UI on carrier detail page: dynamic list of fields, required docs status (cross-references linked Documents by new types), expiration visibility, blocked/conditional alerts, display of additional contacts.
-- Basic booking gate foundation: non-approved or blocked carriers clearly flagged (red badges, notes); reinforced existing "Approved" checks in sourcing/loads with the new fields.
-- All changes extend existing Carrier + Document patterns (no parallel systems, leverages Phase 2 document links on carriers).
-- Followed all handoff rules.
+Build (Phase 3.2 completed):
 
-Remaining for full Phase 3:
+- Added computed performance scorecard fields (onTimePickupRate, issuesCount) to CarrierView, derived safely from load status (list + detail views). Surfaced in new "Performance Scorecard" section on carrier detail (loads, on-time proxy %, issues, margin).
+- Enhanced callback verification into a lightweight workflow: CarrierComplianceForm now supports callbackNotes (appended to complianceNotes) + the existing callbackVerifiedAt. Notes + verified date provide auditable "callback" record.
+- Improved additional contacts editing: compliance form accepts JSON array for additionalContacts (practical for ops; displayed on detail).
+- Hardened the "cannot book" gate in the key path (`/api/loads/[id]/carrier-quotes/[id]/accept`): now rejects on APPROVED + blockedReason with clear messaging. UI badges and detail already flag blocked/non-approved.
+- All extends 3.1 model + existing accept logic, documents, events, and forms. Followed handoff rules strictly.
 
-- Deeper performance scorecard (on-time stats computed from loads/events).
-- Full callback verification workflow UI + logging.
-- External integration adapters (FMCSA snapshot already partially present; prepare clean boundaries for Carrier411 etc.).
-- Enforce hard "cannot book" in backend/API (UI warnings + status already in place).
+Remaining for full Phase 3 / later:
 
-Completion criteria progress:
+- Deeper real on-time metrics (using full ShipmentEvent timestamps + ELD data — Phase 5).
+- External vetting adapters (prepare boundaries; fmcsaSnapshot partially present).
+- Polish callback into dedicated log (e.g., via activities or dedicated events).
 
-- Compliance status and required docs (W-9/COI/agreement via Documents) are visible and explainable.
-- Blocked/conditional carriers surfaced.
-- Foundation for "load cannot be booked with non-compliant carrier" (UI + data model ready).
+Completion criteria (advanced significantly):
+
+- A load cannot be booked with a non-compliant or blocked carrier (hard gate in accept + UI everywhere).
+- Compliance status, required docs (W-9/COI via Document Center), expirations, blocked reasons, and performance are explainable from the model + linked records.
 
 ## Phase 4: Accounting, AR, AP, And Settlements
 

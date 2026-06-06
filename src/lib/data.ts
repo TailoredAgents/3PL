@@ -449,6 +449,7 @@ export const carriers = [
 export const loads = [
   {
     id: "load-atl-dal-001",
+    loadNumber: "LD-0001",
     shipper: "Peachtree Building Supply",
     carrier: "Blue Ridge Transport",
     lane: "Atlanta, GA -> Dallas, TX",
@@ -464,6 +465,9 @@ export const loads = [
     hasPod: false,
     billingReadiness: "Not ready",
     invoice: null,
+    carrierInvoiceNumber: null,
+    carrierPaymentDue: null,
+    carrierPaidAt: null,
     carrierCandidates: [
       {
         id: "candidate-blue-ridge-001",
@@ -522,6 +526,7 @@ export const loads = [
   },
   {
     id: "load-sav-nas-002",
+    loadNumber: "LD-0002",
     shipper: "Southline Foods",
     carrier: "Magnolia Reefer Lines",
     lane: "Savannah, GA -> Nashville, TN",
@@ -537,6 +542,9 @@ export const loads = [
     hasPod: false,
     billingReadiness: "Not ready",
     invoice: null,
+    carrierInvoiceNumber: null,
+    carrierPaymentDue: null,
+    carrierPaidAt: null,
     carrierCandidates: [
       {
         id: "candidate-magnolia-002",

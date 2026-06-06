@@ -110,6 +110,7 @@ enum ShipmentEventType {
 enum DocumentType {
   INVOICE
   POD
+  BOL
   RATE_CONFIRMATION
   AUDIT_UPLOAD
   OTHER
@@ -489,6 +490,7 @@ model PricingRecommendation {
 
 model Load {
   id                       String                     @id @default(cuid())
+  loadNumber               Int                        @default(autoincrement()) @unique
   quoteRequestId           String?
   quoteRequest             QuoteRequest?              @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
   shipperId                String
@@ -513,6 +515,9 @@ model Load {
   appointmentRequired      Boolean                    @default(false)
   accessorials             String?
   customerReference        String?
+  carrierInvoiceNumber     String?
+  carrierPaymentDue        DateTime?
+  carrierPaidAt            DateTime?
   pickupWindow             String?
   deliveryWindow           String?
   customerRate             Decimal                    @db.Decimal(12, 2)

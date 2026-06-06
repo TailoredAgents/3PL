@@ -107,6 +107,7 @@ export type LoadEventView = {
 };
 export type LoadView = {
   id: string;
+  loadNumber: string;
   shipper: string;
   carrier: string;
   lane: string;
@@ -141,6 +142,9 @@ export type LoadView = {
   hasPod: boolean;
   billingReadiness: string;
   invoice: InvoiceView | null;
+  carrierInvoiceNumber: string | null;
+  carrierPaymentDue: string | null;
+  carrierPaidAt: string | null;
   carrierCandidates: CarrierSourcingCandidateView[];
   carrierQuotes: CarrierQuoteView[];
   integrationLogs: IntegrationLogView[];
@@ -2024,6 +2028,7 @@ function mapQuoteRequest(
 
 function mapLoad(load: {
   id: string;
+  loadNumber?: number | null;
   shipper: { companyName: string };
   carrier?: { companyName: string } | null;
   originCity: string;
@@ -2043,6 +2048,9 @@ function mapLoad(load: {
   appointmentRequired?: boolean;
   accessorials?: string | null;
   customerReference?: string | null;
+  carrierInvoiceNumber?: string | null;
+  carrierPaymentDue?: Date | null;
+  carrierPaidAt?: Date | null;
   status: string;
   pickupDate?: Date | null;
   pickupWindow?: string | null;
@@ -2201,6 +2209,9 @@ function mapLoad(load: {
 
   return {
     id: load.id,
+    loadNumber: load.loadNumber
+      ? `LD-${String(load.loadNumber).padStart(4, "0")}`
+      : "LD-????",
     shipper: load.shipper.companyName,
     carrier: load.carrier?.companyName ?? "Carrier needed",
     lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
@@ -2223,6 +2234,13 @@ function mapLoad(load: {
     appointmentRequired: load.appointmentRequired ? "Yes" : "No",
     accessorials: load.accessorials ?? "None",
     customerReference: load.customerReference ?? "Not set",
+    carrierInvoiceNumber: load.carrierInvoiceNumber ?? null,
+    carrierPaymentDue: load.carrierPaymentDue
+      ? formatDate(load.carrierPaymentDue)
+      : null,
+    carrierPaidAt: load.carrierPaidAt
+      ? formatFollowUp(load.carrierPaidAt)
+      : null,
     status: titleCaseEnum(load.status),
     pickup: load.pickupDate ? formatDate(load.pickupDate) : "Not set",
     pickupWindow: load.pickupWindow ?? "Window needed",

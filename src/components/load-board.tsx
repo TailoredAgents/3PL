@@ -239,10 +239,10 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
             {load.shipper}
           </Link>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Ref {load.customerReference ?? load.id.slice(0, 8)}
+            Ref {load.customerReference ?? load.loadNumber}
           </p>
           <p className="mt-2 rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
-            {load.id.slice(0, 8)}
+            {load.loadNumber}
           </p>
         </div>
       </Td>

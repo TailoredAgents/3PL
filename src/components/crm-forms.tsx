@@ -963,7 +963,7 @@ export function DocumentCreateForm({ loadId }: { loadId: string }) {
         <Select
           name="type"
           label="Type"
-          options={["POD", "RATE_CONFIRMATION", "INVOICE", "OTHER"]}
+          options={["BOL", "POD", "RATE_CONFIRMATION", "INVOICE", "OTHER"]}
         />
         <Field name="fileName" label="Document name" required />
       </div>

@@ -145,6 +145,7 @@ After deploy, open:
 /agents
 /intake
 /calls
+/email
 /leads
 /shippers
 /quote-requests
@@ -168,6 +169,7 @@ Expected behavior:
 - AI prompt template edits validate and persist when `DATABASE_URL` is configured.
 - quote email template edits validate and persist when `DATABASE_URL` is configured.
 - call intelligence queue loads.
+- email events dashboard loads.
 - create lead works.
 - lead click-to-call validates/logs activity or starts Twilio call when configured.
 - lead SMS validates/logs activity or sends through Twilio when configured.

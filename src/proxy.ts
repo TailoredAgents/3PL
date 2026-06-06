@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const protectedPrefixes = [
   "/dashboard",
   "/leads",
+  "/email",
   "/shippers",
   "/quote-requests",
   "/carriers",
@@ -81,6 +82,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/leads/:path*",
+    "/email/:path*",
     "/shippers/:path*",
     "/quote-requests/:path*",
     "/carriers/:path*",

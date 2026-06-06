@@ -197,6 +197,38 @@ export type AiExceptionView = {
   detail: string;
   href: string;
 };
+export type EmailEventStatus =
+  | "SENT"
+  | "DELIVERED"
+  | "BOUNCED"
+  | "COMPLAINED"
+  | "UNKNOWN";
+export type EmailEventView = {
+  id: string;
+  company: string;
+  contact: string;
+  subject: string;
+  recipient: string;
+  status: EmailEventStatus;
+  outcome: string;
+  detail: string;
+  provider: string;
+  messageId: string;
+  eventId: string;
+  time: string;
+};
+export type EmailEventDashboardView = {
+  sentCount: number;
+  deliveredCount: number;
+  bouncedCount: number;
+  complainedCount: number;
+  unknownCount: number;
+  exceptionCount: number;
+  deliveryRate: string;
+  webhookConfigured: boolean;
+  events: EmailEventView[];
+  exceptions: EmailEventView[];
+};
 export type QuoteRequestDetailView = QuoteRequestView & {
   id: string;
   contact: string;
@@ -522,6 +554,123 @@ function getSampleDashboardMetrics() {
   };
 }
 
+function getSampleEmailEventDashboardView(): EmailEventDashboardView {
+  return buildEmailDashboard([
+    {
+      id: "sample-email-sent",
+      company: "Southline Foods",
+      contact: "Erica Walsh",
+      subject: "Freight quote: Savannah, GA to Nashville, TN",
+      recipient: "erica@southline.example",
+      status: "SENT",
+      outcome: "Sent via RESEND (sample-email-southline)",
+      detail:
+        "Quote email sent. Delivery webhooks will replace sample data once Resend is configured.",
+      provider: "RESEND",
+      messageId: "sample-email-southline",
+      eventId: "Not recorded",
+      time: "Today",
+    },
+    {
+      id: "sample-email-delivered",
+      company: "Peachtree Building Supply",
+      contact: "Mason Keller",
+      subject: "Quote email delivered",
+      recipient: "mason@peachtree.example",
+      status: "DELIVERED",
+      outcome: "Delivered by Resend.",
+      detail:
+        "Event: email.delivered\nEmail ID: sample-email-peachtree\nTo: mason@peachtree.example\nSubject: Freight quote: Atlanta, GA to Dallas, TX",
+      provider: "RESEND",
+      messageId: "sample-email-peachtree",
+      eventId: "sample-event-delivered",
+      time: "Today",
+    },
+    {
+      id: "sample-email-bounced",
+      company: "North Metro Packaging",
+      contact: "Chris Duarte",
+      subject: "Quote email bounced",
+      recipient: "chris@northmetro.example",
+      status: "BOUNCED",
+      outcome: "Bounced by Resend. Type: hard. Reason: Mailbox unavailable",
+      detail:
+        "Event: email.bounced\nEmail ID: sample-email-north-metro\nTo: chris@northmetro.example\nSubject: Freight quote follow-up",
+      provider: "RESEND",
+      messageId: "sample-email-north-metro",
+      eventId: "sample-event-bounced",
+      time: "Yesterday",
+    },
+  ]);
+}
+
+function buildEmailDashboard(events: EmailEventView[]): EmailEventDashboardView {
+  const sentCount = countEmailEvents(events, "SENT");
+  const deliveredCount = countEmailEvents(events, "DELIVERED");
+  const bouncedCount = countEmailEvents(events, "BOUNCED");
+  const complainedCount = countEmailEvents(events, "COMPLAINED");
+  const unknownCount = countEmailEvents(events, "UNKNOWN");
+  const exceptionCount = bouncedCount + complainedCount;
+  const deliveryRate = sentCount
+    ? `${Math.round((deliveredCount / sentCount) * 100)}%`
+    : deliveredCount
+      ? "Webhook only"
+      : "0%";
+
+  return {
+    sentCount,
+    deliveredCount,
+    bouncedCount,
+    complainedCount,
+    unknownCount,
+    exceptionCount,
+    deliveryRate,
+    webhookConfigured: Boolean(process.env.RESEND_WEBHOOK_SECRET),
+    events,
+    exceptions: events.filter((event) =>
+      ["BOUNCED", "COMPLAINED"].includes(event.status),
+    ),
+  };
+}
+
+function countEmailEvents(events: EmailEventView[], status: EmailEventStatus) {
+  return events.filter((event) => event.status === status).length;
+}
+
+function getEmailEventStatus(
+  subject: string | null,
+  outcome: string | null,
+): EmailEventStatus {
+  const text = `${subject ?? ""} ${outcome ?? ""}`.toLowerCase();
+
+  if (text.includes("complaint") || text.includes("complained")) {
+    return "COMPLAINED";
+  }
+
+  if (text.includes("bounce")) {
+    return "BOUNCED";
+  }
+
+  if (text.includes("delivered")) {
+    return "DELIVERED";
+  }
+
+  if (text.includes("sent via resend")) {
+    return "SENT";
+  }
+
+  return "UNKNOWN";
+}
+
+function extractRecipient(body: string | null) {
+  if (!body) {
+    return null;
+  }
+
+  const match = body.match(/^To:\s*(.+)$/m);
+  return match?.[1]?.trim() ?? null;
+}
+
 export async function getActivityViews(): Promise<ActivityView[]> {
   if (!hasDatabaseUrl() || !prisma) {
     return activities;
@@ -548,6 +697,56 @@ export async function getActivityViews(): Promise<ActivityView[]> {
     }));
   } catch {
     return activities;
+  }
+}
+
+export async function getEmailEventDashboardView(): Promise<EmailEventDashboardView> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return getSampleEmailEventDashboardView();
+  }
+
+  try {
+    const records = await prisma.activity.findMany({
+      where: {
+        type: "EMAIL",
+        externalProvider: "RESEND",
+      },
+      include: {
+        shipper: true,
+        contact: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+
+    if (!records.length) {
+      return getSampleEmailEventDashboardView();
+    }
+
+    const events = records.map((activity) => {
+      const status = getEmailEventStatus(activity.subject, activity.outcome);
+      const recipient =
+        extractRecipient(activity.body) ?? activity.contact?.email ?? "Unknown";
+
+      return {
+        id: activity.id,
+        company: activity.shipper?.companyName ?? "Unknown shipper",
+        contact: formatContactName(activity.contact),
+        subject: activity.subject ?? "Quote email event",
+        recipient,
+        status,
+        outcome: activity.outcome ?? "No provider outcome recorded.",
+        detail: activity.body ?? "No email event detail recorded.",
+        provider: activity.externalProvider ?? "RESEND",
+        messageId: activity.externalMessageId ?? "Not recorded",
+        eventId: activity.externalEventId ?? "Not recorded",
+        time: formatFollowUp(activity.createdAt),
+      };
+    });
+
+    return buildEmailDashboard(events);
+  } catch {
+    return getSampleEmailEventDashboardView();
   }
 }
 

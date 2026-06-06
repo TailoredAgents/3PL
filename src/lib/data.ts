@@ -30,6 +30,7 @@ export const internalNavItems = [
   { label: "Intake", href: "/intake" },
   { label: "Calls", href: "/calls" },
   { label: "Leads", href: "/leads" },
+  { label: "Email", href: "/email" },
   { label: "Shippers", href: "/shippers" },
   { label: "Quote Requests", href: "/quote-requests" },
   { label: "Loads", href: "/loads" },

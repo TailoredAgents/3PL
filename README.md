@@ -1050,8 +1050,23 @@ Remaining:
 
 Remaining:
 
-- Add an email-event dashboard view
 - Add bounce/complaint suppression rules before future sends
+- Add inbound reply tracking
+- Add quote email version history
+
+### Milestone 15: Email Events Dashboard
+
+- Add an internal `/email` page for Resend-backed quote email activity
+- Show sent, delivered, exception, and delivery-rate metrics
+- Add a delivery exception queue for bounced and complained messages
+- Show recent Resend message ids and event ids for audit/debugging
+- Add Email to the internal navigation and dashboard work queues
+- Keep local/no-database sample data available for first-deploy review
+
+Remaining:
+
+- Add bounce/complaint suppression rules before future sends
+- Add owner assignment and follow-up status for email exceptions
 - Add inbound reply tracking
 - Add quote email version history
 

@@ -91,6 +91,7 @@ export default async function DashboardPage() {
   const workQueues = [
     { label: "Lead pipeline", href: "/leads", detail: "Calls, stages, AI next actions" },
     { label: "Quote queue", href: "/quote-requests", detail: "Price work and quote-to-load" },
+    { label: "Email events", href: "/email", detail: "Delivery, bounces, complaints" },
     { label: "Load board", href: "/loads", detail: "Tracking, POD, margin" },
     { label: "Carrier desk", href: "/carriers", detail: "Compliance and coverage" },
   ];

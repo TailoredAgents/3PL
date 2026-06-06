@@ -509,31 +509,21 @@ function DocStatus({
   done: boolean;
   pending?: boolean;
 }) {
+  const state = done ? "done" : pending ? "pending" : "none";
+  const suffix = state === "done" ? "✓" : state === "pending" ? "sent" : "needed";
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span
-        className={cn(
-          "h-2 w-2 flex-none rounded-full",
-          done
-            ? "bg-emerald-500"
-            : pending
-              ? "bg-amber-400"
-              : "bg-slate-300",
-        )}
-      />
-      <span
-        className={cn(
-          "font-medium",
-          done
-            ? "text-emerald-700"
-            : pending
-              ? "text-amber-700"
-              : "text-slate-400",
-        )}
-      >
-        {label}
-      </span>
-    </div>
+    <p
+      className={cn(
+        "text-xs font-medium",
+        state === "done"
+          ? "text-emerald-700"
+          : state === "pending"
+            ? "text-amber-700"
+            : "text-slate-400",
+      )}
+    >
+      {label}: {suffix}
+    </p>
   );
 }
 

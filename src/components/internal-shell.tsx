@@ -32,8 +32,8 @@ export async function InternalShell({
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#d1fae5_0,#f1f5f9_34%,#e2e8f0_100%)] text-slate-950">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-slate-950 p-5 text-white shadow-2xl lg:block">
-        <div className="mb-8">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-white/10 bg-slate-950 p-5 text-white shadow-2xl lg:flex">
+        <div className="mb-8 shrink-0">
           <p className="text-xl font-semibold tracking-tight">
             {platformName}
           </p>
@@ -42,7 +42,7 @@ export async function InternalShell({
             agents, and operating performance.
           </p>
         </div>
-        <nav className="grid gap-5 text-sm font-medium text-slate-300">
+        <nav className="flex-1 overflow-y-auto grid gap-5 text-sm font-medium text-slate-300">
           {internalNavGroups.map((group) => (
             <div key={group.label}>
               <p className="px-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-slate-500">
@@ -71,7 +71,7 @@ export async function InternalShell({
             </div>
           ))}
         </nav>
-        <div className="absolute bottom-5 left-5 right-5">
+        <div className="mt-4 shrink-0">
           <InternalAccount
             clerkEnabled={clerkEnabled}
             fallbackLabel="Password gate active"

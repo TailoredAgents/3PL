@@ -13,6 +13,9 @@ export const AGENT_MODE_KEY_PREFIX = "agentMode:";
 export const QUOTE_EMAIL_TEMPLATE_KEY = "quoteEmailTemplate";
 
 export type AgentMode = "approve_first" | "autonomous";
+export const alwaysAutonomousAgentNames = [
+  "Conversation Notes Agent",
+] as const satisfies readonly BrokerageAgentName[];
 
 export const defaultCallRecordingDisclosure =
   "This call may be recorded and transcribed to help our team capture shipment details, improve service, and follow up accurately. By continuing, you consent to this recording.";
@@ -49,6 +52,12 @@ export const defaultQuoteEmailTemplate = {
     "{{brokerageName}}",
   ].join("\n\n"),
 };
+
+export function isAlwaysAutonomousAgent(agentName: BrokerageAgentName) {
+  return alwaysAutonomousAgentNames.includes(
+    agentName as (typeof alwaysAutonomousAgentNames)[number],
+  );
+}
 
 export type AppSettingsView = {
   callRecordingDisclosure: string;
@@ -276,7 +285,10 @@ function parsePromptTemplateSetting(
 
 export async function getAgentModes(): Promise<Record<BrokerageAgentName, AgentMode>> {
   const defaultModes = Object.fromEntries(
-    brokerageAgentNames.map((name) => [name, "approve_first" as AgentMode]),
+    brokerageAgentNames.map((name) => [
+      name,
+      isAlwaysAutonomousAgent(name) ? "autonomous" : "approve_first",
+    ]),
   ) as Record<BrokerageAgentName, AgentMode>;
 
   if (!hasDatabaseUrl() || !prisma) {
@@ -293,6 +305,9 @@ export async function getAgentModes(): Promise<Record<BrokerageAgentName, AgentM
 
     return Object.fromEntries(
       brokerageAgentNames.map((name) => {
+        if (isAlwaysAutonomousAgent(name)) {
+          return [name, "autonomous"];
+        }
         const stored = byAgent.get(name);
         const mode: AgentMode = stored === "autonomous" ? "autonomous" : "approve_first";
         return [name, mode];
@@ -304,6 +319,10 @@ export async function getAgentModes(): Promise<Record<BrokerageAgentName, AgentM
 }
 
 export async function getAgentMode(agentName: BrokerageAgentName): Promise<AgentMode> {
+  if (isAlwaysAutonomousAgent(agentName)) {
+    return "autonomous";
+  }
+
   if (!hasDatabaseUrl() || !prisma) {
     return "approve_first";
   }
@@ -322,6 +341,10 @@ export async function saveAgentMode(
   agentName: BrokerageAgentName,
   mode: AgentMode,
 ): Promise<void> {
+  if (isAlwaysAutonomousAgent(agentName)) {
+    return;
+  }
+
   if (!hasDatabaseUrl() || !prisma) {
     return;
   }

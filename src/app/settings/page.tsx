@@ -13,6 +13,7 @@ import {
   getAgentModes,
   getAppSettings,
   getQuoteEmailTemplate,
+  isAlwaysAutonomousAgent,
   quoteEmailTemplatePlaceholders,
 } from "@/lib/settings";
 
@@ -164,7 +165,11 @@ export default async function SettingsPage() {
                 <p className="text-sm font-semibold text-slate-900">{template.agentName}</p>
                 <p className="mt-0.5 text-xs leading-5 text-slate-500">{template.task}</p>
               </div>
-              {canManageSettings ? (
+              {isAlwaysAutonomousAgent(template.agentName) ? (
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
+                  Always autonomous
+                </span>
+              ) : canManageSettings ? (
                 <AgentModeToggleForm
                   agentName={template.agentName}
                   currentMode={agentModes[template.agentName]}

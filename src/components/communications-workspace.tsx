@@ -282,11 +282,15 @@ export function CommunicationsWorkspace({
             <Bot className="h-4 w-4 text-slate-400" />
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Run agent</p>
           </div>
+          <p className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-500">
+            Conversation notes run automatically after logged calls, emails,
+            SMS, and notes.
+          </p>
           <AiAgentRunForm
             relatedEntityType="Lead"
             relatedEntityId={selectedThread.leadId}
-            defaultAgent="Conversation Notes Agent"
-            agentOptions={["Conversation Notes Agent", "Sales Follow-Up Agent"]}
+            defaultAgent="Sales Follow-Up Agent"
+            agentOptions={["Sales Follow-Up Agent", "Quote Pricing Agent"]}
           />
         </div>
       </aside>

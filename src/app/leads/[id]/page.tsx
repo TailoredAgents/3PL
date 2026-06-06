@@ -146,7 +146,7 @@ export default async function LeadDetailPage({
                 relatedEntityType="Lead"
                 relatedEntityId={lead.id}
                 defaultAgent="Sales Follow-Up Agent"
-                agentOptions={["Sales Follow-Up Agent", "Conversation Notes Agent"]}
+                agentOptions={["Sales Follow-Up Agent", "Quote Pricing Agent"]}
               />
             </div>
           </article>

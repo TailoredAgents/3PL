@@ -1,7 +1,11 @@
 import { revalidatePath } from "next/cache";
 
 import { brokerageAgentNames, type BrokerageAgentName } from "@/lib/agent-config";
-import { saveAgentMode, type AgentMode } from "@/lib/settings";
+import {
+  isAlwaysAutonomousAgent,
+  saveAgentMode,
+  type AgentMode,
+} from "@/lib/settings";
 import { formValue } from "@/lib/server-utils";
 
 export async function PATCH(request: Request) {
@@ -15,6 +19,16 @@ export async function PATCH(request: Request) {
 
   if (mode !== "approve_first" && mode !== "autonomous") {
     return Response.json({ error: "Invalid mode." }, { status: 400 });
+  }
+
+  if (
+    isAlwaysAutonomousAgent(agentName as BrokerageAgentName) &&
+    mode !== "autonomous"
+  ) {
+    return Response.json(
+      { error: `${agentName} always runs autonomously.` },
+      { status: 400 },
+    );
   }
 
   await saveAgentMode(agentName as BrokerageAgentName, mode as AgentMode);

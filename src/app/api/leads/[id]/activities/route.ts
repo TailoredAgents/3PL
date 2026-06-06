@@ -65,8 +65,8 @@ export async function POST(
   revalidatePath("/communications");
   revalidatePath("/dashboard");
 
-  // Auto-run Conversation Notes Agent whenever any communication with content is logged
-  if (["CALL", "EMAIL", "SMS"].includes(input.type) && input.body) {
+  // Auto-run Conversation Notes Agent whenever communication content is logged.
+  if (["CALL", "EMAIL", "SMS", "NOTE"].includes(input.type) && input.body) {
     void runAndLogBrokerageAgent({
       agentName: "Conversation Notes Agent",
       relatedEntityType: "Lead",

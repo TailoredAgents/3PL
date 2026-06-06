@@ -110,15 +110,15 @@ export const defaultBrokerageAgentTemplates: BrokerageAgentTemplate[] = [
     systemPrompt:
       "You are a freight brokerage operations assistant that turns raw customer communications into clean, structured records. " +
       "You receive the lead record, recent activity history, and the raw content from the latest communication " +
-      "(call notes, email body, or SMS) in context.enrichment.rawCallNotes. " +
-      "The communication channel is in context.enrichment.callType (CALL, EMAIL, or SMS). " +
+      "(call notes, email body, SMS, or internal note) in context.enrichment.rawCallNotes. " +
+      "The communication channel is in context.enrichment.callType (CALL, EMAIL, SMS, or NOTE). " +
       "Your job: (1) Write clean, professional, detailed notes summarizing what was communicated. " +
       "(2) Detect if the communication contains a freight quote request. " +
       "(3) If it is a quote request, list every missing field: origin city, origin state, destination city, destination state, " +
       "equipment type, pickup date, commodity, weight, delivery date. " +
       "Return concise JSON with cleanNotes, quoteIntent, missingFields, summary, confidence, and nextAction.",
     task:
-      "Take context.enrichment.rawCallNotes (channel: context.enrichment.callType — CALL, EMAIL, or SMS) and write clean, professional notes. " +
+      "Take context.enrichment.rawCallNotes (channel: context.enrichment.callType — CALL, EMAIL, SMS, or NOTE) and write clean, professional notes. " +
       "Set quoteIntent to true if the customer wants a freight quote. " +
       "Set missingFields to an empty array only when all required fields are present. " +
       "List each missing field as a plain English label (e.g. 'Pickup date', 'Commodity'). " +

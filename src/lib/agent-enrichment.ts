@@ -333,7 +333,7 @@ async function enrichQuotePricingFromLead(
 
 // ─── Conversation Notes Agent ─────────────────────────────────────────────
 
-const COMMS_TYPES = ["CALL", "EMAIL", "SMS"];
+const COMMS_TYPES = ["CALL", "EMAIL", "SMS", "NOTE"];
 
 async function enrichConversationNotes(
   leadId: string,
@@ -355,7 +355,7 @@ async function enrichConversationNotes(
     });
 
     if (lead) {
-      // Prefer most recent CALL/EMAIL/SMS, fall back to any activity
+      // Prefer most recent communication/note entry, fall back to any activity.
       const latestComms = lead.activities.find((a) => COMMS_TYPES.includes(a.type));
       const source = latestComms ?? lead.activities[0] ?? null;
 

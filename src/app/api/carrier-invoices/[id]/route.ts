@@ -3,9 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const fd = await req.formData();
     const status = fd.get("status") as string;
     const paymentMethod = (fd.get("paymentMethod") as string) || null;
@@ -27,7 +28,7 @@ export async function PATCH(
     if (notes) update.notes = notes;
 
     const record = await (prisma as any).carrierInvoice.update({
-      where: { id: params.id },
+      where: { id },
       data: update,
     });
 

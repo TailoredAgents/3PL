@@ -311,6 +311,38 @@ export type LeadDetailView = LeadView & {
   volume: string;
   activities: ActivityView[];
 };
+export type CommunicationMessageView = {
+  id: string;
+  channel: string;
+  direction: string;
+  subject: string;
+  body: string;
+  outcome: string;
+  time: string;
+};
+export type CommunicationThreadView = {
+  id: string;
+  leadId: string;
+  company: string;
+  contact: string;
+  title: string;
+  phone: string;
+  email: string;
+  stage: string;
+  priority: string;
+  lanes: string;
+  equipment: string;
+  volume: string;
+  pain: string;
+  nextFollowUp: string;
+  aiNextAction: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  messages: CommunicationMessageView[];
+};
+export type CommunicationWorkspaceView = {
+  threads: CommunicationThreadView[];
+};
 
 export async function getLeadViews(): Promise<LeadView[]> {
   if (!hasDatabaseUrl() || !prisma) {
@@ -418,6 +450,74 @@ export async function getLeadDetailView(
     };
   } catch {
     return getSampleLeadDetailView(id);
+  }
+}
+
+export async function getCommunicationWorkspaceView(): Promise<CommunicationWorkspaceView> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return getSampleCommunicationWorkspaceView();
+  }
+
+  try {
+    const records = await prisma.lead.findMany({
+      include: {
+        shipper: true,
+        contact: true,
+        activities: {
+          orderBy: { createdAt: "desc" },
+          take: 25,
+        },
+      },
+      orderBy: [{ nextFollowUpAt: "asc" }, { updatedAt: "desc" }],
+      take: 50,
+    });
+
+    if (!records.length) {
+      return getSampleCommunicationWorkspaceView();
+    }
+
+    return {
+      threads: records.map((lead) => {
+        const notes = `${lead.shipper.notes ?? ""}\n${lead.notes ?? ""}`;
+        const messages = lead.activities.map((activity) => ({
+          id: activity.id,
+          channel: titleCaseEnum(activity.type),
+          direction: titleCaseEnum(activity.direction),
+          subject: activity.subject ?? titleCaseEnum(activity.type),
+          body: activity.body ?? "No message body recorded.",
+          outcome: activity.outcome ?? "No outcome recorded.",
+          time: formatFollowUp(activity.createdAt),
+        }));
+        const latest = messages[0];
+
+        return {
+          id: lead.id,
+          leadId: lead.id,
+          company: lead.shipper.companyName,
+          contact: formatContactName(lead.contact),
+          title: lead.contact?.title ?? "Contact",
+          phone: lead.contact?.phone ?? "No phone",
+          email: lead.contact?.email ?? "No email",
+          stage: titleCaseEnum(lead.stage),
+          priority: formatPriority(lead.priority),
+          lanes: extractField(notes, "Lanes") ?? "Lane details needed",
+          equipment: extractField(notes, "Equipment") ?? "Equipment needed",
+          volume: extractField(notes, "Volume") ?? "Volume unknown",
+          nextFollowUp: lead.nextFollowUpAt
+            ? formatFollowUp(lead.nextFollowUpAt)
+            : "No follow-up set",
+          pain: extractField(notes, "Pain") ?? lead.notes ?? "Needs qualification.",
+          aiNextAction:
+            lead.notes ??
+            "Qualify lanes, shipment volume, current provider pain, and quoting urgency.",
+          lastMessage: latest?.body ?? "No communication logged yet.",
+          lastMessageTime: latest?.time ?? "No activity",
+          messages,
+        };
+      }),
+    };
+  } catch {
+    return getSampleCommunicationWorkspaceView();
   }
 }
 
@@ -1630,6 +1730,46 @@ function getSampleLeadDetailView(id: string): LeadDetailView | null {
     activities: activities.filter(
       (activity) => activity.company === sample.company,
     ),
+  };
+}
+
+function getSampleCommunicationWorkspaceView(): CommunicationWorkspaceView {
+  return {
+    threads: leads.slice(0, 8).map((lead) => {
+      const messages = activities
+        .filter((activity) => activity.company === lead.company)
+        .map((activity, index) => ({
+          id: `sample-message-${lead.id}-${index}`,
+          channel: activity.type,
+          direction: activity.type === "Note" ? "Internal" : "Outbound",
+          subject: activity.type,
+          body: activity.detail,
+          outcome: "Sample activity.",
+          time: activity.time,
+        }));
+      const latest = messages[0];
+
+      return {
+        id: lead.id,
+        leadId: lead.id,
+        company: lead.company,
+        contact: lead.contact,
+        title: lead.title,
+        phone: lead.phone,
+        email: lead.email,
+        stage: lead.stage,
+        priority: lead.priority,
+        lanes: lead.lanes,
+        equipment: lead.equipment,
+        volume: lead.volume,
+        pain: lead.pain,
+        nextFollowUp: lead.nextFollowUp,
+        aiNextAction: lead.aiNextAction,
+        lastMessage: latest?.body ?? "No communication logged yet.",
+        lastMessageTime: latest?.time ?? "No activity",
+        messages,
+      };
+    }),
   };
 }
 

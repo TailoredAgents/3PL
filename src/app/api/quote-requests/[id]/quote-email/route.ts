@@ -76,6 +76,7 @@ export async function POST(
     });
 
     revalidatePath("/email");
+    revalidatePath("/communications");
     revalidatePath(`/quote-requests/${id}`);
 
     return Response.json(
@@ -136,6 +137,7 @@ export async function POST(
   revalidatePath("/quote-requests");
   revalidatePath(`/quote-requests/${id}`);
   revalidatePath("/email");
+  revalidatePath("/communications");
   revalidatePath("/dashboard");
 
   return Response.json(

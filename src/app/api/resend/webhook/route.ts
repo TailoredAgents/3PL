@@ -90,6 +90,7 @@ export async function POST(request: Request) {
 
   revalidatePath("/dashboard");
   revalidatePath("/email");
+  revalidatePath("/communications");
   revalidatePath("/leads");
   revalidatePath("/shippers");
   revalidatePath("/quote-requests");

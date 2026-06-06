@@ -331,6 +331,21 @@ export function ActivityCreateForm({ leadId }: { leadId: string }) {
   );
 }
 
+export function LeadNoteForm({ leadId }: { leadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/leads/${leadId}/activities`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="type" value="NOTE" />
+      <input type="hidden" name="direction" value="INTERNAL" />
+      <Field name="subject" label="Subject" defaultValue="Internal note" />
+      <Textarea name="body" label="Note" rows={4} />
+      <Field name="outcome" label="Outcome / next step" />
+      <FormFooter state={state} buttonLabel="Add note" />
+    </form>
+  );
+}
+
 export function LeadClickToCallForm({
   leadId,
   defaultPhone,
@@ -380,6 +395,47 @@ export function LeadSmsForm({
         defaultValue={defaultMessage}
       />
       <FormFooter state={state} buttonLabel="Send SMS" />
+    </form>
+  );
+}
+
+export function LeadEmailForm({
+  leadId,
+  defaultEmail,
+  defaultSubject,
+  defaultBody,
+}: {
+  leadId: string;
+  defaultEmail?: string;
+  defaultSubject?: string;
+  defaultBody?: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/leads/${leadId}/outreach/email`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field
+        name="toEmail"
+        label="Email"
+        type="email"
+        required
+        defaultValue={defaultEmail}
+      />
+      <Field
+        name="subject"
+        label="Subject"
+        required
+        defaultValue={defaultSubject}
+      />
+      <Textarea
+        name="body"
+        label="Message"
+        rows={4}
+        defaultValue={defaultBody}
+      />
+      <FormFooter state={state} buttonLabel="Send email" />
     </form>
   );
 }

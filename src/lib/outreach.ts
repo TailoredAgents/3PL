@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { getEmailSuppressionStatus } from "@/lib/email-suppression";
+import type { SendEmailResult } from "@/lib/email";
+import { sendTransactionalEmail } from "@/lib/email";
 import {
   createTwilioCall,
   getTwilioConfig,
@@ -143,6 +146,77 @@ export async function sendLeadSms(input: {
   });
 
   return { message: "SMS sent and logged." };
+}
+
+export async function sendLeadEmail(input: {
+  leadId: string;
+  toEmail: string;
+  subject: string;
+  body: string;
+  userId?: string;
+}) {
+  if (!prisma) {
+    throw new Error("Database is not configured.");
+  }
+
+  const lead = await getLeadForOutreach(input.leadId);
+  const suppression = await getEmailSuppressionStatus(input.toEmail);
+
+  if (suppression.suppressed) {
+    await prisma.activity.create({
+      data: {
+        leadId: lead.id,
+        shipperId: lead.shipperId,
+        contactId: lead.contactId,
+        userId: input.userId,
+        type: "EMAIL",
+        direction: "INTERNAL",
+        subject: `Suppressed email to ${suppression.email}`,
+        body: input.body,
+        outcome: `Blocked before send because ${suppression.email} is suppressed after ${suppression.reason?.toLowerCase()}.`,
+      },
+    });
+
+    throw new Error(
+      `Email blocked. ${suppression.email} is suppressed after ${suppression.reason?.toLowerCase()}. Use a different customer email before sending.`,
+    );
+  }
+
+  const result: SendEmailResult = await sendTransactionalEmail({
+    to: input.toEmail,
+    subject: input.subject,
+    text: input.body,
+    idempotencyKey: `lead-email-${input.leadId}-${input.toEmail}-${input.subject}`,
+  }).catch((error) => ({
+    sent: false,
+    provider: "RESEND" as const,
+    message:
+      error instanceof Error
+        ? `Email failed: ${error.message}`
+        : "Email failed.",
+  }));
+
+  await prisma.activity.create({
+    data: {
+      leadId: lead.id,
+      shipperId: lead.shipperId,
+      contactId: lead.contactId,
+      userId: input.userId,
+      type: "EMAIL",
+      direction: "OUTBOUND",
+      subject: input.subject,
+      body: input.body,
+      outcome: result.sent
+        ? `Sent via ${result.provider}${
+            result.providerId ? ` (${result.providerId})` : ""
+          }`
+        : result.message,
+      externalProvider: result.sent ? result.provider : undefined,
+      externalMessageId: result.providerId,
+    },
+  });
+
+  return { message: result.message };
 }
 
 async function getLeadForOutreach(leadId: string) {

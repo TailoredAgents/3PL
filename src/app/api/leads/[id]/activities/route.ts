@@ -61,6 +61,7 @@ export async function POST(
 
   revalidatePath("/leads");
   revalidatePath(`/leads/${id}`);
+  revalidatePath("/communications");
   revalidatePath("/dashboard");
 
   return Response.json({ message: "Activity added." });

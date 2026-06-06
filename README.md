@@ -1085,6 +1085,22 @@ Remaining:
 - Add inbound reply tracking
 - Add quote email version history
 
+### Milestone 17: CRM Communications Workspace
+
+- Rework `/communications` into a CRM-style three-panel workspace
+- Show customer conversation threads, message timeline, and customer context
+- Add SMS, email, click-to-call, and internal note composer modes
+- Add general lead email sending through Resend with suppression checks
+- Log lead emails, SMS, calls, and notes into the customer activity timeline
+- Revalidate Communications after outreach, quote email, notes, and Resend webhooks
+
+Remaining:
+
+- Add inbound SMS replies and two-way email reply tracking
+- Add dedicated conversation/message records if activity timelines are not enough
+- Add unread/assigned/resolved states for communication queues
+- Add AI draft suggestions inside the composer
+
 ## Design Principles
 
 - Keep the interface clean, operational, and fast.

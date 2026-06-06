@@ -40,6 +40,7 @@ export async function POST(
     revalidatePath("/leads");
     revalidatePath(`/leads/${id}`);
     revalidatePath("/calls");
+    revalidatePath("/communications");
     revalidatePath("/dashboard");
 
     return Response.json(result);

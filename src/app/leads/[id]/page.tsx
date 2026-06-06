@@ -14,6 +14,7 @@ import {
   ActivityCreateForm,
   AiAgentRunForm,
   LeadClickToCallForm,
+  LeadEmailForm,
   LeadSmsForm,
   LeadUpdateForm,
 } from "@/components/crm-forms";
@@ -34,7 +35,9 @@ export default async function LeadDetailPage({
     notFound();
   }
   const outreachPhone = lead.phone === "No phone" ? undefined : lead.phone;
+  const outreachEmail = lead.email === "No email" ? undefined : lead.email;
   const defaultSmsMessage = `Hi ${lead.contact}, this is Atlanta Freight OS following up on your freight lanes. Is now a good time to confirm your shipment needs?`;
+  const defaultEmailBody = `Hi ${lead.contact},\n\nI wanted to follow up on your freight lanes and see what shipments you need help with next.\n\nThanks,`;
 
   return (
     <InternalShell
@@ -146,10 +149,11 @@ export default async function LeadDetailPage({
           <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-2xl font-semibold">Outreach</h2>
             <p className="mt-3 leading-7 text-slate-600">
-              Start a recorded click-to-call or send an SMS follow-up. Each
-              action is logged to this lead&apos;s activity timeline.
+              Start a recorded click-to-call, send an SMS follow-up, or send a
+              customer email. Each action is logged to this lead&apos;s activity
+              timeline.
             </p>
-            <div className="mt-5 grid gap-4 rounded-lg bg-slate-50 p-4 xl:grid-cols-2">
+            <div className="mt-5 grid gap-4 rounded-lg bg-slate-50 p-4 xl:grid-cols-3">
               <LeadClickToCallForm
                 leadId={lead.id}
                 defaultPhone={outreachPhone}
@@ -158,6 +162,12 @@ export default async function LeadDetailPage({
                 leadId={lead.id}
                 defaultPhone={outreachPhone}
                 defaultMessage={defaultSmsMessage}
+              />
+              <LeadEmailForm
+                leadId={lead.id}
+                defaultEmail={outreachEmail}
+                defaultSubject={`Following up with ${lead.company}`}
+                defaultBody={defaultEmailBody}
               />
             </div>
           </article>

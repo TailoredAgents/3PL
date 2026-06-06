@@ -170,7 +170,9 @@ Expected behavior:
 - AI prompt template edits validate and persist when `DATABASE_URL` is configured.
 - quote email template edits validate and persist when `DATABASE_URL` is configured.
 - call intelligence queue loads.
+- communications workspace loads with conversation threads and SMS/email/call/note composer modes.
 - email events dashboard loads.
+- lead email outreach validates/logs activity or sends through Resend when configured.
 - suppressed email recipients appear on the email events dashboard after Resend bounce or complaint webhooks.
 - quote email sends are blocked when the recipient is on the suppression list.
 - create lead works.

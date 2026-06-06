@@ -154,6 +154,14 @@ export type LoadExceptionView = {
   resolvedAt?: string | null;
   created: string;
 };
+
+export type PublicTrackingLinkView = {
+  id: string;
+  token: string;
+  expiresAt: string;
+  revoked: boolean;
+  created: string;
+};
 export type LoadView = {
   id: string;
   loadNumber: string;
@@ -200,6 +208,7 @@ export type LoadView = {
   events: LoadEventView[];
   documents: LoadDocumentView[];
   exceptions: LoadExceptionView[];
+  publicTrackingLinks: PublicTrackingLinkView[];
   // For internal tracking computations (Phase 5.1)
   rawPickupDate?: Date | null;
   rawDeliveryDate?: Date | null;
@@ -1834,6 +1843,9 @@ export async function getLoadViews(): Promise<LoadView[]> {
           include: { owner: { select: { name: true } } },
           orderBy: { createdAt: "desc" },
         },
+        publicTrackingLinks: {
+          orderBy: { createdAt: "desc" },
+        },
       },
       orderBy: [{ pickupDate: "asc" }, { updatedAt: "desc" }],
       take: 100,
@@ -1973,6 +1985,89 @@ export async function getTrackingWorkspaceView(): Promise<{
   };
 }
 
+export async function generatePublicTrackingLink(loadId: string): Promise<{ url: string; expiresAt: string }> {
+  if (!hasDatabaseUrl() || !prisma) {
+    throw new Error("Database is not configured.");
+  }
+
+  const load = await prisma.load.findUnique({ where: { id: loadId } });
+  if (!load) {
+    throw new Error("Load not found.");
+  }
+
+  // Generate a secure random token (simple for foundation; in prod use crypto)
+  const token = `trk_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+  await prisma.publicTrackingLink.create({
+    data: {
+      loadId,
+      token,
+      expiresAt,
+    },
+  });
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return {
+    url: `${baseUrl}/track/${token}`,
+    expiresAt: formatFollowUp(expiresAt),
+  };
+}
+
+export async function getPublicLoadView(token: string): Promise<{
+  loadNumber: string;
+  lane: string;
+  status: string;
+  pickup?: string;
+  delivery?: string;
+  events: Array<{ type: string; message: string; time: string }>;
+  hasPod: boolean;
+  podDownloadHref?: string | null;
+} | null> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return null;
+  }
+
+  const link = await prisma.publicTrackingLink.findUnique({
+    where: { token },
+    include: {
+      load: {
+        include: {
+          events: {
+            orderBy: { occurredAt: "desc" },
+            take: 5,
+          },
+          documents: true,
+        },
+      },
+    },
+  });
+
+  if (!link || link.revoked || link.expiresAt < new Date()) {
+    return null;
+  }
+
+  const l = link.load;
+  const hasPod = l.documents.some((d: { type: string }) => d.type === "POD");
+  const podDoc = l.documents.find((d: { type: string; id: string }) => d.type === "POD");
+  const podDownloadHref = podDoc ? `/api/documents/${podDoc.id}/download` : null;
+
+  return {
+    loadNumber: l.loadNumber ? `LD-${String(l.loadNumber).padStart(4, "0")}` : "LD-????",
+    lane: `${l.originCity}, ${l.originState} → ${l.destinationCity}, ${l.destinationState}`,
+    status: titleCaseEnum(l.status),
+    pickup: l.pickupDate ? formatDate(l.pickupDate) : undefined,
+    delivery: l.deliveryDate ? formatDate(l.deliveryDate) : undefined,
+    events: l.events.map((e: { type: string; message: string; occurredAt: Date }) => ({
+      type: titleCaseEnum(e.type),
+      message: e.message,
+      time: formatFollowUp(e.occurredAt),
+    })),
+    hasPod,
+    podDownloadHref,
+  };
+}
+
 export async function getLoadDetailView(
   id: string,
 ): Promise<LoadDetailView | null> {
@@ -2008,6 +2103,9 @@ export async function getLoadDetailView(
         },
         exceptions: {
           include: { owner: { select: { name: true } } },
+          orderBy: { createdAt: "desc" },
+        },
+        publicTrackingLinks: {
           orderBy: { createdAt: "desc" },
         },
       },
@@ -2930,6 +3028,13 @@ function mapLoad(load: {
     resolvedAt?: Date | null;
     createdAt: Date;
   }>;
+  publicTrackingLinks?: Array<{
+    id: string;
+    token: string;
+    expiresAt: Date;
+    revoked: boolean;
+    createdAt: Date;
+  }>;
 }) {
   const customerRate = Number(load.customerRate);
   const carrierRate = load.carrierRate ? Number(load.carrierRate) : 0;
@@ -3017,6 +3122,14 @@ function mapLoad(load: {
     created: formatFollowUp(ex.createdAt),
   }));
 
+  const publicTrackingLinks = (load.publicTrackingLinks ?? []).map((link) => ({
+    id: link.id,
+    token: link.token,
+    expiresAt: formatFollowUp(link.expiresAt),
+    revoked: link.revoked,
+    created: formatFollowUp(link.createdAt),
+  }));
+
   return {
     id: load.id,
     loadNumber: load.loadNumber
@@ -3101,6 +3214,7 @@ function mapLoad(load: {
     })),
     documents,
     exceptions,
+    publicTrackingLinks,
     rawPickupDate: load.pickupDate,
     rawDeliveryDate: load.deliveryDate,
   };

@@ -582,6 +582,7 @@ model Load {
   invoice                  Invoice?
   carrierInvoice           CarrierInvoice?
   exceptions               LoadException[]
+  publicTrackingLinks      PublicTrackingLink[]
   createdAt                DateTime                   @default(now())
   updatedAt                DateTime                   @updatedAt
 
@@ -731,6 +732,19 @@ model LoadException {
 
   @@index([loadId])
   @@index([status])
+}
+
+model PublicTrackingLink {
+  id        String   @id @default(cuid())
+  loadId    String
+  load      Load     @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([loadId])
+  @@index([token])
 }
 
 model Document {

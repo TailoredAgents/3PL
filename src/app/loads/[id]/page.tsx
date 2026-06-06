@@ -293,6 +293,33 @@ export default async function LoadDetailPage({
                   <LoadExceptionCreateForm loadId={load.id} />
                 </div>
               </article>
+
+              {/* Public tracking link (Phase 5.3 foundation) */}
+              <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+                <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+                  <p className="text-sm font-semibold text-slate-700">Public tracking link</p>
+                </div>
+                <div className="p-5">
+                  <form action={`/api/loads/${load.id}/public-tracking-link`} method="POST">
+                    <button
+                      type="submit"
+                      className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                    >
+                      Generate shareable tracking link (30-day expiry)
+                    </button>
+                  </form>
+                  <p className="mt-2 text-xs text-slate-500">Link is public but time-limited and scoped to basic shipment info only. Refresh page after generating to see it.</p>
+                  {load.publicTrackingLinks && load.publicTrackingLinks.filter((l: any) => !l.revoked).length > 0 && ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                    <div className="mt-3 text-sm">
+                      {load.publicTrackingLinks.filter((l: any) => !l.revoked).slice(0,1).map((link: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                        <div key={link.id}>
+                          Active: <a href={`/track/${link.token}`} target="_blank" className="font-semibold text-emerald-700 hover:underline">/track/{link.token}</a> (expires {link.expiresAt})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </article>
             </div>
           </section>
 

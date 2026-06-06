@@ -1,6 +1,8 @@
+import { DocumentSource } from "@prisma/client";
+
+import { buildDocumentCreateData } from "@/lib/documents";
 import { runSavingsAuditAgent } from "@/lib/grok";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import { uploadFile } from "@/lib/storage";
 import { freightAuditSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
@@ -83,12 +85,15 @@ export async function POST(request: Request) {
         documents: {
           create: await Promise.all(
             rawFiles.map(async (file) => {
-              const result = await uploadFile(file, file.name, file.type || "application/octet-stream");
-              return {
-                type: "AUDIT_UPLOAD" as const,
+              return buildDocumentCreateData({
+                type: "AUDIT_UPLOAD",
                 fileName: file.name,
-                fileUrl: result.fileUrl,
-              };
+                uploadedFile: file,
+                source: DocumentSource.PUBLIC_AUDIT,
+                relations: {
+                  shipperId: shipper.id,
+                },
+              });
             }),
           ),
         },

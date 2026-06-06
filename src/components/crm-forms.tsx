@@ -954,19 +954,44 @@ export function PricingRecommendationGenerateForm({ quoteId }: { quoteId: string
   );
 }
 
-export function DocumentCreateForm({ loadId }: { loadId: string }) {
-  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/documents`);
+export function DocumentCreateForm({
+  loadId,
+  relatedEntityType,
+  relatedEntityId,
+}: {
+  loadId?: string;
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+}) {
+  const endpoint = loadId ? `/api/loads/${loadId}/documents` : "/api/documents";
+  const { state, onSubmit } = useCrmSubmit(endpoint);
 
   return (
     <form className="grid gap-3" onSubmit={onSubmit}>
+      {relatedEntityType && relatedEntityId ? (
+        <>
+          <input type="hidden" name="relatedEntityType" value={relatedEntityType} />
+          <input type="hidden" name="relatedEntityId" value={relatedEntityId} />
+        </>
+      ) : !loadId ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Select
+            name="relatedEntityType"
+            label="Record type"
+            options={["LOAD", "SHIPPER", "QUOTE_REQUEST", "CARRIER", "SAVINGS_AUDIT"]}
+          />
+          <Field name="relatedEntityId" label="Record ID" required />
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <Select
           name="type"
           label="Type"
-          options={["BOL", "POD", "RATE_CONFIRMATION", "INVOICE", "OTHER"]}
+          options={["BOL", "POD", "RATE_CONFIRMATION", "INVOICE", "AUDIT_UPLOAD", "OTHER"]}
         />
         <Field name="fileName" label="Document name" required />
       </div>
+      <Field name="fileUrl" label="Document URL" placeholder="Optional if uploading a file" />
       <label className="grid gap-2 text-sm font-semibold text-slate-800">
         Upload file
         <input

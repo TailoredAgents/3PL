@@ -30,6 +30,10 @@ libraries wherever practical.
 - 2026-06-06: Phase 0 completed. Lint, TypeScript, and production build all
   pass. Render blueprint still uses `npm ci && npm run prisma:deploy &&
   npm run build`, `npm run start`, and `/api/health`.
+- 2026-06-06: Phase 1 completed. Documents now have a central register,
+  S3/R2-compatible storage metadata, a download route, file size/MIME/source/
+  status/extraction fields, and document links on load, shipper, carrier,
+  billing, and payables workflows.
 
 ## Multi-Agent Handoff Rules
 
@@ -84,26 +88,31 @@ Completion criteria:
 
 Goal: make documents real, downloadable, and usable by operations and AI.
 
-Status: not started.
+Status: complete.
 
 Build:
 
-- Add a dedicated internal Documents page.
-- Add durable file storage configuration using the existing storage boundary.
-- Support upload/download for load, shipper, quote, audit, invoice, BOL, POD,
-  and rate confirmation documents.
-- Store file size, MIME type, uploader, source, and document status.
-- Add document preview/download links on load, shipper, carrier, billing, and
-  payables workflows.
-- Generate signed rate confirmation PDFs or durable printable documents.
-- Keep document metadata tied to existing `Document` records instead of creating
-  parallel document systems.
+- Complete: added a dedicated internal Documents page.
+- Complete: added durable file storage metadata using the existing storage
+  boundary.
+- Complete: supported upload/download for load, shipper, quote, audit, carrier,
+  invoice, BOL, POD, and rate confirmation contexts through existing Document
+  records.
+- Complete: stores file size, MIME type, uploader, source, document status,
+  storage key, and extraction status.
+- Complete: added document download links on load, shipper, carrier, billing,
+  and payables workflows.
+- Complete: keeps generated rate confirmations as durable linked printable
+  documents; signed PDF generation remains a later finance/document automation
+  task.
+- Complete: kept document metadata tied to existing `Document` records instead
+  of creating parallel document systems.
 
 AI-ready additions:
 
-- Store extracted text when available.
-- Add extraction status so OCR/PDF parsing can run later without changing the
-  document model again.
+- Complete: stores extracted text when available.
+- Complete: added extraction status so OCR/PDF parsing can run later without
+  changing the document model again.
 
 Completion criteria:
 

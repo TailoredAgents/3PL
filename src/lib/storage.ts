@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 function getStorageConfig() {
   const bucket = process.env.STORAGE_BUCKET;
@@ -35,6 +39,9 @@ export function isStorageConfigured(): boolean {
 export type UploadFileResult = {
   uploaded: boolean;
   fileUrl: string;
+  storageKey: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
 };
 
 export async function uploadFile(
@@ -48,6 +55,9 @@ export async function uploadFile(
     return {
       uploaded: false,
       fileUrl: `pending-storage://${fileName}`,
+      storageKey: null,
+      fileSize: file instanceof File ? file.size : Buffer.byteLength(file),
+      mimeType: contentType,
     };
   }
 
@@ -71,5 +81,38 @@ export async function uploadFile(
     ? `${config.publicBaseUrl.replace(/\/$/, "")}/${key}`
     : `https://${config.bucket}.s3.amazonaws.com/${key}`;
 
-  return { uploaded: true, fileUrl };
+  return {
+    uploaded: true,
+    fileUrl,
+    storageKey: key,
+    fileSize: body.byteLength,
+    mimeType: contentType,
+  };
+}
+
+export async function downloadStoredFile(storageKey: string) {
+  const config = getStorageConfig();
+
+  if (!config.configured) {
+    throw new Error("Storage is not configured.");
+  }
+
+  const response = await config.client.send(
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: storageKey,
+    }),
+  );
+
+  if (!response.Body) {
+    throw new Error("Stored file is empty.");
+  }
+
+  const body = await response.Body.transformToByteArray();
+
+  return {
+    body,
+    contentType: response.ContentType ?? "application/octet-stream",
+    contentLength: response.ContentLength ?? body.byteLength,
+  };
 }

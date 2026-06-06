@@ -587,11 +587,11 @@ export default async function LoadDetailPage({
                   <p>Status: {load.rateConfirmationStatus ?? "Not started"}</p>
                   <p>Sent: {load.rateConfirmationSentAt ?? "Not sent"}</p>
                   <p>Signed: {load.rateConfirmationSignedAt ?? "Not signed"}</p>
-                  {latestRateConfirmation?.fileUrl ? (
+                  {latestRateConfirmation?.downloadHref ? (
                     <p>
                       Document:{" "}
                       <DocumentLink
-                        href={latestRateConfirmation.fileUrl}
+                        href={latestRateConfirmation.downloadHref}
                         label={latestRateConfirmation.fileName}
                       />
                     </p>
@@ -636,16 +636,23 @@ export default async function LoadDetailPage({
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900">{document.fileName}</p>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {document.type} · {document.created}
+                        {document.type} · {document.storageState} · {document.fileSize} · {document.created}
                       </p>
-                      {document.fileUrl ? (
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        AI extraction: {document.extractionStatus}
+                      </p>
+                      {document.downloadHref ? (
                         <div className="mt-1.5 break-all text-sm">
                           <DocumentLink
-                            href={document.fileUrl}
-                            label={document.fileUrl}
+                            href={document.downloadHref}
+                            label="Download document"
                           />
                         </div>
-                      ) : null}
+                      ) : (
+                        <p className="mt-1.5 text-xs font-semibold text-amber-700">
+                          Storage needed before download.
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}

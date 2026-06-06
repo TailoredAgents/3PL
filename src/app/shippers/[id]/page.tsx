@@ -5,6 +5,8 @@ import {
   ArrowLeft,
   Building2,
   ClipboardList,
+  Download,
+  FileText,
   Mail,
   MapPinned,
   Package,
@@ -201,6 +203,48 @@ export default async function ShipperDetailPage({
           </div>
         </article>
       )}
+
+      {/* Documents */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Documents</p>
+          </div>
+          <Link
+            href={`/documents`}
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+          >
+            Open document center
+          </Link>
+        </div>
+        {shipper.documents.length ? (
+          <div className="grid gap-3 p-5 md:grid-cols-2 xl:grid-cols-4">
+            {shipper.documents.map((document) => (
+              <div key={document.id} className="rounded-md border border-slate-100 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-950">{document.fileName}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {document.type} · {document.storageState}
+                </p>
+                {document.downloadHref ? (
+                  <Link
+                    href={document.downloadHref}
+                    target="_blank"
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download
+                  </Link>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="px-5 py-8 text-center text-sm text-slate-400">
+            No shipper-level documents logged yet.
+          </p>
+        )}
+      </article>
 
       {/* Add contact + manage lanes */}
       <section className="grid gap-6 xl:grid-cols-2">

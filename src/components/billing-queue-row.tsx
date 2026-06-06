@@ -30,6 +30,11 @@ type BillingLoad = {
     dueDate?: string | null;
     paidAt?: string | null;
   } | null;
+  documents: Array<{
+    type: string;
+    fileName: string;
+    downloadHref: string | null;
+  }>;
 };
 
 export function BillingQueueTableRow({ load }: { load: BillingLoad }) {
@@ -43,6 +48,7 @@ export function BillingQueueTableRow({ load }: { load: BillingLoad }) {
     !load.invoice;
   const canMarkPaid =
     load.invoice && load.invoice.status !== "Paid" && !load.invoice.paidAt;
+  const podDocument = load.documents.find((document) => document.type === "Pod");
 
   async function createInvoice() {
     if (submitting) return;
@@ -112,6 +118,15 @@ export function BillingQueueTableRow({ load }: { load: BillingLoad }) {
         <p className="mt-1.5 text-xs text-slate-500">
           POD {load.hasPod ? "✓" : "needed"}
         </p>
+        {podDocument?.downloadHref ? (
+          <Link
+            href={podDocument.downloadHref}
+            target="_blank"
+            className="mt-1 inline-flex text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+          >
+            Download POD
+          </Link>
+        ) : null}
       </Td>
       <Td>
         <p className="font-semibold text-slate-900">
@@ -198,6 +213,7 @@ export function BillingQueueMobileRow({ load }: { load: BillingLoad }) {
     !load.invoice;
   const canMarkPaid =
     load.invoice && load.invoice.status !== "Paid" && !load.invoice.paidAt;
+  const podDocument = load.documents.find((document) => document.type === "Pod");
 
   async function createInvoice() {
     if (submitting) return;
@@ -254,6 +270,15 @@ export function BillingQueueMobileRow({ load }: { load: BillingLoad }) {
         <p>Invoice: {load.invoice?.status ?? "Not created"}</p>
         <p>Margin: {toCurrency(load.margin)}</p>
         <p>POD: {load.hasPod ? "Received" : "Needed"}</p>
+        {podDocument?.downloadHref ? (
+          <Link
+            href={podDocument.downloadHref}
+            target="_blank"
+            className="text-xs font-semibold text-emerald-700"
+          >
+            Download POD
+          </Link>
+        ) : null}
       </div>
       <div className="mt-4 flex gap-2">
         {done ? (

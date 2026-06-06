@@ -116,6 +116,27 @@ enum DocumentType {
   OTHER
 }
 
+enum DocumentStatus {
+  ACTIVE
+  NEEDS_REVIEW
+  MISSING_STORAGE
+  ARCHIVED
+}
+
+enum DocumentSource {
+  MANUAL_UPLOAD
+  SYSTEM_GENERATED
+  PUBLIC_AUDIT
+  EXTERNAL_URL
+}
+
+enum DocumentExtractionStatus {
+  NOT_REQUESTED
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 enum InvoiceStatus {
   DRAFT
   SENT
@@ -261,6 +282,7 @@ model User {
   leads       Lead[]          @relation("LeadOwner")
   activities  Activity[]
   quotes      CustomerQuote[]
+  documents   Document[]      @relation("DocumentUploader")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -440,6 +462,7 @@ model QuoteRequest {
   pricingRecommendations PricingRecommendation[]
   loads                  Load[]
   calls                  BrokerageCall[]
+  documents              Document[]
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
 
@@ -583,6 +606,7 @@ model Carrier {
   carrierQuotes      CarrierQuote[]
   sourcingCandidates CarrierSourcingCandidate[]
   carrierInvoices    CarrierInvoice[]
+  documents          Document[]
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt
 
@@ -673,22 +697,41 @@ model ShipmentEvent {
 }
 
 model Document {
-  id             String        @id @default(cuid())
-  shipperId      String?
-  shipper        Shipper?      @relation(fields: [shipperId], references: [id], onDelete: SetNull)
-  loadId         String?
-  load           Load?         @relation(fields: [loadId], references: [id], onDelete: SetNull)
-  savingsAuditId String?
-  savingsAudit   SavingsAudit? @relation(fields: [savingsAuditId], references: [id], onDelete: SetNull)
-  type           DocumentType
-  fileName       String
-  fileUrl        String
-  extractedText  String?
-  createdAt      DateTime      @default(now())
+  id               String                   @id @default(cuid())
+  shipperId        String?
+  shipper          Shipper?                 @relation(fields: [shipperId], references: [id], onDelete: SetNull)
+  loadId           String?
+  load             Load?                    @relation(fields: [loadId], references: [id], onDelete: SetNull)
+  quoteRequestId   String?
+  quoteRequest     QuoteRequest?            @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  carrierId        String?
+  carrier          Carrier?                 @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  savingsAuditId   String?
+  savingsAudit     SavingsAudit?            @relation(fields: [savingsAuditId], references: [id], onDelete: SetNull)
+  uploadedByUserId String?
+  uploadedBy       User?                    @relation("DocumentUploader", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  type             DocumentType
+  status           DocumentStatus           @default(ACTIVE)
+  source           DocumentSource           @default(MANUAL_UPLOAD)
+  extractionStatus DocumentExtractionStatus @default(NOT_REQUESTED)
+  fileName         String
+  fileUrl          String
+  storageKey       String?
+  mimeType         String?
+  fileSize         Int?
+  extractedText    String?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
 
   @@index([shipperId])
   @@index([loadId])
+  @@index([quoteRequestId])
+  @@index([carrierId])
   @@index([savingsAuditId])
+  @@index([uploadedByUserId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Invoice {

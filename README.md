@@ -67,10 +67,11 @@ Included now:
 - Production env checklist at `docs/production-env-checklist.md`
 - Generated logistics hero image at `public/freight-hero.png`
 - Detailed implementation roadmap
+- Dedicated Documents page for PODs, BOLs, invoices, audit uploads, rate confirmations, and linked records
+- S3/R2-compatible document storage metadata and download route
 
 Not included yet:
 
-- Real document storage and file download handling
 - PDF parsing/OCR
 - Final DAT provider payload mapping
 - Final Truckstop provider payload mapping
@@ -566,7 +567,7 @@ The current TMS workflow supports the first manual operating loop:
 15. Add document metadata for rate confirmations, PODs, invoices, and other load documents.
 16. Save invoice amount/status once POD and billing details are ready.
 
-The document workflow is metadata-first. It records what document exists and where it should live later. Rate confirmations can be generated as printable HTML documents today. Durable upload storage, OCR, generated invoice PDFs, signed PDF downloads, email sending, and payment collection are still future work.
+The document workflow now records operational document metadata, storage keys, file size, MIME type, source, status, and AI extraction status. Rate confirmations can be generated as printable HTML documents today. Durable upload storage uses the configured S3/R2-compatible storage boundary. OCR, generated invoice PDFs, signed PDF downloads, email sending, and payment collection are still future work.
 
 ## Phone Intake and Call Intelligence Plan
 
@@ -918,7 +919,6 @@ Status: started.
 Remaining:
 
 - Add automated DAT/Truckstop carrier quote sync
-- Add durable POD upload and downloads
 - Add generated invoice PDFs and email sending
 - Add signed rate confirmation PDFs and email sending
 

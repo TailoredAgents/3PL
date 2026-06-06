@@ -21,6 +21,14 @@ type CarrierInvoiceItem = {
   dueDate: string | null;
   paidAt: string | null;
   isOverdue: boolean;
+  invoiceDocument: {
+    fileName: string;
+    downloadHref: string | null;
+  } | null;
+  rateConfirmationDocument: {
+    fileName: string;
+    downloadHref: string | null;
+  } | null;
 };
 
 const STATUS_CLASS: Record<string, string> = {
@@ -79,6 +87,8 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
             {variance > 0 ? "+" : ""}{toCurrency(variance)} vs rate con
           </p>
         )}
+        <DocumentLink label="Invoice doc" href={invoice.invoiceDocument?.downloadHref} />
+        <DocumentLink label="Rate con" href={invoice.rateConfirmationDocument?.downloadHref} />
       </Td>
       <Td>
         <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_CLASS[invoice.status] ?? "bg-slate-100 text-slate-700")}>
@@ -185,6 +195,10 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
           </p>
         </div>
       </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <DocumentLink label="Invoice doc" href={invoice.invoiceDocument?.downloadHref} />
+        <DocumentLink label="Rate con" href={invoice.rateConfirmationDocument?.downloadHref} />
+      </div>
       <div className="mt-3 flex gap-2">
         {done ? (
           <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
@@ -222,4 +236,26 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
 
 function Td({ children }: { children: React.ReactNode }) {
   return <td className="px-4 py-4">{children}</td>;
+}
+
+function DocumentLink({
+  label,
+  href,
+}: {
+  label: string;
+  href: string | null | undefined;
+}) {
+  if (!href) {
+    return null;
+  }
+
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      className="mt-1 inline-flex text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+    >
+      {label}
+    </Link>
+  );
 }

@@ -275,9 +275,10 @@ Temporary internal gate:
 
 Document upload:
 
-- Public audit upload currently stores metadata only.
-- Load documents currently store metadata only.
-- Durable storage and OCR are not wired yet.
+- Public audit and load document uploads use the configured S3/R2-compatible storage boundary when `STORAGE_*` variables are set.
+- Document records store storage key, file size, MIME type, source, status, and extraction status.
+- `/documents` is the internal document register and `/api/documents/[id]/download` serves stored files or redirects linked documents.
+- OCR is not wired yet.
 
 Integrations:
 

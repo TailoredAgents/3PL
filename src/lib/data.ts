@@ -4,6 +4,7 @@ import {
   Building2,
   ClipboardCheck,
   FileText,
+  Files,
   Headphones,
   LineChart,
   MapPinned,
@@ -49,6 +50,7 @@ export const internalNavGroups = [
     items: [
       { label: "Load Board", href: "/loads", icon: Truck },
       { label: "Carriers", href: "/carriers", icon: ShieldCheck },
+      { label: "Documents", href: "/documents", icon: Files },
     ],
   },
   {

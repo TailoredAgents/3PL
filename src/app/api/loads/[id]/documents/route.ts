@@ -1,8 +1,10 @@
 import { revalidatePath } from "next/cache";
+import { type DocumentType } from "@prisma/client";
 
+import { buildDocumentCreateData, isFileLike } from "@/lib/documents";
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import { uploadFile } from "@/lib/storage";
 import { documentCreateSchema } from "@/lib/validation";
 
 export async function POST(
@@ -39,7 +41,7 @@ export async function POST(
 
   const load = await prisma.load.findUnique({
     where: { id },
-    select: { id: true, shipperId: true },
+    select: { id: true, shipperId: true, carrierId: true, quoteRequestId: true },
   });
 
   if (!load) {
@@ -47,26 +49,22 @@ export async function POST(
   }
 
   const input = parsed.data;
-
-  let fileUrl = input.fileUrl;
-  if (!fileUrl && uploadedFile) {
-    const result = await uploadFile(
-      uploadedFile,
-      uploadedFile.name,
-      uploadedFile.type || "application/octet-stream",
-    );
-    fileUrl = result.fileUrl;
-  }
-
+  const currentUser = await getCurrentInternalUser();
   await prisma.document.create({
-    data: {
+    data: await buildDocumentCreateData({
+      type: input.type as DocumentType,
+      fileName: input.fileName,
+      fileUrl: input.fileUrl,
+      extractedText: input.extractedText,
+      uploadedFile,
+      relations: {
       loadId: load.id,
       shipperId: load.shipperId,
-      type: input.type,
-      fileName: input.fileName,
-      fileUrl: fileUrl || `pending-storage://${input.fileName}`,
-      extractedText: input.extractedText,
-    },
+        carrierId: load.carrierId,
+        quoteRequestId: load.quoteRequestId,
+        uploadedByUserId: currentUser?.id ?? null,
+      },
+    }),
   });
 
   if (input.type === "POD") {
@@ -88,18 +86,8 @@ export async function POST(
 
   revalidatePath("/loads");
   revalidatePath(`/loads/${id}`);
+  revalidatePath("/documents");
   revalidatePath("/dashboard");
 
   return Response.json({ message: "Document added to load." });
-}
-
-function isFileLike(value: FormDataEntryValue | null): value is File {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "name" in value &&
-    "size" in value &&
-    typeof (value as File).size === "number" &&
-    (value as File).size > 0
-  );
 }

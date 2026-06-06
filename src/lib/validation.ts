@@ -284,7 +284,7 @@ export const marketRateFetchSchema = z.object({
 });
 
 export const documentCreateSchema = z.object({
-  type: z.enum(["INVOICE", "POD", "RATE_CONFIRMATION", "AUDIT_UPLOAD", "OTHER"]),
+  type: z.enum(["INVOICE", "POD", "BOL", "RATE_CONFIRMATION", "AUDIT_UPLOAD", "OTHER"]),
   fileName: requiredString,
   fileUrl: z.string().trim().optional(),
   extractedText: z.string().trim().optional(),

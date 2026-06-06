@@ -1,4 +1,5 @@
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { isStorageConfigured } from "@/lib/storage";
 
 export async function GET() {
   const database = await checkDatabase();
@@ -23,6 +24,7 @@ export async function GET() {
       ),
       resend: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL),
       resendWebhook: Boolean(process.env.RESEND_WEBHOOK_SECRET),
+      storage: isStorageConfigured(),
     },
   });
 }

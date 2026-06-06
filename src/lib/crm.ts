@@ -12,6 +12,10 @@ import {
   type AiAgentRun,
   type EmailSuppressionReason,
 } from "@prisma/client";
+import {
+  formatFileSize,
+  getDocumentDownloadHref,
+} from "@/lib/documents";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -58,7 +62,20 @@ export type LoadDocumentView = {
   type: string;
   fileName: string;
   fileUrl: string;
+  downloadHref: string | null;
+  status: string;
+  source: string;
+  extractionStatus: string;
+  mimeType: string;
+  fileSize: string;
+  storageState: string;
   created: string;
+};
+export type DocumentCenterView = LoadDocumentView & {
+  relatedLabel: string;
+  relatedHref: string | null;
+  shipper: string;
+  uploadedBy: string;
 };
 export type IntegrationLogView = {
   id: string;
@@ -186,9 +203,11 @@ export type ShipperDetailView = ShipperView & {
   leads: LeadView[];
   quoteRequests: QuoteRequestView[];
   loads: LoadView[];
+  documents: LoadDocumentView[];
 };
 export type CarrierDetailView = CarrierView & {
   loads: LoadView[];
+  documents: LoadDocumentView[];
 };
 export type AiAgentRunView = {
   id: string;
@@ -1349,8 +1368,13 @@ export async function getShipperDetailView(
         contacts: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
         leads: { include: { contact: true }, orderBy: { updatedAt: "desc" } },
         quoteRequests: { orderBy: { createdAt: "desc" } },
+        documents: { orderBy: { createdAt: "desc" }, take: 8 },
         loads: {
-          include: { carrier: true, events: { orderBy: { occurredAt: "desc" } } },
+          include: {
+            carrier: true,
+            documents: true,
+            events: { orderBy: { occurredAt: "desc" } },
+          },
           orderBy: { updatedAt: "desc" },
         },
       },
@@ -1408,6 +1432,7 @@ export async function getShipperDetailView(
       loads: shipper.loads.map((load) =>
         mapLoad({ ...load, shipper, events: load.events }),
       ),
+      documents: shipper.documents.map(mapDocumentSummary),
     };
   } catch {
     return getSampleShipperDetailView(id);
@@ -1648,8 +1673,14 @@ export async function getCarrierDetailView(
     const carrier = await prisma.carrier.findUnique({
       where: { id },
       include: {
+        documents: { orderBy: { createdAt: "desc" }, take: 8 },
         loads: {
-          include: { shipper: true, carrier: true, events: true },
+          include: {
+            shipper: true,
+            carrier: true,
+            documents: true,
+            events: true,
+          },
           orderBy: { updatedAt: "desc" },
         },
       },
@@ -1702,6 +1733,7 @@ export async function getCarrierDetailView(
         return Number(avg.toFixed(1));
       })(),
       loads: carrier.loads.map((load) => mapLoad(load)),
+      documents: carrier.documents.map(mapDocumentSummary),
     };
   } catch {
     return getSampleCarrierDetailView(id);
@@ -1794,6 +1826,59 @@ export async function getLoadDetailView(
     return mapLoad(load);
   } catch {
     return getSampleLoadDetailView(id);
+  }
+}
+
+export async function getDocumentCenterViews(): Promise<DocumentCenterView[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return [];
+  }
+
+  try {
+    const documents = await prisma.document.findMany({
+      include: {
+        shipper: { select: { id: true, companyName: true } },
+        load: {
+          select: {
+            id: true,
+            loadNumber: true,
+            originCity: true,
+            originState: true,
+            destinationCity: true,
+            destinationState: true,
+          },
+        },
+        quoteRequest: {
+          select: {
+            id: true,
+            originCity: true,
+            originState: true,
+            destinationCity: true,
+            destinationState: true,
+          },
+        },
+        carrier: { select: { id: true, companyName: true } },
+        savingsAudit: { select: { id: true } },
+        uploadedBy: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 250,
+    });
+
+    return documents.map((document) => {
+      const summary = mapDocumentSummary(document);
+      const related = getDocumentRelatedRecord(document);
+
+      return {
+        ...summary,
+        relatedLabel: related.label,
+        relatedHref: related.href,
+        shipper: document.shipper?.companyName ?? "No shipper linked",
+        uploadedBy: document.uploadedBy?.name ?? "System or public intake",
+      };
+    });
+  } catch {
+    return [];
   }
 }
 
@@ -2231,6 +2316,7 @@ function getSampleShipperDetailView(id: string): ShipperDetailView | null {
           (quote) => quote.company === sample.company,
         ),
         loads: loads.filter((load) => load.shipper === sample.company),
+        documents: [],
       }
     : null;
 }
@@ -2263,6 +2349,7 @@ function getSampleCarrierDetailView(id: string): CarrierDetailView | null {
     ? {
         ...sample,
         loads: loads.filter((load) => load.carrier === sample.company),
+        documents: [],
       }
     : null;
 }
@@ -2434,6 +2521,104 @@ function mapQuoteRequest(
   };
 }
 
+function mapDocumentSummary(document: {
+  id: string;
+  type: string;
+  fileName: string;
+  fileUrl: string;
+  storageKey?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  status?: string | null;
+  source?: string | null;
+  extractionStatus?: string | null;
+  createdAt: Date;
+}): LoadDocumentView {
+  const canDownload = !document.fileUrl.startsWith("pending-storage://");
+
+  return {
+    id: document.id,
+    type: titleCaseEnum(document.type),
+    fileName: document.fileName,
+    fileUrl: document.fileUrl,
+    downloadHref: canDownload ? getDocumentDownloadHref(document.id) : null,
+    status: titleCaseEnum(document.status ?? "ACTIVE"),
+    source: titleCaseEnum(document.source ?? "MANUAL_UPLOAD"),
+    extractionStatus: titleCaseEnum(
+      document.extractionStatus ?? "NOT_REQUESTED",
+    ),
+    mimeType: document.mimeType ?? "Type unknown",
+    fileSize: formatFileSize(document.fileSize),
+    storageState: document.storageKey
+      ? "Stored"
+      : canDownload
+        ? "Linked"
+        : "Missing storage",
+    created: formatFollowUp(document.createdAt),
+  };
+}
+
+function getDocumentRelatedRecord(document: {
+  shipper?: { id: string; companyName: string } | null;
+  load?: {
+    id: string;
+    loadNumber: number | null;
+    originCity: string;
+    originState: string;
+    destinationCity: string;
+    destinationState: string;
+  } | null;
+  quoteRequest?: {
+    id: string;
+    originCity: string;
+    originState: string;
+    destinationCity: string;
+    destinationState: string;
+  } | null;
+  carrier?: { id: string; companyName: string } | null;
+  savingsAudit?: { id: string } | null;
+}) {
+  if (document.load) {
+    return {
+      label: `LD-${String(document.load.loadNumber ?? "").padStart(4, "0")} · ${document.load.originCity}, ${document.load.originState} -> ${document.load.destinationCity}, ${document.load.destinationState}`,
+      href: `/loads/${document.load.id}?tab=documents`,
+    };
+  }
+
+  if (document.quoteRequest) {
+    return {
+      label: `Quote · ${document.quoteRequest.originCity}, ${document.quoteRequest.originState} -> ${document.quoteRequest.destinationCity}, ${document.quoteRequest.destinationState}`,
+      href: `/quote-requests/${document.quoteRequest.id}`,
+    };
+  }
+
+  if (document.shipper) {
+    return {
+      label: document.shipper.companyName,
+      href: `/shippers/${document.shipper.id}`,
+    };
+  }
+
+  if (document.carrier) {
+    return {
+      label: document.carrier.companyName,
+      href: `/carriers/${document.carrier.id}`,
+    };
+  }
+
+  if (document.savingsAudit) {
+    return {
+      label: "Savings audit",
+      href: null,
+    };
+  }
+
+  return {
+    label: "Unlinked document",
+    href: null,
+  };
+}
+
 function mapLoad(load: {
   id: string;
   loadNumber?: number | null;
@@ -2530,6 +2715,12 @@ function mapLoad(load: {
     type: string;
     fileName: string;
     fileUrl: string;
+    storageKey?: string | null;
+    mimeType?: string | null;
+    fileSize?: number | null;
+    status?: string | null;
+    source?: string | null;
+    extractionStatus?: string | null;
     createdAt: Date;
   }>;
 }) {
@@ -2541,13 +2732,7 @@ function mapLoad(load: {
       : carrierRate
         ? customerRate - carrierRate
         : 0;
-  const documents = load.documents?.map((document) => ({
-    id: document.id,
-    type: titleCaseEnum(document.type),
-    fileName: document.fileName,
-    fileUrl: document.fileUrl,
-    created: formatFollowUp(document.createdAt),
-  })) ?? [];
+  const documents = load.documents?.map(mapDocumentSummary) ?? [];
   const hasPod = documents.some((document) => document.type === "Pod");
   const invoice = load.invoice
     ? {
@@ -3080,6 +3265,8 @@ export type CarrierInvoiceView = {
   paidAt: string | null;
   notes: string | null;
   isOverdue: boolean;
+  invoiceDocument: LoadDocumentView | null;
+  rateConfirmationDocument: LoadDocumentView | null;
 };
 
 export type LoadNeedingPayableView = {
@@ -3104,7 +3291,20 @@ export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
   try {
     const records = await prisma.carrierInvoice.findMany({
       include: {
-        load: { select: { loadNumber: true, originCity: true, originState: true, destinationCity: true, destinationState: true, deliveryDate: true } },
+        load: {
+          select: {
+            loadNumber: true,
+            originCity: true,
+            originState: true,
+            destinationCity: true,
+            destinationState: true,
+            deliveryDate: true,
+            documents: {
+              where: { type: { in: ["INVOICE", "RATE_CONFIRMATION"] } },
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        },
         carrier: { select: { companyName: true } },
       },
       orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
@@ -3132,6 +3332,20 @@ export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
       paidAt: formatMaybe(r.paidAt),
       notes: r.notes,
       isOverdue: r.dueDate != null && r.dueDate < now && r.paidAt == null,
+      invoiceDocument:
+        r.load?.documents.find((document) => document.type === "INVOICE")
+          ? mapDocumentSummary(
+              r.load.documents.find((document) => document.type === "INVOICE")!,
+            )
+          : null,
+      rateConfirmationDocument:
+        r.load?.documents.find((document) => document.type === "RATE_CONFIRMATION")
+          ? mapDocumentSummary(
+              r.load.documents.find(
+                (document) => document.type === "RATE_CONFIRMATION",
+              )!,
+            )
+          : null,
     }));
   } catch {
     return [];

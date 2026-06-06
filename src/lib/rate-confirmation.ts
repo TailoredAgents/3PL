@@ -1,3 +1,5 @@
+import { DocumentExtractionStatus, DocumentSource } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 import { toCurrency } from "@/lib/utils";
 
@@ -70,8 +72,12 @@ export async function generateRateConfirmationDocument(loadId: string) {
         loadId: load.id,
         shipperId: load.shipperId,
         type: "RATE_CONFIRMATION",
+        source: DocumentSource.SYSTEM_GENERATED,
+        extractionStatus: DocumentExtractionStatus.COMPLETED,
         fileName,
         fileUrl,
+        mimeType: "text/html",
+        fileSize: Buffer.byteLength(content),
         extractedText: content,
       },
     });

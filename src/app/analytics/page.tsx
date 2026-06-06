@@ -5,6 +5,12 @@ import { getAnalyticsData } from "@/lib/crm";
 
 export const dynamic = "force-dynamic";
 
+const CARD_ACCENTS = [
+  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
+  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
+] as const;
+
 export default async function AnalyticsPage() {
   const data = await getAnalyticsData();
   const { revenue, loadsByStatus, topLanes, topCarriers, salesFunnel, quoteConversion } = data;
@@ -18,6 +24,27 @@ export default async function AnalyticsPage() {
   const maxFunnelCount = Math.max(...salesFunnel.map((s) => s.count), 1);
   const maxQuoteCount = Math.max(...quoteConversion.map((s) => s.count), 1);
 
+  const revenueCards = [
+    {
+      icon: DollarSign,
+      label: "Total revenue",
+      value: `$${revenue.totalRevenue.toLocaleString()}`,
+      sub: `${revenue.loadCount} loads invoiced or paid`,
+    },
+    {
+      icon: TrendingUp,
+      label: "Total gross profit",
+      value: `$${revenue.totalGrossProfit.toLocaleString()}`,
+      sub: `${revenue.avgMarginPercent.toFixed(1)}% avg margin`,
+    },
+    {
+      icon: BarChart3,
+      label: "Revenue this month",
+      value: `$${revenue.revenueThisMonth.toLocaleString()}`,
+      sub: `$${revenue.grossProfitThisMonth.toLocaleString()} gross profit`,
+    },
+  ];
+
   return (
     <InternalShell
       active="Analytics"
@@ -25,50 +52,46 @@ export default async function AnalyticsPage() {
       title="Analytics"
       description="Revenue, margin, load throughput, lane performance, carrier usage, and sales funnel in one view."
     >
-      {/* Revenue strip */}
+      {/* Revenue cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard
-          icon={DollarSign}
-          label="Total revenue (closed loads)"
-          value={`$${revenue.totalRevenue.toLocaleString()}`}
-          sub={`${revenue.loadCount} loads invoiced or paid`}
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="Total gross profit"
-          value={`$${revenue.totalGrossProfit.toLocaleString()}`}
-          sub={`${revenue.avgMarginPercent.toFixed(1)}% avg margin`}
-        />
-        <StatCard
-          icon={BarChart3}
-          label="Revenue this month"
-          value={`$${revenue.revenueThisMonth.toLocaleString()}`}
-          sub={`$${revenue.grossProfitThisMonth.toLocaleString()} gross profit`}
-        />
+        {revenueCards.map((item, i) => (
+          <article
+            key={item.label}
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
+          >
+            <div className="p-5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                <item.icon className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+                {item.value}
+              </p>
+              <p className="mt-2 text-xs text-slate-500">{item.sub}</p>
+            </div>
+          </article>
+        ))}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
         {/* Load status snapshot */}
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <SectionHeader
-            icon={Package}
-            eyebrow="Operations"
-            title="Load status snapshot"
-          />
-          <div className="mt-6 grid gap-2">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <Package className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Load status snapshot</p>
+          </div>
+          <div className="grid gap-2.5 p-5">
             {loadsByStatus.map((row) => (
-              <div key={row.status} className="grid grid-cols-[1fr_auto] items-center gap-3">
-                <div>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium">{row.status}</span>
-                    <span className="text-slate-500">{row.count}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-emerald-500"
-                      style={{ width: `${(row.count / maxStatusCount) * 100}%` }}
-                    />
-                  </div>
+              <div key={row.status}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{row.status}</span>
+                  <span className="text-xs font-semibold text-slate-500">{row.count}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full rounded-full ${statusBarColor(row.status)}`}
+                    style={{ width: `${(row.count / maxStatusCount) * 100}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -76,25 +99,26 @@ export default async function AnalyticsPage() {
         </article>
 
         {/* Carrier scoreboard */}
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <SectionHeader
-            icon={Truck}
-            eyebrow="Carrier usage"
-            title="Top carriers by loads"
-          />
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <Truck className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Top carriers by loads</p>
+          </div>
           {topCarriers.length ? (
-            <div className="mt-6 grid gap-3">
+            <div className="grid gap-2 p-5">
               {topCarriers.map((carrier, i) => (
                 <div
                   key={carrier.name}
                   className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
                 >
-                  <span className="text-sm font-bold text-slate-400">
-                    #{i + 1}
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                    i === 0 ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-600"
+                  }`}>
+                    {i + 1}
                   </span>
                   <div>
-                    <p className="font-semibold">{carrier.name}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm font-semibold text-slate-900">{carrier.name}</p>
+                    <p className="text-xs text-slate-500">
                       {carrier.loads} load{carrier.loads !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -111,17 +135,16 @@ export default async function AnalyticsPage() {
       </section>
 
       {/* Top lanes */}
-      <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <SectionHeader
-          icon={BarChart3}
-          eyebrow="Lane performance"
-          title="Top lanes by volume"
-        />
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <BarChart3 className="h-4 w-4 text-slate-400" />
+          <p className="text-sm font-semibold text-slate-700">Top lanes by volume</p>
+        </div>
         {topLanes.length ? (
-          <div className="mt-6 overflow-x-auto">
+          <div className="overflow-x-auto p-5">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
                   <th className="pb-3 pr-4">Origin</th>
                   <th className="pb-3 pr-4">Destination</th>
                   <th className="pb-3 pr-4 text-right">Loads</th>
@@ -132,16 +155,16 @@ export default async function AnalyticsPage() {
               <tbody className="divide-y divide-slate-50">
                 {topLanes.map((lane) => (
                   <tr key={`${lane.origin}-${lane.destination}`} className="hover:bg-slate-50">
-                    <td className="py-3 pr-4 font-medium">{lane.origin}</td>
-                    <td className="py-3 pr-4 text-slate-600">{lane.destination}</td>
-                    <td className="py-3 pr-4 text-right font-bold">{lane.count}</td>
+                    <td className="py-3 pr-4 font-medium text-slate-900">{lane.origin}</td>
+                    <td className="py-3 pr-4 text-slate-500">{lane.destination}</td>
+                    <td className="py-3 pr-4 text-right font-bold text-slate-900">{lane.count}</td>
                     <td className="py-3 pr-4 text-right font-bold text-emerald-700">
                       ${lane.avgGrossProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </td>
                     <td className="py-3">
                       <div className="h-2 w-32 overflow-hidden rounded-full bg-slate-100">
                         <div
-                          className="h-full rounded-full bg-emerald-400"
+                          className="h-full rounded-full bg-sky-400"
                           style={{ width: `${(lane.count / maxLaneCount) * 100}%` }}
                         />
                       </div>
@@ -158,32 +181,28 @@ export default async function AnalyticsPage() {
 
       <section className="grid gap-6 xl:grid-cols-2">
         {/* Sales funnel */}
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <SectionHeader
-            icon={Users}
-            eyebrow="Sales pipeline"
-            title={`Sales funnel — ${conversionRate}% win rate`}
-          />
-          <div className="mt-6 grid gap-2">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-semibold text-slate-700">Sales funnel</p>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+              {conversionRate}% win rate
+            </span>
+          </div>
+          <div className="grid gap-2.5 p-5">
             {salesFunnel.map((row) => (
-              <div key={row.stage} className="grid grid-cols-[1fr_auto] items-center gap-3">
-                <div>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium">{row.stage}</span>
-                    <span className="text-slate-500">{row.count}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={`h-full rounded-full ${
-                        row.stage === "Won"
-                          ? "bg-emerald-500"
-                          : row.stage === "Lost"
-                            ? "bg-red-400"
-                            : "bg-emerald-300"
-                      }`}
-                      style={{ width: `${(row.count / maxFunnelCount) * 100}%` }}
-                    />
-                  </div>
+              <div key={row.stage}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{row.stage}</span>
+                  <span className="text-xs font-semibold text-slate-500">{row.count}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full rounded-full ${funnelBarColor(row.stage)}`}
+                    style={{ width: `${(row.count / maxFunnelCount) * 100}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -191,32 +210,23 @@ export default async function AnalyticsPage() {
         </article>
 
         {/* Quote conversion */}
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <SectionHeader
-            icon={TrendingUp}
-            eyebrow="Quoting"
-            title="Quote request pipeline"
-          />
-          <div className="mt-6 grid gap-2">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <TrendingUp className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Quote request pipeline</p>
+          </div>
+          <div className="grid gap-2.5 p-5">
             {quoteConversion.map((row) => (
-              <div key={row.status} className="grid grid-cols-[1fr_auto] items-center gap-3">
-                <div>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium">{row.status}</span>
-                    <span className="text-slate-500">{row.count}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={`h-full rounded-full ${
-                        row.status === "Accepted"
-                          ? "bg-emerald-500"
-                          : row.status === "Rejected"
-                            ? "bg-red-400"
-                            : "bg-emerald-300"
-                      }`}
-                      style={{ width: `${(row.count / maxQuoteCount) * 100}%` }}
-                    />
-                  </div>
+              <div key={row.status}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{row.status}</span>
+                  <span className="text-xs font-semibold text-slate-500">{row.count}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full rounded-full ${quoteBarColor(row.status)}`}
+                    style={{ width: `${(row.count / maxQuoteCount) * 100}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -227,55 +237,45 @@ export default async function AnalyticsPage() {
   );
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  sub: string;
-}) {
-  return (
-    <div className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-        <Icon className="h-5 w-5" />
-      </div>
-      <p className="mt-5 text-sm font-medium text-slate-600">{label}</p>
-      <p className="mt-2 text-3xl font-semibold">{value}</p>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{sub}</p>
-    </div>
-  );
+function statusBarColor(status: string) {
+  const map: Record<string, string> = {
+    Tendered: "bg-amber-400",
+    Booked: "bg-sky-400",
+    "Picked Up": "bg-blue-400",
+    "In Transit": "bg-emerald-500",
+    Delivered: "bg-violet-400",
+    "Pod Received": "bg-emerald-400",
+    Invoiced: "bg-slate-400",
+    Paid: "bg-lime-500",
+  };
+  return map[status] ?? "bg-emerald-400";
 }
 
-function SectionHeader({
-  icon: Icon,
-  eyebrow,
-  title,
-}: {
-  icon: React.ElementType;
-  eyebrow: string;
-  title: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <Icon className="mt-1 h-5 w-5 flex-none text-emerald-600" />
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-          {eyebrow}
-        </p>
-        <h2 className="mt-1 text-xl font-semibold">{title}</h2>
-      </div>
-    </div>
-  );
+function funnelBarColor(stage: string) {
+  const map: Record<string, string> = {
+    New: "bg-sky-400",
+    Contacted: "bg-cyan-400",
+    Qualified: "bg-emerald-400",
+    Quoted: "bg-amber-400",
+    Won: "bg-lime-500",
+    Lost: "bg-red-400",
+  };
+  return map[stage] ?? "bg-emerald-400";
+}
+
+function quoteBarColor(status: string) {
+  const map: Record<string, string> = {
+    New: "bg-sky-400",
+    Pricing: "bg-amber-400",
+    Quoted: "bg-emerald-400",
+    Accepted: "bg-lime-500",
+    Rejected: "bg-red-400",
+  };
+  return map[status] ?? "bg-emerald-400";
 }
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="mt-6 rounded-md border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-      {text}
-    </div>
+    <p className="px-5 py-8 text-center text-sm text-slate-400">{text}</p>
   );
 }

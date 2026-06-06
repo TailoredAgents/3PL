@@ -371,9 +371,34 @@ export default async function QuoteRequestDetailPage({
           <div className="mt-6 border-t border-slate-100 pt-6">
             <h3 className="text-lg font-semibold">Convert accepted quote</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Use this only after the shipper says yes. The latest quoted rate
-              is prefilled when available.
+              Use this only after the shipper says yes. Confirm the details
+              below are correct — they will be copied to the new load
+              automatically.
             </p>
+            <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+                Carries over to load
+              </p>
+              <div className="mt-3 grid gap-1.5 text-sm text-emerald-900 sm:grid-cols-2">
+                <p>Lane: {quote.lane}</p>
+                <p>Equipment: {quote.equipment}</p>
+                <p>Pickup: {quote.pickup}</p>
+                <p>
+                  Delivery:{" "}
+                  {quote.deliveryDateInput ?? "Not set"}
+                </p>
+                <p>Weight: {quote.weight}</p>
+                <p>Commodity: {quote.commodity ?? "Not set"}</p>
+                {quote.customerReference ? (
+                  <p>Customer ref: {quote.customerReference}</p>
+                ) : null}
+                {quote.hazmat ? <p>Hazmat: Yes</p> : null}
+                {quote.temperatureRequirement &&
+                quote.temperatureRequirement !== "Not set" ? (
+                  <p>Temp: {quote.temperatureRequirement}</p>
+                ) : null}
+              </div>
+            </div>
             <div className="mt-4 rounded-lg bg-slate-50 p-4">
               <QuoteConvertForm
                 quoteId={quote.id}

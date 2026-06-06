@@ -696,6 +696,182 @@ function getSampleDashboardMetrics() {
   };
 }
 
+export type SearchResultItem = {
+  id: string;
+  type: "Load" | "Lead" | "Shipper" | "Carrier";
+  title: string;
+  subtitle: string;
+  href: string;
+};
+
+export async function getSearchResults(
+  q: string,
+): Promise<SearchResultItem[]> {
+  const term = q.trim().toLowerCase();
+  if (!term || term.length < 2) return [];
+
+  if (!hasDatabaseUrl() || !prisma) {
+    return getSampleSearchResults(term);
+  }
+
+  try {
+    const [dbLeads, dbShippers, dbCarriers, dbLoads] = await Promise.all([
+      prisma.lead.findMany({
+        where: {
+          OR: [
+            {
+              shipper: { companyName: { contains: q, mode: "insensitive" } },
+            },
+            {
+              contact: {
+                OR: [
+                  { firstName: { contains: q, mode: "insensitive" } },
+                  { lastName: { contains: q, mode: "insensitive" } },
+                ],
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          stage: true,
+          shipper: { select: { companyName: true } },
+        },
+        take: 5,
+      }),
+      prisma.shipper.findMany({
+        where: { companyName: { contains: q, mode: "insensitive" } },
+        select: { id: true, companyName: true, status: true },
+        take: 5,
+      }),
+      prisma.carrier.findMany({
+        where: {
+          OR: [
+            { companyName: { contains: q, mode: "insensitive" } },
+            { mcNumber: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          companyName: true,
+          complianceStatus: true,
+          mcNumber: true,
+        },
+        take: 5,
+      }),
+      prisma.load.findMany({
+        where: {
+          OR: [
+            { shipper: { companyName: { contains: q, mode: "insensitive" } } },
+            { originCity: { contains: q, mode: "insensitive" } },
+            { destinationCity: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          loadNumber: true,
+          shipper: { select: { companyName: true } },
+          originCity: true,
+          originState: true,
+          destinationCity: true,
+          destinationState: true,
+          status: true,
+        },
+        take: 5,
+      }),
+    ]);
+
+    const results: SearchResultItem[] = [
+      ...dbLeads.map((l) => ({
+        id: l.id,
+        type: "Lead" as const,
+        title: l.shipper.companyName,
+        subtitle: `Pipeline: ${titleCaseEnum(l.stage)}`,
+        href: `/leads/${l.id}`,
+      })),
+      ...dbShippers.map((s) => ({
+        id: s.id,
+        type: "Shipper" as const,
+        title: s.companyName,
+        subtitle: `Status: ${titleCaseEnum(s.status)}`,
+        href: `/shippers/${s.id}`,
+      })),
+      ...dbCarriers.map((c) => ({
+        id: c.id,
+        type: "Carrier" as const,
+        title: c.companyName,
+        subtitle: `${c.mcNumber ?? "MC unknown"} | ${titleCaseEnum(c.complianceStatus)}`,
+        href: `/carriers/${c.id}`,
+      })),
+      ...dbLoads.map((l) => ({
+        id: l.id,
+        type: "Load" as const,
+        title: l.loadNumber
+          ? `LD-${String(l.loadNumber).padStart(4, "0")}`
+          : l.shipper.companyName,
+        subtitle: `${l.originCity}, ${l.originState} → ${l.destinationCity}, ${l.destinationState} | ${titleCaseEnum(l.status)}`,
+        href: `/loads/${l.id}`,
+      })),
+    ];
+
+    return results;
+  } catch {
+    return getSampleSearchResults(term);
+  }
+}
+
+function getSampleSearchResults(term: string): SearchResultItem[] {
+  const results: SearchResultItem[] = [];
+
+  for (const lead of leads) {
+    if (
+      lead.company.toLowerCase().includes(term) ||
+      lead.contact.toLowerCase().includes(term)
+    ) {
+      results.push({
+        id: lead.id,
+        type: "Lead",
+        title: lead.company,
+        subtitle: `Pipeline: ${lead.stage}`,
+        href: `/leads/${lead.id}`,
+      });
+    }
+  }
+
+  for (const carrier of carriers) {
+    if (
+      carrier.company.toLowerCase().includes(term) ||
+      carrier.mcNumber.toLowerCase().includes(term)
+    ) {
+      results.push({
+        id: carrier.id,
+        type: "Carrier",
+        title: carrier.company,
+        subtitle: `${carrier.mcNumber} | ${carrier.complianceStatus}`,
+        href: `/carriers/${carrier.id}`,
+      });
+    }
+  }
+
+  for (const load of loads) {
+    if (
+      load.shipper.toLowerCase().includes(term) ||
+      load.lane.toLowerCase().includes(term) ||
+      load.loadNumber.toLowerCase().includes(term)
+    ) {
+      results.push({
+        id: load.id,
+        type: "Load",
+        title: load.loadNumber,
+        subtitle: `${load.lane} | ${load.status}`,
+        href: `/loads/${load.id}`,
+      });
+    }
+  }
+
+  return results;
+}
+
 export type TodayScheduleItem = {
   id: string;
   loadNumber: string;

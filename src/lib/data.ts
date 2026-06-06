@@ -11,6 +11,7 @@ import {
   MessageSquareText,
   Radar,
   ReceiptText,
+  Search,
   Settings,
   ShieldCheck,
   Truck,
@@ -31,6 +32,7 @@ export const internalNavGroups = [
     label: "Command Center",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: Headphones },
+      { label: "Search", href: "/search", icon: Search },
       { label: "Communications", href: "/communications", icon: MessageSquareText },
     ],
   },

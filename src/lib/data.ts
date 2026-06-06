@@ -55,6 +55,12 @@ export const internalNavGroups = [
     ],
   },
   {
+    label: "Reporting",
+    items: [
+      { label: "Analytics", href: "/analytics", icon: BarChart3 },
+    ],
+  },
+  {
     label: "Admin / AI",
     items: [
       { label: "AI Command Center", href: "/agents", icon: Bot },

@@ -2408,3 +2408,241 @@ export async function getContactDetailView(
     return null;
   }
 }
+
+export type AnalyticsData = {
+  revenue: {
+    totalRevenue: number;
+    totalGrossProfit: number;
+    avgMarginPercent: number;
+    loadCount: number;
+    revenueThisMonth: number;
+    grossProfitThisMonth: number;
+  };
+  loadsByStatus: { status: string; count: number }[];
+  topLanes: {
+    origin: string;
+    destination: string;
+    count: number;
+    avgGrossProfit: number;
+  }[];
+  topCarriers: { name: string; loads: number; totalGrossProfit: number }[];
+  salesFunnel: { stage: string; count: number }[];
+  quoteConversion: { status: string; count: number }[];
+};
+
+export async function getAnalyticsData(): Promise<AnalyticsData> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return getSampleAnalyticsData();
+  }
+
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [
+      allLoads,
+      loadsThisMonth,
+      loadGroups,
+      topCarrierLoads,
+      leadGroups,
+      quoteGroups,
+    ] = await Promise.all([
+      prisma.load.findMany({
+        select: {
+          customerRate: true,
+          grossProfit: true,
+          originCity: true,
+          originState: true,
+          destinationCity: true,
+          destinationState: true,
+        },
+        where: { status: { in: ["INVOICED", "PAID", "POD_RECEIVED", "DELIVERED"] } },
+      }),
+      prisma.load.findMany({
+        select: { customerRate: true, grossProfit: true },
+        where: {
+          createdAt: { gte: startOfMonth },
+          status: { in: ["INVOICED", "PAID", "POD_RECEIVED", "DELIVERED"] },
+        },
+      }),
+      prisma.load.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
+      prisma.load.findMany({
+        select: {
+          carrier: { select: { companyName: true } },
+          grossProfit: true,
+        },
+        where: { carrierId: { not: null } },
+        take: 500,
+      }),
+      prisma.lead.groupBy({ by: ["stage"], _count: true }),
+      prisma.quoteRequest.groupBy({ by: ["status"], _count: true }),
+    ]);
+
+    const isEmpty =
+      allLoads.length === 0 &&
+      leadGroups.length === 0 &&
+      quoteGroups.length === 0;
+
+    if (isEmpty) {
+      return getSampleAnalyticsData();
+    }
+
+    const totalRevenue = allLoads.reduce(
+      (s, l) => s + Number(l.customerRate),
+      0,
+    );
+    const totalGP = allLoads.reduce(
+      (s, l) => s + Number(l.grossProfit ?? 0),
+      0,
+    );
+    const avgMargin =
+      totalRevenue > 0 ? (totalGP / totalRevenue) * 100 : 0;
+
+    const revenueThisMonth = loadsThisMonth.reduce(
+      (s, l) => s + Number(l.customerRate),
+      0,
+    );
+    const gpThisMonth = loadsThisMonth.reduce(
+      (s, l) => s + Number(l.grossProfit ?? 0),
+      0,
+    );
+
+    const laneMap = new Map<
+      string,
+      { count: number; totalGP: number }
+    >();
+    for (const load of allLoads) {
+      const key = `${load.originCity}, ${load.originState} → ${load.destinationCity}, ${load.destinationState}`;
+      const existing = laneMap.get(key) ?? { count: 0, totalGP: 0 };
+      laneMap.set(key, {
+        count: existing.count + 1,
+        totalGP: existing.totalGP + Number(load.grossProfit ?? 0),
+      });
+    }
+    const topLanes = [...laneMap.entries()]
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10)
+      .map(([lane, data]) => {
+        const [origin, destination] = lane.split(" → ");
+        return {
+          origin: origin ?? lane,
+          destination: destination ?? "",
+          count: data.count,
+          avgGrossProfit: data.count > 0 ? data.totalGP / data.count : 0,
+        };
+      });
+
+    const carrierMap = new Map<string, { loads: number; totalGP: number }>();
+    for (const load of topCarrierLoads) {
+      const name = load.carrier?.companyName ?? "Unknown";
+      const existing = carrierMap.get(name) ?? { loads: 0, totalGP: 0 };
+      carrierMap.set(name, {
+        loads: existing.loads + 1,
+        totalGP: existing.totalGP + Number(load.grossProfit ?? 0),
+      });
+    }
+    const topCarriers = [...carrierMap.entries()]
+      .sort((a, b) => b[1].loads - a[1].loads)
+      .slice(0, 8)
+      .map(([name, data]) => ({ name, ...data, totalGrossProfit: data.totalGP }));
+
+    const statusOrder = [
+      "TENDERED",
+      "BOOKED",
+      "PICKED_UP",
+      "IN_TRANSIT",
+      "DELIVERED",
+      "POD_RECEIVED",
+      "INVOICED",
+      "PAID",
+    ];
+    const loadsByStatus = statusOrder.map((status) => ({
+      status: titleCaseEnum(status),
+      count: loadGroups.find((g) => g.status === status)?._count ?? 0,
+    }));
+
+    const stageOrder = ["NEW", "CONTACTED", "QUALIFIED", "QUOTED", "WON", "LOST"];
+    const salesFunnel = stageOrder.map((stage) => ({
+      stage: titleCaseEnum(stage),
+      count: leadGroups.find((g) => g.stage === stage)?._count ?? 0,
+    }));
+
+    const quoteOrder = ["NEW", "PRICING", "QUOTED", "ACCEPTED", "REJECTED"];
+    const quoteConversion = quoteOrder.map((status) => ({
+      status: titleCaseEnum(status),
+      count: quoteGroups.find((g) => g.status === status)?._count ?? 0,
+    }));
+
+    return {
+      revenue: {
+        totalRevenue,
+        totalGrossProfit: totalGP,
+        avgMarginPercent: avgMargin,
+        loadCount: allLoads.length,
+        revenueThisMonth,
+        grossProfitThisMonth: gpThisMonth,
+      },
+      loadsByStatus,
+      topLanes,
+      topCarriers,
+      salesFunnel,
+      quoteConversion,
+    };
+  } catch {
+    return getSampleAnalyticsData();
+  }
+}
+
+function getSampleAnalyticsData(): AnalyticsData {
+  return {
+    revenue: {
+      totalRevenue: 284500,
+      totalGrossProfit: 51210,
+      avgMarginPercent: 18.0,
+      loadCount: 47,
+      revenueThisMonth: 62000,
+      grossProfitThisMonth: 11160,
+    },
+    loadsByStatus: [
+      { status: "Tendered", count: 3 },
+      { status: "Booked", count: 5 },
+      { status: "Picked Up", count: 4 },
+      { status: "In Transit", count: 8 },
+      { status: "Delivered", count: 6 },
+      { status: "Pod Received", count: 4 },
+      { status: "Invoiced", count: 9 },
+      { status: "Paid", count: 8 },
+    ],
+    topLanes: [
+      { origin: "Atlanta, GA", destination: "Nashville, TN", count: 12, avgGrossProfit: 1050 },
+      { origin: "Atlanta, GA", destination: "Charlotte, NC", count: 9, avgGrossProfit: 870 },
+      { origin: "Savannah, GA", destination: "Atlanta, GA", count: 7, avgGrossProfit: 720 },
+      { origin: "Atlanta, GA", destination: "Memphis, TN", count: 6, avgGrossProfit: 940 },
+      { origin: "Atlanta, GA", destination: "Dallas, TX", count: 5, avgGrossProfit: 1400 },
+    ],
+    topCarriers: [
+      { name: "Blue Ridge Freight", loads: 14, totalGrossProfit: 15400 },
+      { name: "Southern Express", loads: 11, totalGrossProfit: 9900 },
+      { name: "Appalachian Transport", loads: 8, totalGrossProfit: 7200 },
+      { name: "Peach State Carriers", loads: 6, totalGrossProfit: 5400 },
+    ],
+    salesFunnel: [
+      { stage: "New", count: 18 },
+      { stage: "Contacted", count: 12 },
+      { stage: "Qualified", count: 8 },
+      { stage: "Quoted", count: 5 },
+      { stage: "Won", count: 14 },
+      { stage: "Lost", count: 3 },
+    ],
+    quoteConversion: [
+      { status: "New", count: 4 },
+      { status: "Pricing", count: 3 },
+      { status: "Quoted", count: 7 },
+      { status: "Accepted", count: 12 },
+      { status: "Rejected", count: 2 },
+    ],
+  };
+}

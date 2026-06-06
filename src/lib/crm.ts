@@ -3056,6 +3056,119 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   }
 }
 
+// ─── Carrier Invoices (AP / Payables) ─────────────────────────────────────────
+
+export type CarrierInvoiceView = {
+  id: string;
+  loadId: string;
+  loadNumber: string;
+  carrierName: string;
+  carrierId: string;
+  lane: string;
+  delivery: string;
+  invoiceNumber: string | null;
+  amount: number;
+  agreedRate: number | null;
+  status: string;
+  paymentMethod: string | null;
+  dueDate: string | null;
+  approvedAt: string | null;
+  paidAt: string | null;
+  notes: string | null;
+  isOverdue: boolean;
+};
+
+export type LoadNeedingPayableView = {
+  id: string;
+  loadNumber: string;
+  carrierName: string;
+  carrierId: string;
+  lane: string;
+  delivery: string;
+  agreedRate: number;
+  status: string;
+};
+
+function formatMaybe(d: Date | null | undefined): string | null {
+  if (!d) return null;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
+  if (!hasDatabaseUrl() || !prisma) return [];
+
+  try {
+    const records = await (prisma as any).carrierInvoice.findMany({
+      include: {
+        load: { select: { loadNumber: true, originCity: true, originState: true, destinationCity: true, destinationState: true, deliveryDate: true } },
+        carrier: { select: { companyName: true } },
+      },
+      orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
+    });
+
+    const now = new Date();
+
+    return records.map((r: any) => ({
+      id: r.id,
+      loadId: r.loadId,
+      loadNumber: `L-${String(r.load?.loadNumber ?? "").padStart(4, "0")}`,
+      carrierName: r.carrier?.companyName ?? "Unknown carrier",
+      carrierId: r.carrierId,
+      lane: r.load
+        ? `${r.load.originCity}, ${r.load.originState} → ${r.load.destinationCity}, ${r.load.destinationState}`
+        : "—",
+      delivery: formatMaybe(r.load?.deliveryDate) ?? "TBD",
+      invoiceNumber: r.invoiceNumber,
+      amount: Number(r.amount),
+      agreedRate: r.agreedRate != null ? Number(r.agreedRate) : null,
+      status: r.status.charAt(0) + r.status.slice(1).toLowerCase(),
+      paymentMethod: r.paymentMethod,
+      dueDate: formatMaybe(r.dueDate),
+      approvedAt: formatMaybe(r.approvedAt),
+      paidAt: formatMaybe(r.paidAt),
+      notes: r.notes,
+      isOverdue: r.dueDate != null && r.dueDate < now && r.paidAt == null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getLoadsNeedingPayable(): Promise<LoadNeedingPayableView[]> {
+  if (!hasDatabaseUrl() || !prisma) return [];
+
+  try {
+    const records = await prisma.load.findMany({
+      where: {
+        carrierId: { not: null },
+        carrierRate: { not: null },
+        status: { in: ["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"] as any },
+        carrierInvoice: null,
+      },
+      include: {
+        carrier: { select: { companyName: true } },
+      },
+      orderBy: [{ deliveryDate: "asc" }, { updatedAt: "desc" }],
+      take: 50,
+    });
+
+    return records.map((load) => ({
+      id: load.id,
+      loadNumber: `L-${String(load.loadNumber ?? "").padStart(4, "0")}`,
+      carrierName: load.carrier?.companyName ?? "Unknown",
+      carrierId: load.carrierId!,
+      lane: `${load.originCity}, ${load.originState} → ${load.destinationCity}, ${load.destinationState}`,
+      delivery: formatMaybe(load.deliveryDate) ?? "TBD",
+      agreedRate: load.carrierRate != null ? Number(load.carrierRate) : 0,
+      status: load.status.charAt(0) + load.status.slice(1).toLowerCase().replace(/_/g, " "),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 function getSampleAnalyticsData(): AnalyticsData {
   return {
     revenue: {

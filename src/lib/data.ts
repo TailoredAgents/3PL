@@ -55,7 +55,7 @@ export const internalNavGroups = [
     label: "Finance",
     items: [
       { label: "Invoicing", href: "/billing", icon: ReceiptText },
-      { label: "Payables", href: "/billing?tab=payables", icon: Wallet },
+      { label: "Payables", href: "/payables", icon: Wallet },
     ],
   },
   {

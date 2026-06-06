@@ -124,6 +124,21 @@ enum InvoiceStatus {
   OVERDUE
 }
 
+enum CarrierInvoiceStatus {
+  RECEIVED
+  MATCHED
+  APPROVED
+  PAID
+  DISPUTED
+}
+
+enum PaymentMethod {
+  CHECK
+  ACH
+  QUICKPAY
+  WIRE
+}
+
 enum AiAgentStatus {
   STARTED
   COMPLETED
@@ -536,6 +551,7 @@ model Load {
   events                   ShipmentEvent[]
   documents                Document[]
   invoice                  Invoice?
+  carrierInvoice           CarrierInvoice?
   createdAt                DateTime                   @default(now())
   updatedAt                DateTime                   @updatedAt
 
@@ -564,6 +580,7 @@ model Carrier {
   loads              Load[]
   carrierQuotes      CarrierQuote[]
   sourcingCandidates CarrierSourcingCandidate[]
+  carrierInvoices    CarrierInvoice[]
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt
 
@@ -686,6 +703,29 @@ model Invoice {
 
   @@index([status])
   @@index([dueDate])
+}
+
+model CarrierInvoice {
+  id            String               @id @default(cuid())
+  loadId        String               @unique
+  load          Load                 @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  carrierId     String
+  carrier       Carrier              @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  invoiceNumber String?
+  amount        Decimal              @db.Decimal(12, 2)
+  agreedRate    Decimal?             @db.Decimal(12, 2)
+  status        CarrierInvoiceStatus @default(RECEIVED)
+  paymentMethod PaymentMethod?
+  dueDate       DateTime?
+  approvedAt    DateTime?
+  paidAt        DateTime?
+  notes         String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([carrierId])
 }
 
 model AiAgentRun {

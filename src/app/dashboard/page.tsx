@@ -117,15 +117,15 @@ export default async function DashboardPage() {
     },
     {
       icon: Building2,
-      label: "Customers",
+      label: "Companies",
       href: "/shippers",
       detail: "Company files, contacts, and lanes",
     },
     {
       icon: ReceiptText,
-      label: "Billing & Accounting",
+      label: "Invoicing",
       href: "/billing",
-      detail: "POD, invoices, payment status",
+      detail: "Shipper invoices and payment status",
     },
     {
       icon: Truck,

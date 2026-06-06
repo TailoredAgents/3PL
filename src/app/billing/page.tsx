@@ -39,7 +39,7 @@ export default async function BillingPage() {
 
   return (
     <InternalShell
-      active="Billing & Accounting"
+      active="Invoicing"
       eyebrow="Money"
       title="Billing & Accounting"
       description="The billing workspace for POD collection, invoice readiness, open invoices, carrier cost visibility, and margin protection."

@@ -3,7 +3,6 @@ import {
   Bot,
   Building2,
   ClipboardCheck,
-  ClipboardList,
   FileText,
   Headphones,
   LineChart,
@@ -16,6 +15,7 @@ import {
   ShieldCheck,
   Truck,
   Users,
+  Wallet,
 } from "lucide-react";
 
 export const platformName = "DAO Logistics";
@@ -33,16 +33,15 @@ export const internalNavGroups = [
     items: [
       { label: "Dashboard", href: "/dashboard", icon: Headphones },
       { label: "Search", href: "/search", icon: Search },
-      { label: "Communications", href: "/communications", icon: MessageSquareText },
     ],
   },
   {
-    label: "Sales & Pricing",
+    label: "Sales & CRM",
     items: [
       { label: "Leads", href: "/leads", icon: Users },
-      { label: "Customers", href: "/shippers", icon: Building2 },
-      { label: "Contacts", href: "/contacts", icon: ClipboardList },
+      { label: "Companies", href: "/shippers", icon: Building2 },
       { label: "Quotes & Pricing", href: "/quote-requests", icon: FileText },
+      { label: "Communications", href: "/communications", icon: MessageSquareText },
     ],
   },
   {
@@ -55,7 +54,8 @@ export const internalNavGroups = [
   {
     label: "Finance",
     items: [
-      { label: "Billing & Accounting", href: "/billing", icon: ReceiptText },
+      { label: "Invoicing", href: "/billing", icon: ReceiptText },
+      { label: "Payables", href: "/billing?tab=payables", icon: Wallet },
     ],
   },
   {
@@ -191,7 +191,7 @@ export const crmMetrics = [
     note: "12 have known recurring lanes.",
   },
   {
-    icon: ClipboardList,
+    icon: Headphones,
     label: "Follow-ups due",
     value: "9",
     note: "Start with qualified leads and audit submissions.",

@@ -22,7 +22,7 @@ export default async function ContactDetailPage({
 
   return (
     <InternalShell
-      active="Customers"
+      active="Companies"
       eyebrow="Contact record"
       title={contact.fullName}
       description="Contact details, linked leads, and activity history."

@@ -268,16 +268,26 @@ Build (Phase 5.2 completed):
 - Followed handoff rules.
 
 Deferred:
-- 5.3: Public tracking links.
 - 5.4: Provider adapters.
 - 5.5: Agent workflows.
 
-Completion criteria progress:
-- Exceptions now have persistent ownership and resolution states.
-- Visible/assignable in tracking workspace and per-load.
-- Operators can manage active loads + exceptions in one place.
+Build (Phase 5.3 completed):
 
-Next: 5.3 for public foundation when ready.
+- Added PublicTrackingLink model (token, expiresAt, revoked) with explicit migration.
+- Added to Load model and views (PublicTrackingLinkView in crm.ts, included in queries and mapLoad).
+- New generatePublicTrackingLink() and getPublicLoadView(token) in crm.ts (validates token/expiry/revoked, returns scoped public data: loadNumber, lane, status, dates, limited events, hasPod + POD download link. No rates, margins, or sensitive info).
+- New API /api/loads/[id]/public-tracking-link (POST to generate 30-day link).
+- New public page /track/[token] (unauthenticated, minimal view with shipment basics and POD link if available).
+- UI in load detail: "Public tracking link" section with generate button (form posts to API, revalidates page to show active link + URL). Links are shareable, token-based, time-limited, scoped.
+- Generation from internal tracking/load detail only. Reuses existing document download (open by design for PODs), events, formatting. No duplication or new auth surface.
+- Followed handoff rules.
+
+Completion criteria progress:
+- Public tracking link foundation complete (secure tokens, expiration, customer data scoping to basics only).
+- Internal operators can generate and share limited views for shippers.
+- No full customer portal yet.
+
+Next: 5.4 for provider adapters when needed.
 
 ## Phase 6: Integration Admin And Monitoring
 

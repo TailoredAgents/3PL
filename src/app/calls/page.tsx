@@ -28,7 +28,7 @@ export default async function CallsPage() {
 
   return (
     <InternalShell
-      active="Calls"
+      active="Intake"
       eyebrow="Call intelligence"
       title="Call intake queue"
       description="Review recorded shipment calls, transcripts, AI extraction, and approved quote request drafts."

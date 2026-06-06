@@ -91,11 +91,11 @@ export default async function QuoteRequestDetailPage({
 
   return (
     <InternalShell
-      active="Quote Requests"
+      active="Quotes & Pricing"
       eyebrow="Quote detail"
       title={quote.company}
       description="Review the quote request, confirm service details, then convert it to a load when the customer accepts."
-      action={{ label: "Back to quotes", href: "/quote-requests" }}
+      action={{ label: "Back to Quotes & Pricing", href: "/quote-requests" }}
     >
       <Link
         href="/quote-requests"

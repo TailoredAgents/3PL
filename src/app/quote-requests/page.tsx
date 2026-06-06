@@ -52,9 +52,9 @@ export default async function QuoteRequestsPage() {
 
   return (
     <InternalShell
-      active="Quote Requests"
+      active="Quotes & Pricing"
       eyebrow="Pricing desk"
-      title="Quote request queue"
+      title="Quotes & Pricing"
       description="Most quotes start with a phone conversation. Capture the shipper's details fast, then price, follow up, and convert accepted quotes into booked loads."
       action={{ label: "Public quote form", href: "/#quote" }}
     >

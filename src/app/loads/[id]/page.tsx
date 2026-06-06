@@ -56,11 +56,11 @@ export default async function LoadDetailPage({
 
   return (
     <InternalShell
-      active="Loads"
+      active="Load Board"
       eyebrow="Load detail"
       title={load.shipper}
       description="Execute the shipment from one workspace: status, carrier, margin, tracking events, POD readiness, and customer update context."
-      action={{ label: "Back to loads", href: "/loads" }}
+      action={{ label: "Back to Load Board", href: "/loads" }}
     >
       <Link
         href="/loads"

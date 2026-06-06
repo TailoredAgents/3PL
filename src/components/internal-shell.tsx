@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
 import { InternalAccount } from "@/components/internal-account";
 import { isClerkAuthConfigured } from "@/lib/auth";
 import { getCurrentInternalUser } from "@/lib/current-user";
-import { internalNavItems, platformName } from "@/lib/data";
+import { internalNavGroups, internalNavItems, platformName } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 type InternalShellProps = {
@@ -52,19 +52,33 @@ export async function InternalShell({
             agents, and operating performance.
           </p>
         </div>
-        <nav className="mt-8 grid gap-1 text-sm font-medium text-slate-300">
-          {internalNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "rounded-md px-3 py-2 hover:bg-white/10 hover:text-white",
-                item.label === active &&
-                  "bg-white text-slate-950 shadow-lg shadow-black/20 hover:bg-white hover:text-slate-950",
-              )}
-            >
-              {item.label}
-            </Link>
+        <nav className="mt-8 grid gap-5 text-sm font-medium text-slate-300">
+          {internalNavGroups.map((group) => (
+            <div key={group.label}>
+              <p className="px-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-slate-500">
+                {group.label}
+              </p>
+              <div className="mt-2 grid gap-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 hover:bg-white/10 hover:text-white",
+                        item.label === active &&
+                          "bg-white text-slate-950 shadow-lg shadow-black/20 hover:bg-white hover:text-slate-950",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           ))}
         </nav>
         <div className="absolute bottom-5 left-5 right-5">

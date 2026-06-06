@@ -31,11 +31,11 @@ export default async function ShipperDetailPage({
 
   return (
     <InternalShell
-      active="Shippers"
+      active="Customers"
       eyebrow="Shipper account"
       title={shipper.company}
       description="One account file for contacts, lane context, sales opportunities, quote requests, and booked freight."
-      action={{ label: "Back to shippers", href: "/shippers" }}
+      action={{ label: "Back to Customers", href: "/customers" }}
     >
       <Link
         href="/shippers"

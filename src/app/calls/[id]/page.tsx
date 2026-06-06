@@ -32,7 +32,7 @@ export default async function CallDetailPage({
 
   return (
     <InternalShell
-      active="Calls"
+      active="Intake"
       eyebrow="Call detail"
       title={call.shipper}
       description="Review the recording, transcript, AI intake extraction, and create a quote request only after a human review."

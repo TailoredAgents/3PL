@@ -38,11 +38,11 @@ export default async function LeadDetailPage({
 
   return (
     <InternalShell
-      active="Leads"
+      active="Customers"
       eyebrow="Lead detail"
       title={lead.company}
       description="Work the prospect from one place: contact context, lane notes, stage update, next follow-up, activity logging, and AI suggested next action."
-      action={{ label: "Back to leads", href: "/leads" }}
+      action={{ label: "Back to Customers", href: "/customers" }}
     >
       <Link
         href="/leads"

@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ClipboardList, FileText, Gauge } from "lucide-react";
+import {
+  ArrowRight,
+  ClipboardList,
+  FileText,
+  Gauge,
+  Mail,
+  PhoneCall,
+} from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
 import { getIntakeViews } from "@/lib/crm";
@@ -34,6 +41,41 @@ export default async function IntakePage() {
             <p className="text-sm font-medium text-slate-600">{item.label}</p>
             <p className="mt-2 text-3xl font-semibold">{item.value}</p>
           </article>
+        ))}
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        {[
+          {
+            icon: PhoneCall,
+            title: "Calls",
+            body: "Review call recordings, transcripts, extraction status, and quote request conversion.",
+            href: "/calls",
+            action: "Open calls",
+          },
+          {
+            icon: Mail,
+            title: "Email events",
+            body: "Track quote email delivery, bounces, complaints, and suppressed recipients.",
+            href: "/email",
+            action: "Open email events",
+          },
+        ].map((item) => (
+          <Link
+            key={item.title}
+            href={item.href}
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+          >
+            <item.icon className="h-6 w-6 text-emerald-600" />
+            <h2 className="mt-4 text-xl font-semibold">{item.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {item.body}
+            </p>
+            <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700">
+              {item.action}
+              <ArrowRight className="h-4 w-4" />
+            </p>
+          </Link>
         ))}
       </section>
 
@@ -106,7 +148,7 @@ export default async function IntakePage() {
               href="/quote-requests"
               className="mt-5 inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
             >
-              Open quote queue
+              Open Quotes & Pricing
             </Link>
           </article>
         </div>

@@ -11,6 +11,7 @@ import {
   MessageSquareText,
   Radar,
   ReceiptText,
+  Settings,
   ShieldCheck,
   Truck,
   Users,
@@ -25,19 +26,44 @@ export const navItems = [
   { label: "Dashboard", href: "/dashboard" },
 ];
 
-export const internalNavItems = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Intake", href: "/intake" },
-  { label: "Calls", href: "/calls" },
-  { label: "Leads", href: "/leads" },
-  { label: "Email", href: "/email" },
-  { label: "Shippers", href: "/shippers" },
-  { label: "Quote Requests", href: "/quote-requests" },
-  { label: "Loads", href: "/loads" },
-  { label: "Carriers", href: "/carriers" },
-  { label: "AI Command Center", href: "/agents" },
-  { label: "Settings", href: "/settings" },
+export const internalNavGroups = [
+  {
+    label: "Command Center",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: Headphones },
+      { label: "Intake", href: "/intake", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Sales & Pricing",
+    items: [
+      { label: "Customers", href: "/customers", icon: Building2 },
+      { label: "Quotes & Pricing", href: "/quote-requests", icon: FileText },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { label: "Load Board", href: "/loads", icon: Truck },
+      { label: "Carriers", href: "/carriers", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { label: "Billing & Accounting", href: "/billing", icon: ReceiptText },
+    ],
+  },
+  {
+    label: "Admin / AI",
+    items: [
+      { label: "AI Command Center", href: "/agents", icon: Bot },
+      { label: "Settings", href: "/settings", icon: Settings },
+    ],
+  },
 ];
+
+export const internalNavItems = internalNavGroups.flatMap((group) => group.items);
 
 export const stats = [
   { label: "Target AI-assisted workflows", value: "95%" },
@@ -133,7 +159,7 @@ export const operationsModules = [
   {
     icon: BarChart3,
     title: "CRM",
-    items: ["Lead pipeline", "Contact history", "Follow-up tasks", "Warm contact import"],
+    items: ["Customer pipeline", "Contact history", "Follow-up tasks", "Warm contact import"],
   },
   {
     icon: Truck,

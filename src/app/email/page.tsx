@@ -52,7 +52,7 @@ export default async function EmailPage() {
 
   return (
     <InternalShell
-      active="Email"
+      active="Intake"
       eyebrow="Communications"
       title="Email events"
       description="Track quote email sends, Resend delivery confirmations, bounces, and complaint events so sales follow-up stays clean."

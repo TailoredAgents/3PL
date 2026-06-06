@@ -33,9 +33,9 @@ export default async function LeadsPage() {
 
   return (
     <InternalShell
-      active="Leads"
+      active="Customers"
       eyebrow="CRM"
-      title="Lead pipeline"
+      title="Customer pipeline"
       description="The day-one sales desk: who to call, what lane they care about, where they sit in the pipeline, and what the AI thinks should happen next."
       action={{ label: "Instant quote form", href: "/#quote" }}
     >

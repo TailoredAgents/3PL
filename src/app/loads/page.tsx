@@ -9,11 +9,11 @@ export default async function LoadsPage() {
 
   return (
     <InternalShell
-      active="Loads"
+      active="Load Board"
       eyebrow="TMS"
-      title="Load board"
+      title="Load Board"
       description="A broker-facing board for scanning load status, carrier coverage, DAT/Truckstop posting, margin, tracking, POD, billing readiness, and exceptions."
-      action={{ label: "Carrier desk", href: "/carriers" }}
+      action={{ label: "Carriers", href: "/carriers" }}
     >
       <LoadBoard loads={loadViews} />
     </InternalShell>

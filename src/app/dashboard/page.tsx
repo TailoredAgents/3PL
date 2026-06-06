@@ -89,20 +89,21 @@ export default async function DashboardPage() {
     "Mark ready for invoice",
   ];
   const workQueues = [
-    { label: "Lead pipeline", href: "/leads", detail: "Calls, stages, AI next actions" },
-    { label: "Quote queue", href: "/quote-requests", detail: "Price work and quote-to-load" },
-    { label: "Email events", href: "/email", detail: "Delivery, bounces, complaints" },
-    { label: "Load board", href: "/loads", detail: "Tracking, POD, margin" },
-    { label: "Carrier desk", href: "/carriers", detail: "Compliance and coverage" },
+    { label: "Intake", href: "/intake", detail: "Intake, calls, and email events" },
+    { label: "Quotes & Pricing", href: "/quote-requests", detail: "Price work and quote-to-load" },
+    { label: "Load Board", href: "/loads", detail: "Tracking, POD, margin" },
+    { label: "Customers", href: "/customers", detail: "Relationships, contacts, lanes" },
+    { label: "Billing & Accounting", href: "/billing", detail: "POD, invoices, payment status" },
+    { label: "Carriers", href: "/carriers", detail: "Compliance and coverage" },
   ];
 
   return (
     <InternalShell
       active="Dashboard"
-      eyebrow="Internal dashboard"
-      title="Daily brokerage command center"
+      eyebrow="Command center"
+      title="Dashboard"
       description="The first screen for sales and operations: follow-ups, open quotes, active load attention, AI notes, and the next work that matters."
-      action={{ label: "Phone quote intake", href: "/quote-requests" }}
+      action={{ label: "Open Quotes & Pricing", href: "/quote-requests" }}
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardCards.map((card) => (

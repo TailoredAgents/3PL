@@ -19,7 +19,7 @@ export default async function CarriersPage() {
       eyebrow="Carrier desk"
       title="Carrier management"
       description="Build a reliable carrier file before tendering loads: authority, contacts, compliance status, preferred lanes, and performance notes."
-      action={{ label: "Create load", href: "/loads" }}
+      action={{ label: "Open Load Board", href: "/loads" }}
     >
       <section className="grid gap-4 md:grid-cols-3">
         {[

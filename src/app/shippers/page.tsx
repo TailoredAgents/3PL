@@ -12,9 +12,9 @@ export default async function ShippersPage() {
 
   return (
     <InternalShell
-      active="Shippers"
+      active="Customers"
       eyebrow="Accounts"
-      title="Shippers and contacts"
+      title="Customer files"
       description="A clean company file for each prospect or customer: who they are, who to call, what lanes they run, and what context should never get lost."
       action={{ label: "Savings audit form", href: "/#audit" }}
     >

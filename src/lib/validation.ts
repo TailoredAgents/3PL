@@ -360,6 +360,17 @@ export const appSettingsSchema = z.object({
   callRecordingDisclosure: requiredString,
 });
 
+export const loadExceptionCreateSchema = z.object({
+  type: requiredString,
+  notes: z.string().trim().optional(),
+});
+
+export const loadExceptionUpdateSchema = z.object({
+  status: z.enum(["OPEN", "ASSIGNED", "RESOLVED"]),
+  ownerUserId: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
 export const quoteEmailTemplateSettingsSchema = z.object({
   subject: requiredString,
   body: requiredString,
@@ -422,6 +433,9 @@ export type AppSettingsInput = z.infer<typeof appSettingsSchema>;
 export type QuoteEmailTemplateSettingsInput = z.infer<
   typeof quoteEmailTemplateSettingsSchema
 >;
+
+export type LoadExceptionCreateInput = z.infer<typeof loadExceptionCreateSchema>;
+export type LoadExceptionUpdateInput = z.infer<typeof loadExceptionUpdateSchema>;
 
 export const shipperUpdateSchema = z.object({
   companyName: requiredString,

@@ -144,6 +144,16 @@ export type LoadEventView = {
   location: string;
   time: string;
 };
+
+export type LoadExceptionView = {
+  id: string;
+  type: string;
+  status: string;
+  owner?: string | null;
+  notes?: string | null;
+  resolvedAt?: string | null;
+  created: string;
+};
 export type LoadView = {
   id: string;
   loadNumber: string;
@@ -189,6 +199,7 @@ export type LoadView = {
   integrationLogs: IntegrationLogView[];
   events: LoadEventView[];
   documents: LoadDocumentView[];
+  exceptions: LoadExceptionView[];
   // For internal tracking computations (Phase 5.1)
   rawPickupDate?: Date | null;
   rawDeliveryDate?: Date | null;
@@ -1819,6 +1830,10 @@ export async function getLoadViews(): Promise<LoadView[]> {
           orderBy: { occurredAt: "desc" },
           take: 1,
         },
+        exceptions: {
+          include: { owner: { select: { name: true } } },
+          orderBy: { createdAt: "desc" },
+        },
       },
       orderBy: [{ pickupDate: "asc" }, { updatedAt: "desc" }],
       take: 100,
@@ -1989,6 +2004,10 @@ export async function getLoadDetailView(
           take: 50,
         },
         documents: {
+          orderBy: { createdAt: "desc" },
+        },
+        exceptions: {
+          include: { owner: { select: { name: true } } },
           orderBy: { createdAt: "desc" },
         },
       },
@@ -2901,6 +2920,16 @@ function mapLoad(load: {
     extractionStatus?: string | null;
     createdAt: Date;
   }>;
+  exceptions?: Array<{
+    id: string;
+    type: string;
+    status: string;
+    ownerUserId?: string | null;
+    owner?: { name: string } | null;
+    notes?: string | null;
+    resolvedAt?: Date | null;
+    createdAt: Date;
+  }>;
 }) {
   const customerRate = Number(load.customerRate);
   const carrierRate = load.carrierRate ? Number(load.carrierRate) : 0;
@@ -2977,6 +3006,16 @@ function mapLoad(load: {
     error: log.error ?? null,
     created: formatFollowUp(log.createdAt),
   })) ?? [];
+
+  const exceptions = (load.exceptions ?? []).map((ex) => ({
+    id: ex.id,
+    type: ex.type,
+    status: titleCaseEnum(ex.status),
+    owner: ex.owner?.name ?? null,
+    notes: ex.notes ?? null,
+    resolvedAt: ex.resolvedAt ? formatFollowUp(ex.resolvedAt) : null,
+    created: formatFollowUp(ex.createdAt),
+  }));
 
   return {
     id: load.id,
@@ -3061,6 +3100,7 @@ function mapLoad(load: {
       time: formatFollowUp(event.occurredAt),
     })),
     documents,
+    exceptions,
     rawPickupDate: load.pickupDate,
     rawDeliveryDate: load.deliveryDate,
   };

@@ -10,6 +10,7 @@ import {
 
 import { InternalShell } from "@/components/internal-shell";
 import { getTrackingWorkspaceView } from "@/lib/crm";
+import { LoadExceptionCreateForm, LoadExceptionUpdateForm } from "@/components/crm-forms";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,14 @@ export default async function TrackingPage() {
                         {load.customerUpdateStatus && (
                           <p className="mt-0.5 text-xs text-slate-500">Customer update: {load.customerUpdateStatus}</p>
                         )}
+                        {load.exceptions && load.exceptions.length > 0 && (
+                          <div className="mt-1 text-xs">
+                            <span className="font-semibold">Exceptions:</span>
+                            {load.exceptions.map((ex: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                              <span key={ex.id} className="ml-1 inline-block bg-amber-100 px-1 rounded">{ex.type} ({ex.status})</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Quick actions reusing existing system */}
@@ -119,6 +128,25 @@ export default async function TrackingPage() {
                         >
                           Upload POD
                         </Link>
+                      </div>
+
+                      <div className="mt-2 border-t pt-2 text-xs">
+                        <details>
+                          <summary className="cursor-pointer text-emerald-700">Create exception</summary>
+                          <div className="mt-1">
+                            <LoadExceptionCreateForm loadId={load.id} />
+                          </div>
+                        </details>
+                        {load.exceptions && load.exceptions.length > 0 && (
+                          <div className="mt-1">
+                            {load.exceptions.map((ex: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                              <details key={ex.id} className="mt-1">
+                                <summary>Update {ex.type}</summary>
+                                <LoadExceptionUpdateForm loadId={load.id} exceptionId={ex.id} currentStatus={ex.status} />
+                              </details>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

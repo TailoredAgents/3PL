@@ -1073,6 +1073,45 @@ export function CustomerUpdateForm({
   );
 }
 
+export function LoadExceptionCreateForm({ loadId }: { loadId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/exceptions`);
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field name="type" label="Exception type (e.g. PICKUP_RISK, MISSING_POD, LATE_DELIVERY)" required />
+      <Textarea name="notes" label="Notes / details" />
+      <FormFooter state={state} buttonLabel="Create exception" />
+    </form>
+  );
+}
+
+export function LoadExceptionUpdateForm({
+  loadId,
+  exceptionId,
+  currentStatus,
+}: {
+  loadId: string;
+  exceptionId: string;
+  currentStatus: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/exceptions`, "PATCH");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <input type="hidden" name="exceptionId" value={exceptionId} />
+      <Select
+        name="status"
+        label="Status"
+        options={["OPEN", "ASSIGNED", "RESOLVED"]}
+        defaultValue={currentStatus}
+      />
+      <Field name="ownerUserId" label="Assign to user ID (optional)" />
+      <Textarea name="notes" label="Update notes" />
+      <FormFooter state={state} buttonLabel="Update exception" />
+    </form>
+  );
+}
+
 export function RateConfirmationForm({
   loadId,
   currentStatus,

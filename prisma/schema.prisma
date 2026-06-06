@@ -286,6 +286,7 @@ model User {
   activities  Activity[]
   quotes      CustomerQuote[]
   documents   Document[]      @relation("DocumentUploader")
+  loadExceptions LoadException[] @relation("LoadExceptionOwner")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -580,6 +581,7 @@ model Load {
   documents                Document[]
   invoice                  Invoice?
   carrierInvoice           CarrierInvoice?
+  exceptions               LoadException[]
   createdAt                DateTime                   @default(now())
   updatedAt                DateTime                   @updatedAt
 
@@ -706,6 +708,29 @@ model ShipmentEvent {
 
   @@index([loadId])
   @@index([occurredAt])
+}
+
+enum LoadExceptionStatus {
+  OPEN
+  ASSIGNED
+  RESOLVED
+}
+
+model LoadException {
+  id          String               @id @default(cuid())
+  loadId      String
+  load        Load                 @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  type        String
+  status      LoadExceptionStatus  @default(OPEN)
+  ownerUserId String?
+  owner       User?                @relation("LoadExceptionOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  notes       String?
+  resolvedAt  DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([loadId])
+  @@index([status])
 }
 
 model Document {

@@ -535,6 +535,7 @@ export const loads = [
       },
     ],
     documents: [],
+    exceptions: [],
   },
   {
     id: "load-sav-nas-002",
@@ -612,5 +613,6 @@ export const loads = [
       },
     ],
     documents: [],
+    exceptions: [],
   },
 ];

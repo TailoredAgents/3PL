@@ -12,6 +12,7 @@ import {
   ReceiptText,
   ShieldCheck,
   Truck,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -30,6 +31,8 @@ import {
   RateConfirmationGenerateForm,
   RateConfirmationForm,
   ShipmentEventCreateForm,
+  LoadExceptionCreateForm,
+  LoadExceptionUpdateForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getLoadDetailView } from "@/lib/crm";
@@ -252,6 +255,42 @@ export default async function LoadDetailPage({
                     loadId={load.id}
                     currentStatus={load.customerUpdateStatus ?? "Not needed"}
                   />
+                </div>
+              </article>
+
+              {/* Exceptions (Phase 5.2) */}
+              <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-slate-400" />
+                    <p className="text-sm font-semibold text-slate-700">Exceptions</p>
+                  </div>
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                    {load.exceptions?.length ?? 0}
+                  </span>
+                </div>
+                <div className="p-5">
+                  {load.exceptions && load.exceptions.length > 0 ? (
+                    <div className="space-y-3 mb-4">
+                      {load.exceptions.map((ex: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                        <div key={ex.id} className="text-sm border rounded p-2">
+                          <div><strong>{ex.type}</strong> — {ex.status}</div>
+                          {ex.owner && <div className="text-xs">Owner: {ex.owner}</div>}
+                          {ex.notes && <div className="text-xs text-slate-600">{ex.notes}</div>}
+                          <div className="mt-2">
+                            <LoadExceptionUpdateForm
+                              loadId={load.id}
+                              exceptionId={ex.id}
+                              currentStatus={ex.status}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 mb-3">No persistent exceptions logged.</p>
+                  )}
+                  <LoadExceptionCreateForm loadId={load.id} />
                 </div>
               </article>
             </div>

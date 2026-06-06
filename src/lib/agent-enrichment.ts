@@ -30,7 +30,7 @@ export async function enrichAgentContext(
       case "Sales Follow-Up Agent":
         return enrichSalesFollowUp(entityId, baseContext);
       case "Quote Pricing Agent":
-        return enrichQuotePricing(entityId, baseContext);
+        return enrichQuotePricing(entityId, entityType, baseContext);
       case "Carrier Coverage Agent":
         return enrichCarrierCoverage(entityId, baseContext);
       case "Load Tracking Agent":
@@ -39,6 +39,8 @@ export async function enrichAgentContext(
         return enrichBillingReadiness(entityId, baseContext);
       case "Carrier Compliance Agent":
         return enrichCarrierCompliance(entityId, baseContext);
+      case "Call Notes Agent":
+        return enrichCallNotes(entityId, baseContext);
       default:
         return { base: baseContext, enrichment: {}, dataAvailability: {} };
     }
@@ -113,6 +115,17 @@ async function enrichSalesFollowUp(
 // ─── Quote Pricing Agent ───────────────────────────────────────────────────
 
 async function enrichQuotePricing(
+  entityId: string,
+  entityType: AgentEntityType,
+  base: unknown,
+): Promise<EnrichedAgentContext> {
+  if (entityType === "Lead") {
+    return enrichQuotePricingFromLead(entityId, base);
+  }
+  return enrichQuotePricingFromQuoteRequest(entityId, base);
+}
+
+async function enrichQuotePricingFromQuoteRequest(
   quoteId: string,
   base: unknown,
 ): Promise<EnrichedAgentContext> {
@@ -129,7 +142,6 @@ async function enrichQuotePricing(
   const origin = `${originCity}, ${originState}`.trim();
   const destination = `${destinationCity}, ${destinationState}`.trim();
 
-  // Run external calls in parallel — never throw
   const [mileageResult, dieselResult, rateResult] = await Promise.allSettled([
     getTruckMileage(origin, destination),
     getEiaDieselPrice(),
@@ -152,7 +164,6 @@ async function enrichQuotePricing(
     enrichment.dieselPricePerGallon = diesel.price;
     enrichment.dieselPriceDate = diesel.cachedAt;
     dataAvailability.dieselPrice = true;
-
     if (mileage?.miles) {
       enrichment.fuelSurchargeEstimate = calcFuelSurcharge(diesel.price, mileage.miles);
       dataAvailability.fuelSurcharge = true;
@@ -174,7 +185,6 @@ async function enrichQuotePricing(
     dataAvailability.spotRate = rate?.configured ? "failed" : "not_configured";
   }
 
-  // Expanded internal lane history
   if (hasDatabaseUrl() && prisma) {
     try {
       const quoteRequest = await prisma.quoteRequest.findUnique({
@@ -197,7 +207,6 @@ async function enrichQuotePricing(
           select: { carrierRate: true, customerRate: true, grossProfit: true, pickupDate: true },
         });
 
-        // Fallback: same state pair, same equipment
         if (laneLoads.length < 3) {
           const broader = await prisma.load.findMany({
             where: {
@@ -221,9 +230,11 @@ async function enrichQuotePricing(
             grossProfit: l.grossProfit ? Number(l.grossProfit) : null,
             date: l.pickupDate?.toISOString().slice(0, 10) ?? null,
           }));
-          const avgBuy = avg(rates.map((r) => r.buyRate).filter((v) => v > 0));
-          const avgSell = avg(rates.map((r) => r.sellRate).filter((v) => v > 0));
-          enrichment.internalLaneHistory = { loads: rates, avgBuyRate: avgBuy, avgSellRate: avgSell };
+          enrichment.internalLaneHistory = {
+            loads: rates,
+            avgBuyRate: avg(rates.map((r) => r.buyRate).filter((v) => v > 0)),
+            avgSellRate: avg(rates.map((r) => r.sellRate).filter((v) => v > 0)),
+          };
           dataAvailability.laneHistory = true;
         } else {
           dataAvailability.laneHistory = "no_history";
@@ -232,6 +243,137 @@ async function enrichQuotePricing(
     } catch {
       dataAvailability.laneHistory = "failed";
     }
+  }
+
+  return { base, enrichment, dataAvailability };
+}
+
+async function enrichQuotePricingFromLead(
+  leadId: string,
+  base: unknown,
+): Promise<EnrichedAgentContext> {
+  const enrichment: Record<string, unknown> = {};
+  const dataAvailability: Record<string, boolean | string> = {};
+
+  // Diesel price is always useful even without a specific lane
+  const dieselResult = await Promise.allSettled([getEiaDieselPrice()]);
+  const diesel = dieselResult[0].status === "fulfilled" ? dieselResult[0].value : null;
+
+  if (diesel?.price) {
+    enrichment.dieselPricePerGallon = diesel.price;
+    enrichment.dieselPriceDate = diesel.cachedAt;
+    dataAvailability.dieselPrice = true;
+  } else {
+    dataAvailability.dieselPrice = diesel?.configured ? "failed" : "not_configured";
+  }
+
+  // Mileage and spot rate need exact origin/dest — not available from a lead
+  dataAvailability.mileage = "needs_specific_origin_dest";
+  dataAvailability.spotRate = "needs_specific_origin_dest";
+  dataAvailability.fuelSurcharge = "needs_mileage";
+  enrichment.pricingNote =
+    "Running from lead context — no specific origin/dest. Provide exact cities to calculate mileage, spot rate, and fuel surcharge.";
+
+  if (hasDatabaseUrl() && prisma) {
+    try {
+      const lead = await prisma.lead.findUnique({
+        where: { id: leadId },
+        include: {
+          shipper: {
+            include: {
+              quoteRequests: { orderBy: { createdAt: "desc" }, take: 10 },
+              loads: {
+                where: { status: "DELIVERED" },
+                orderBy: { pickupDate: "desc" },
+                take: 10,
+                select: { carrierRate: true, customerRate: true, grossProfit: true, pickupDate: true, originCity: true, originState: true, destinationCity: true, destinationState: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (lead) {
+        enrichment.leadLanes = (lead as Record<string, unknown>).lanes;
+        enrichment.leadEquipment = (lead as Record<string, unknown>).equipment;
+
+        const shipperLoads = lead.shipper.loads;
+        if (shipperLoads.length > 0) {
+          const rates = shipperLoads.map((l) => ({
+            buyRate: Number(l.carrierRate),
+            sellRate: Number(l.customerRate),
+            grossProfit: l.grossProfit ? Number(l.grossProfit) : null,
+            date: l.pickupDate?.toISOString().slice(0, 10) ?? null,
+            lane: `${l.originCity ?? ""}, ${l.originState ?? ""} → ${l.destinationCity ?? ""}, ${l.destinationState ?? ""}`,
+          }));
+          enrichment.shipperLoadHistory = {
+            loads: rates,
+            avgBuyRate: avg(rates.map((r) => r.buyRate).filter((v) => v > 0)),
+            avgSellRate: avg(rates.map((r) => r.sellRate).filter((v) => v > 0)),
+          };
+          dataAvailability.laneHistory = true;
+        } else {
+          dataAvailability.laneHistory = "no_history";
+        }
+
+        enrichment.recentQuotes = lead.shipper.quoteRequests.slice(0, 5).map((q) => ({
+          origin: `${q.originCity ?? ""}, ${q.originState ?? ""}`,
+          destination: `${q.destinationCity ?? ""}, ${q.destinationState ?? ""}`,
+          status: q.status,
+          createdAt: q.createdAt.toISOString(),
+        }));
+      }
+    } catch {
+      dataAvailability.laneHistory = "failed";
+    }
+  }
+
+  return { base, enrichment, dataAvailability };
+}
+
+// ─── Call Notes Agent ──────────────────────────────────────────────────────
+
+async function enrichCallNotes(
+  leadId: string,
+  base: unknown,
+): Promise<EnrichedAgentContext> {
+  const enrichment: Record<string, unknown> = {};
+  const dataAvailability: Record<string, boolean | string> = {};
+
+  if (!hasDatabaseUrl() || !prisma) {
+    return { base, enrichment, dataAvailability };
+  }
+
+  try {
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      include: {
+        activities: { orderBy: { createdAt: "desc" }, take: 10 },
+      },
+    });
+
+    if (lead) {
+      const latestCall = lead.activities.find((a) => a.type === "CALL");
+      const latestActivity = lead.activities[0];
+      const source = latestCall ?? latestActivity ?? null;
+
+      enrichment.rawCallNotes = source?.body ?? null;
+      enrichment.callSubject = source?.subject ?? null;
+      enrichment.callOutcome = source?.outcome ?? null;
+      enrichment.callType = source?.type ?? null;
+      enrichment.recentActivities = lead.activities.slice(0, 5).map((a) => ({
+        type: a.type,
+        subject: a.subject,
+        body: a.body,
+        outcome: a.outcome,
+        createdAt: a.createdAt.toISOString(),
+      }));
+
+      dataAvailability.rawCallNotes = Boolean(source?.body);
+      dataAvailability.activityHistory = lead.activities.length > 0;
+    }
+  } catch {
+    dataAvailability.callNotes = "failed";
   }
 
   return { base, enrichment, dataAvailability };

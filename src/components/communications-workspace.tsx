@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import {
+  AiAgentRunForm,
   LeadClickToCallForm,
   LeadEmailForm,
   LeadNoteForm,
@@ -251,7 +252,7 @@ export function CommunicationsWorkspace({
         </div>
 
         {/* AI next action */}
-        <div className="p-4">
+        <div className="border-b border-slate-200 p-4">
           <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-emerald-600" />
@@ -263,6 +264,20 @@ export function CommunicationsWorkspace({
               {selectedThread.aiNextAction}
             </p>
           </div>
+        </div>
+
+        {/* AI agents */}
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Bot className="h-4 w-4 text-slate-400" />
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Run agent</p>
+          </div>
+          <AiAgentRunForm
+            relatedEntityType="Lead"
+            relatedEntityId={selectedThread.leadId}
+            defaultAgent="Call Notes Agent"
+            agentOptions={["Call Notes Agent", "Sales Follow-Up Agent", "Quote Pricing Agent"]}
+          />
         </div>
       </aside>
     </section>

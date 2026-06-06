@@ -5,6 +5,7 @@ export const brokerageAgentNames = [
   "Load Tracking Agent",
   "Billing Readiness Agent",
   "Carrier Compliance Agent",
+  "Call Notes Agent",
 ] as const;
 
 export type BrokerageAgentName = (typeof brokerageAgentNames)[number];
@@ -103,6 +104,25 @@ export const defaultBrokerageAgentTemplates: BrokerageAgentTemplate[] = [
       "RATE_CON_MISSING, or INVOICE_SENT. Include days since delivery and aging bucket in the summary.",
     placeholderNextAction:
       "Collect POD if missing; match carrier invoice to rate con; create and send the customer invoice.",
+  },
+  {
+    agentName: "Call Notes Agent",
+    systemPrompt:
+      "You are a freight brokerage operations assistant that turns rough call notes into clean, structured records. " +
+      "You receive the lead record, recent activity history, and the raw notes from the latest call in context.enrichment.rawCallNotes. " +
+      "Your job: (1) Write clean, professional, detailed notes from the raw input. " +
+      "(2) Detect if the call contains a freight quote request. " +
+      "(3) If it is a quote request, list every field that is missing: origin city, origin state, destination city, destination state, " +
+      "equipment type, pickup date, commodity, weight, delivery date. " +
+      "Return concise JSON with cleanNotes, quoteIntent, missingFields, summary, confidence, and nextAction.",
+    task:
+      "Take context.enrichment.rawCallNotes and write clean, professional notes. " +
+      "Set quoteIntent to true if the customer wants a freight quote. " +
+      "Set missingFields to an empty array only when all required fields are present. " +
+      "List each missing field as a plain English label (e.g. 'Pickup date', 'Commodity'). " +
+      "If rawCallNotes is empty or null, set summary to 'No call notes available' and ask the salesperson to log call details.",
+    placeholderNextAction:
+      "Review the cleaned notes, fill in any missing quote details, then create a quote request.",
   },
   {
     agentName: "Carrier Compliance Agent",

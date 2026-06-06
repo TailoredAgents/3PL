@@ -139,14 +139,14 @@ export default async function LeadDetailPage({
           <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
             <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
               <Bot className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">Run sales agent</p>
+              <p className="text-sm font-semibold text-slate-700">Run AI agent</p>
             </div>
             <div className="p-5">
               <AiAgentRunForm
                 relatedEntityType="Lead"
                 relatedEntityId={lead.id}
                 defaultAgent="Sales Follow-Up Agent"
-                agentOptions={["Sales Follow-Up Agent"]}
+                agentOptions={["Sales Follow-Up Agent", "Call Notes Agent", "Quote Pricing Agent"]}
               />
             </div>
           </article>

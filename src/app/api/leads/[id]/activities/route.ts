@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { activityCreateSchema } from "@/lib/validation";
+import { runAndLogBrokerageAgent } from "@/lib/agent-workflow";
 
 export async function POST(
   request: Request,
@@ -63,6 +64,15 @@ export async function POST(
   revalidatePath(`/leads/${id}`);
   revalidatePath("/communications");
   revalidatePath("/dashboard");
+
+  // Auto-run Call Notes Agent in background when a CALL activity with notes is saved
+  if (input.type === "CALL" && input.body) {
+    void runAndLogBrokerageAgent({
+      agentName: "Call Notes Agent",
+      relatedEntityType: "Lead",
+      relatedEntityId: lead.id,
+    }).catch(() => { /* best-effort — don't block the response */ });
+  }
 
   return Response.json({ message: "Activity added." });
 }

@@ -2,10 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ComponentType } from "react";
 import {
-  ArrowLeft,
   Bot,
   CalendarDays,
-  CheckCircle2,
   CircleDollarSign,
   ClipboardCheck,
   FileText,
@@ -75,14 +73,6 @@ export default async function LoadDetailPage({
       description="Execute the shipment from one workspace: status, carrier, margin, tracking events, POD readiness, and customer update context."
       action={{ label: "Back to Load Board", href: "/loads" }}
     >
-      <Link
-        href="/loads"
-        className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to load board
-      </Link>
-
       {/* Tab nav */}
       <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
         {TABS.map((t) => (
@@ -113,7 +103,7 @@ export default async function LoadDetailPage({
                     {load.equipment}
                   </p>
                 </div>
-                <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
+                <span className={`w-fit rounded-full px-3 py-1 text-sm font-semibold ${getStatusBadgeClass(load.status)}`}>
                   {load.status}
                 </span>
               </div>
@@ -140,7 +130,6 @@ export default async function LoadDetailPage({
                   label="Margin"
                   value={`${toCurrency(load.margin)} (${load.marginPercent}%)`}
                 />
-                <MetricCard icon={Package} label="Equipment" value={load.equipment} />
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -156,35 +145,18 @@ export default async function LoadDetailPage({
                 />
               </div>
 
-              <div className="mt-4 rounded-md bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-700">
-                  Freight requirements
-                </p>
-                <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-                  <p>Commodity: {load.commodity ?? "Commodity needed"}</p>
-                  <p>Weight: {load.weight ?? "Not set"}</p>
-                  <p>Pallets: {load.palletCount ?? "Not set"}</p>
-                  <p>Pieces: {load.pieceCount ?? "Not set"}</p>
-                  <p>Dimensions: {load.dimensions ?? "Not set"}</p>
-                  <p>Hazmat: {load.hazmat ?? "No"}</p>
-                  <p>Temperature: {load.temperatureRequirement ?? "None"}</p>
-                  <p>Appointment: {load.appointmentRequired ?? "No"}</p>
-                  <p>Customer ref: {load.customerReference ?? "Not set"}</p>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Accessorials: {load.accessorials ?? "None"}
-                </p>
-              </div>
+              <FreightRequirements load={load} />
 
-              <div className="mt-6 rounded-md bg-amber-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
-                  <MapPinned className="h-4 w-4 text-amber-600" />
-                  Current risk / next action
+              {load.risk && (
+                <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
+                    Next action
+                  </p>
+                  <p className="mt-1.5 text-sm font-medium leading-6 text-amber-900">
+                    {load.risk}
+                  </p>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-amber-900">
-                  {load.risk}
-                </p>
-              </div>
+              )}
 
               <div className="mt-6 rounded-md border border-slate-100 bg-slate-50 p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -219,15 +191,11 @@ export default async function LoadDetailPage({
             {/* Right: operations */}
             <div className="grid gap-6">
               <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <Bot className="h-6 w-6 text-emerald-600" />
-                  <h2 className="text-2xl font-semibold">Run operations agent</h2>
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-emerald-600" />
+                  <h2 className="text-base font-semibold text-slate-900">AI operations agent</h2>
                 </div>
-                <p className="mt-3 leading-7 text-slate-600">
-                  Generate the next best operating move from this load, carrier
-                  offers, timeline, POD state, margin, and invoice state.
-                </p>
-                <div className="mt-5 rounded-lg bg-slate-50 p-4">
+                <div className="mt-4 rounded-lg bg-slate-50 p-4">
                   <AiAgentRunForm
                     relatedEntityType="Load"
                     relatedEntityId={load.id}
@@ -242,12 +210,9 @@ export default async function LoadDetailPage({
               </article>
 
               <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-2xl font-semibold">Update load</h2>
-                <p className="mt-3 leading-7 text-slate-600">
-                  Move the load through the operating workflow and update carrier
-                  cost as coverage changes.
-                </p>
-                <div className="mt-5 rounded-lg bg-slate-50 p-4">
+                <h2 className="text-base font-semibold text-slate-900">Update load</h2>
+                <p className="mt-1 text-xs text-slate-500">Update carrier, rate, status, and delivery date.</p>
+                <div className="mt-4 rounded-lg bg-slate-50 p-4">
                   <LoadUpdateForm
                     loadId={load.id}
                     currentStatus={load.status}
@@ -258,30 +223,20 @@ export default async function LoadDetailPage({
               </article>
 
               <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-2xl font-semibold">Add tracking event</h2>
-                <p className="mt-3 leading-7 text-slate-600">
-                  Record pickup confirmations, location updates, delays,
-                  delivery, and POD events.
-                </p>
-                <div className="mt-5 rounded-lg bg-slate-50 p-4">
+                <h2 className="text-base font-semibold text-slate-900">Add tracking event</h2>
+                <p className="mt-1 text-xs text-slate-500">Pickup confirmations, location updates, delays, delivery, POD.</p>
+                <div className="mt-4 rounded-lg bg-slate-50 p-4">
                   <ShipmentEventCreateForm loadId={load.id} />
                 </div>
               </article>
 
               <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-2xl font-semibold">Customer update</h2>
-                <p className="mt-3 leading-7 text-slate-600">
-                  Log customer-facing updates separately so active loads do not
-                  go quiet after pickup, delay, or delivery events.
-                </p>
-                <div className="mt-4 rounded-md bg-slate-50 p-4 text-sm leading-6 text-slate-700">
-                  <p>Status: {load.customerUpdateStatus ?? "Not needed"}</p>
-                  <p>
-                    Last update:{" "}
-                    {load.lastCustomerUpdateAt ?? "No update logged"}
-                  </p>
+                <h2 className="text-base font-semibold text-slate-900">Customer update</h2>
+                <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
+                  <span>Status: <span className="font-semibold text-slate-700">{load.customerUpdateStatus ?? "Not needed"}</span></span>
+                  <span>Last: <span className="font-semibold text-slate-700">{load.lastCustomerUpdateAt ?? "None logged"}</span></span>
                 </div>
-                <div className="mt-5 rounded-lg bg-slate-50 p-4">
+                <div className="mt-4 rounded-lg bg-slate-50 p-4">
                   <CustomerUpdateForm
                     loadId={load.id}
                     currentStatus={load.customerUpdateStatus ?? "Not needed"}
@@ -839,14 +794,16 @@ function ReadinessItem({
   complete: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold">
-      <CheckCircle2
-        className={`h-4 w-4 ${
-          complete ? "text-emerald-600" : "text-slate-300"
-        }`}
-      />
-      <span className={complete ? "text-slate-900" : "text-slate-500"}>
+    <div className="flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2 text-sm">
+      <span className={complete ? "font-medium text-slate-900" : "text-slate-400"}>
         {label}
+      </span>
+      <span
+        className={`text-xs font-bold ${
+          complete ? "text-emerald-600" : "text-slate-400"
+        }`}
+      >
+        {complete ? "Done" : "Pending"}
       </span>
     </div>
   );
@@ -863,9 +820,54 @@ function MetricCard({
 }) {
   return (
     <div className="rounded-md bg-slate-50 p-4">
-      <Icon className="h-5 w-5 text-emerald-600" />
-      <p className="mt-3 text-sm font-semibold text-slate-600">{label}</p>
-      <p className="mt-1 font-medium">{value}</p>
+      <Icon className="h-4 w-4 text-emerald-600" />
+      <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function getStatusBadgeClass(status: string) {
+  if (["Delivered", "Pod Received", "Invoiced", "Paid"].includes(status)) {
+    return "bg-emerald-100 text-emerald-800";
+  }
+  if (["Picked Up", "In Transit", "Booked"].includes(status)) {
+    return "bg-sky-100 text-sky-800";
+  }
+  return "bg-amber-100 text-amber-800";
+}
+
+function FreightRequirements({ load }: { load: { commodity?: string | null; weight?: string | null; palletCount?: string | null; pieceCount?: string | null; dimensions?: string | null; hazmat?: string | null; temperatureRequirement?: string | null; appointmentRequired?: string | null; customerReference?: string | null; accessorials?: string | null } }) {
+  const fields = [
+    { label: "Commodity", value: load.commodity },
+    { label: "Weight", value: load.weight },
+    { label: "Pallets", value: load.palletCount },
+    { label: "Pieces", value: load.pieceCount },
+    { label: "Dimensions", value: load.dimensions },
+    { label: "Temperature", value: load.temperatureRequirement },
+    { label: "Customer ref", value: load.customerReference },
+    { label: "Accessorials", value: load.accessorials },
+    ...(load.hazmat === "Yes" ? [{ label: "Hazmat", value: "Yes" }] : []),
+    ...(load.appointmentRequired === "Yes" ? [{ label: "Appointment", value: "Required" }] : []),
+  ].filter((f) => f.value);
+
+  return (
+    <div className="mt-4 rounded-md bg-slate-50 p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+        Freight details
+      </p>
+      {fields.length ? (
+        <div className="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
+          {fields.map((f) => (
+            <p key={f.label} className="text-slate-700">
+              <span className="font-semibold text-slate-900">{f.label}:</span>{" "}
+              {f.value}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-2 text-sm text-slate-400">Freight details not yet specified.</p>
+      )}
     </div>
   );
 }

@@ -33,6 +33,15 @@ export async function InternalShell({
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#d1fae5_0,#f1f5f9_34%,#e2e8f0_100%)] text-slate-950">
       <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-slate-950 p-5 text-white shadow-2xl lg:block">
+        <div className="mb-8">
+          <p className="text-xl font-semibold tracking-tight">
+            {platformName}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Internal CRM/TMS command center for sales, brokerage operations, AI
+            agents, and operating performance.
+          </p>
+        </div>
         <nav className="grid gap-5 text-sm font-medium text-slate-300">
           {internalNavGroups.map((group) => (
             <div key={group.label}>

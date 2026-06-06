@@ -248,27 +248,31 @@ Completion criteria:
 
 Goal: make active loads easy to monitor without opening each load.
 
-Status: not started.
+Status: 5.1 complete (internal workspace + risk groupings using existing data); public links, persistent ownership, and provider adapters deferred.
 
-Build:
+Build (Phase 5.1 completed):
 
-- Add a dedicated Tracking/Visibility page or expand Load Board saved views.
-- Show pickup risk, delivery risk, no recent update, missing check call, late
-  pickup, late delivery, missing POD, and customer update due.
-- Add customer update templates for email/SMS.
-- Add carrier check-call logging from load detail and tracking board.
-- Add public tracking link foundation for shipper visibility.
-- Add internal exception ownership and resolution states.
+- Added dedicated internal /tracking page (src/app/tracking/page.tsx) using InternalShell.
+- "Tracking" entry added to Operations nav in src/lib/data.ts.
+- New getTrackingWorkspaceView() in src/lib/crm.ts (reuses/extends getLoadViews + LoadView with raw dates; computes risk groups server-side from existing Load, ShipmentEvent, customerUpdateStatus, documents (for hasPod), pickup/delivery dates, and statuses. No new schema or migration).
+- Risk groups implemented exactly as scoped: pickup today, delivery today, no recent check call/update, customer update due, delivered but missing POD, late pickup/delivery risk, uncovered/not booked.
+- Each load entry shows key context and quick action links that reuse the existing system (open load, add check call / tracking update, customer update, upload POD via /documents).
+- All exceptions/risks are computed (no new ownership/resolution model).
+- Explicitly internal-only: no public tracking links or customer-facing surface (documented as future in page footer and roadmap).
+- Builds 100% on prior phases' data and patterns (Load Board, load detail events/forms, documents, crm views). No duplication.
 
-Integrations:
+Deferred per scope (5.2+):
+- 5.2: Persistent exception ownership/resolution model + migration.
+- 5.3: Public tracking link foundation (secure tokens, expiration, customer data scoping).
+- 5.4: ELD/GPS/tracking provider adapter boundaries.
+- 5.5: Automated customer updates and agent workflows.
 
-- Prepare visibility adapter boundaries for ELD/GPS providers, Truckstop ELD,
-  MacroPoint, TruckerTools, Samsara, Motive, or similar providers.
+Completion criteria progress:
+- Internal operators now have one workspace to monitor active loads by the listed risks without opening every record.
+- Quick actions tie back to existing check-call, customer update, POD, and load detail workflows.
+- Exceptions are visible and actionable (computed).
 
-Completion criteria:
-
-- An operations user can manage active tracking from one workspace.
-- Exceptions are visible, assigned, and resolvable.
+Next: 5.2 when ready for ownership model.
 
 ## Phase 6: Integration Admin And Monitoring
 

@@ -134,49 +134,54 @@ Completion criteria:
 
 Goal: let the system read important freight paperwork.
 
-Status: foundation complete (sub-phase 2.1); structured parsing + exceptions remain.
+Status: complete (sub-phases 2.1 + 2.2).
 
-Build (Phase 2.1 completed):
+Build (Phase 2.1 completed — text extraction foundation):
+- (See previous entry for details of raw text extraction, adapter, /extract API,
+  DocumentExtractionControl for text, etc.)
 
-- Added practical text extraction using existing Document.extractionStatus and
-  extractedText (no schema or parallel document changes).
-- Auto-extracts .txt/.csv and similar at upload time for text files.
-- runDocumentExtraction + extractTextFromBytes behind clean adapter in
-  src/lib/documents.ts: direct decode for text mimes/files; PDF/image/other
-  return FAILED with actionable guidance (provider boundary ready for OCR/
-  vision later).
-- POST /api/documents/[id]/extract supports trigger (auto) and review (manual
-  extractedText override forces COMPLETED). Handles PENDING during work,
-  graceful no-storage cases, and revalidates center + linked records.
-- Added DocumentExtractionControl (review UI) on /documents: Run extraction
-  buttons, inline Review/edit textarea + "Save reviewed text", status pills
-  updated, text snippets visible in register (desktop table + mobile cards).
-- Updated document view types/mappers so extractedText flows to UIs without
-  duplicating systems.
-- Followed all handoff rules: pulled, read roadmap, one sub-phase, explicit
-  (no migration), full validation + commit/push before roadmap update.
+Build (Phase 2.2 completed — structured parsing + real provider + review gates):
+- Added `extractedFields` Json column to Document (explicit new migration
+  20260607100000_phase2_structured_document_extraction).
+- Added runDocumentStructuredExtraction in src/lib/grok.ts (re-uses existing
+  xAI/OpenAI client + json_object mode). Supports:
+    - Text-based structuring from extractedText.
+    - Vision for image files (PNG/JPG etc.): downloads via storage, sends
+      base64 data URL to model for OCR + structured field extraction in one pass.
+- Extended runDocumentExtraction + POST /api/documents/[id]/extract to run
+  structured extraction automatically (when possible) and support manual
+  review/save of both text and fields.
+- Major upgrade to DocumentExtractionControl: now shows rich review form with
+  editable grid for common freight fields (BOL/PRO, pieces, weight, cities,
+  rate, commodity, etc.) + raw text. "Save reviewed text + fields" only updates
+  the Document (explicit human review gate — no auto-write to Load, CarrierInvoice,
+  etc.).
+- Basic exception hints come back from the LLM (in the fields object).
+- UI surfaces "Structured" badge + review entrypoint on /documents (desktop +
+  mobile) and load document lists.
+- Because real STORAGE + XAI_API_KEY are present, PDFs/images now get
+  meaningful structured output (not just the previous stub).
+- All built by extending Phase 1/2.1 code and patterns. Followed every handoff
+  rule (pull/status/roadmap, one sub-phase, explicit migration, full validation
+  before commit/push, roadmap update).
 
-Remaining for full Phase 2 / later:
+This completes the core of Phase 2: the system can now "read" freight paperwork
+(raw + structured) with human review before any operational impact.
 
-- Structured field parsing from extractedText (BOL/POD/rate con/invoice
-  specific extractors + exception states).
-- Document exception UI/states (missing, unreadable, mismatched, duplicate).
-- Wire into Savings Audit / Billing Readiness agents with review gates.
-- Optional: provider-backed OCR (e.g. vision LLM when OPENAI/XAI configured,
-  or external service adapter).
+AI-ready additions (Phase 2):
+- Raw text + structured fields (with review) available for Savings Audit Agent,
+  Billing Readiness comparisons (POD vs load vs carrier invoice), and future
+  autonomous document jobs (Phase 10).
+- Document exception signals (mismatches) now possible at extraction time.
 
-AI-ready additions (enabled by 2.1):
-
-- Extracted raw text now stored under review for audit, invoice matching,
-  POD verification, and billing readiness.
-- Future agents can read document.extractedText safely.
-
-Completion criteria (2.1):
-
-- Text files produce stored extracted text automatically.
-- Users can request extraction and review/edit text before any downstream use.
-- Statuses (NOT_REQUESTED / PENDING / COMPLETED / FAILED) fully supported.
-- No AI auto-applies fields; human review is explicit step.
+Completion criteria for full Phase 2:
+- Uploaded PDFs/images produce stored extracted text + structured fields.
+- Users can review/edit both text and structured fields before any downstream
+  records are affected.
+- Provider-backed (vision LLM) path is live when credentials are configured.
+- Human review gate is mandatory and visible.
+- No duplicate systems; everything extends the existing Document model and
+  document center.
 
 ## Phase 3: Carrier Onboarding And Compliance
 

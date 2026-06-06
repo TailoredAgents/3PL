@@ -575,6 +575,8 @@ model Carrier {
   lastVettedAt       DateTime?
   approvedBy         String?
   complianceNotes    String?
+  fmcsaSnapshot      Json?
+  fmcsaSnapshotAt    DateTime?
   preferredLanes     Json?
   notes              String?
   loads              Load[]

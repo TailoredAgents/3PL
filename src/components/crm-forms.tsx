@@ -1935,9 +1935,9 @@ export function DocumentExtractionControl({
         headers: body ? { "Content-Type": "application/json" } : {},
         body: body ? JSON.stringify(body) : undefined,
       });
-      const payload = (await res.json()) as { 
-        message?: string; 
-        error?: string; 
+      const payload = (await res.json()) as {
+        message?: string;
+        error?: string;
         status?: string;
         extractedFields?: DocumentStructuredFields;
       };
@@ -1967,9 +1967,9 @@ export function DocumentExtractionControl({
 
   async function handleSaveReview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await postExtract({ 
-      extractedText: localText, 
-      extractedFields: localFields 
+    await postExtract({
+      extractedText: localText,
+      extractedFields: localFields
     });
     setShowReview(false);
   }

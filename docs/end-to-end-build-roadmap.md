@@ -134,7 +134,8 @@ Completion criteria:
 
 Goal: let the system read important freight paperwork.
 
-Status: complete (sub-phases 2.1 + 2.2).
+Status: foundation complete (sub-phases 2.1 + 2.2). Full PDF OCR still needs
+a dedicated parser/provider or PDF-to-image conversion step.
 
 Build (Phase 2.1 completed — text extraction foundation):
 - (See previous entry for details of raw text extraction, adapter, /extract API,
@@ -159,14 +160,18 @@ Build (Phase 2.2 completed — structured parsing + real provider + review gates
 - Basic exception hints come back from the LLM (in the fields object).
 - UI surfaces "Structured" badge + review entrypoint on /documents (desktop +
   mobile) and load document lists.
-- Because real STORAGE + XAI_API_KEY are present, PDFs/images now get
-  meaningful structured output (not just the previous stub).
+- Because real STORAGE + XAI_API_KEY are present, image files can get
+  meaningful structured output through the vision path. PDFs still require
+  a dedicated OCR/PDF parsing provider or conversion step before they can be
+  read automatically.
 - All built by extending Phase 1/2.1 code and patterns. Followed every handoff
   rule (pull/status/roadmap, one sub-phase, explicit migration, full validation
   before commit/push, roadmap update).
 
-This completes the core of Phase 2: the system can now "read" freight paperwork
-(raw + structured) with human review before any operational impact.
+This completes the core extraction foundation for Phase 2: the system can read
+plain text uploads and image paperwork through the provider-backed vision path,
+then store raw/structured results with human review before any operational
+impact. PDF OCR remains a follow-up stabilization item.
 
 AI-ready additions (Phase 2):
 - Raw text + structured fields (with review) available for Savings Audit Agent,
@@ -175,10 +180,13 @@ AI-ready additions (Phase 2):
 - Document exception signals (mismatches) now possible at extraction time.
 
 Completion criteria for full Phase 2:
-- Uploaded PDFs/images produce stored extracted text + structured fields.
+- Uploaded text files and supported images produce stored extracted text and/or
+  structured fields.
+- Uploaded PDFs produce stored extracted text + structured fields after the
+  dedicated OCR/PDF parser is wired.
 - Users can review/edit both text and structured fields before any downstream
   records are affected.
-- Provider-backed (vision LLM) path is live when credentials are configured.
+- Provider-backed image vision path is live when credentials are configured.
 - Human review gate is mandatory and visible.
 - No duplicate systems; everything extends the existing Document model and
   document center.

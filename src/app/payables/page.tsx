@@ -188,10 +188,10 @@ export default async function PayablesPage() {
               type="submit"
               className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
             >
-              Pay All Approved as Batch
+              Create Payment Batch
             </button>
             <p className="mt-1 text-[10px] text-slate-500">
-              Marks all APPROVED carrier invoices as PAID and assigns a batch reference.
+              Assigns a batch reference to unbatched APPROVED invoices for payment review.
             </p>
           </form>
         </div>

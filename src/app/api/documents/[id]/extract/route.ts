@@ -25,8 +25,8 @@ export async function POST(
   const contentType = request.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
     try {
-      const json = (await request.json()) as { 
-        extractedText?: string; 
+      const json = (await request.json()) as {
+        extractedText?: string;
         extractedFields?: DocumentStructuredFields;
       };
       if (typeof json?.extractedText === "string") manualExtractedText = json.extractedText;

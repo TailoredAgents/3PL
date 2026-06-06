@@ -232,8 +232,8 @@ export async function extractTextFromBytes(
 
 export async function runDocumentExtraction(
   documentId: string,
-  options?: { 
-    extractedText?: string | null; 
+  options?: {
+    extractedText?: string | null;
     extractedFields?: DocumentStructuredFields | null;
   },
 ): Promise<{
@@ -285,10 +285,10 @@ export async function runDocumentExtraction(
         extractedFields: fields ?? Prisma.JsonNull,
       },
     });
-    return { 
-      status: DocumentExtractionStatus.COMPLETED, 
-      extractedText: text, 
-      extractedFields: fields 
+    return {
+      status: DocumentExtractionStatus.COMPLETED,
+      extractedText: text,
+      extractedFields: fields
     };
   }
 

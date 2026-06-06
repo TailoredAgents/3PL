@@ -288,8 +288,8 @@ export async function runDocumentStructuredExtraction(input: {
   const isImage = !!input.imageBase64 &&
     (input.mimeType?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(input.fileName));
 
-  const system = `You are a precise freight brokerage document parser. 
-Only extract information that is explicitly visible or stated. 
+  const system = `You are a precise freight brokerage document parser.
+Only extract information that is explicitly visible or stated.
 Return strict JSON with:
 {
   "fields": {
@@ -322,8 +322,8 @@ ${input.extractedText || "(no prior text extraction)"}`;
   let userContent: any = baseText;
 
   if (isImage && input.imageBase64) {
-    const imageUrl = input.imageBase64.startsWith("data:") 
-      ? input.imageBase64 
+    const imageUrl = input.imageBase64.startsWith("data:")
+      ? input.imageBase64
       : `data:${input.mimeType || "image/jpeg"};base64,${input.imageBase64}`;
     userContent = [
       { type: "text", text: baseText + "\n\nAnalyze the attached image of the freight document and extract the structured fields accurately." },

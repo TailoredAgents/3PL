@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
-export async function POST(_request: Request) { // eslint-disable-line @typescript-eslint/no-unused-vars
+export async function POST() {
   if (!hasDatabaseUrl() || !prisma) {
     return Response.json({ message: "Database not configured." }, { status: 503 });
   }
@@ -11,31 +11,29 @@ export async function POST(_request: Request) { // eslint-disable-line @typescri
     const now = new Date();
     const batchRef = `BATCH-${now.toISOString().slice(0, 10)}`;
 
-    const approvedInvoices = await prisma.carrierInvoice.findMany({
-      where: { status: "APPROVED" },
+    const batchableInvoices = await prisma.carrierInvoice.findMany({
+      where: { status: "APPROVED", paymentBatch: null },
       select: { id: true, loadId: true, carrierId: true },
     });
 
-    if (approvedInvoices.length === 0) {
-      return Response.json({ message: "No approved carrier invoices to batch." });
+    if (batchableInvoices.length === 0) {
+      return Response.json({ message: "No unbatched approved carrier invoices to stage." });
     }
 
     await prisma.$transaction([
       prisma.carrierInvoice.updateMany({
-        where: { id: { in: approvedInvoices.map((i) => i.id) } },
+        where: { id: { in: batchableInvoices.map((i) => i.id) } },
         data: {
-          status: "PAID",
-          paidAt: now,
           paymentBatch: batchRef,
           updatedAt: now,
         },
       }),
-      ...approvedInvoices.map((inv) =>
+      ...batchableInvoices.map((inv) =>
         prisma!.shipmentEvent.create({
           data: {
             loadId: inv.loadId,
             type: "LOCATION_UPDATE",
-            message: `Carrier invoice paid as part of batch ${batchRef}.`,
+            message: `Carrier invoice staged for payment batch ${batchRef}.`,
             occurredAt: now,
           },
         })
@@ -47,12 +45,12 @@ export async function POST(_request: Request) { // eslint-disable-line @typescri
     revalidatePath("/dashboard");
 
     return Response.json({
-      message: `Batch ${batchRef} paid: ${approvedInvoices.length} invoices.`,
+      message: `Batch ${batchRef} staged: ${batchableInvoices.length} invoices ready for payment review.`,
       batchRef,
     });
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Batch payment failed." },
+      { error: error instanceof Error ? error.message : "Payment batch staging failed." },
       { status: 500 },
     );
   }

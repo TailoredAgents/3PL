@@ -3,24 +3,38 @@ import {
   AlertTriangle,
   ArrowRight,
   Bot,
+  CalendarDays,
   CheckCircle2,
   ClipboardList,
   FileText,
   Headphones,
   MapPinned,
+  Package,
   ReceiptText,
   Truck,
 } from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
-import { getDashboardMetrics, getRecentAiAgentRunViews } from "@/lib/crm";
+import {
+  getDashboardMetrics,
+  getRecentAiAgentRunViews,
+  getTodayScheduleView,
+} from "@/lib/crm";
 import { agentBriefs } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const metrics = await getDashboardMetrics();
-  const recentAgentRuns = await getRecentAiAgentRunViews();
+  const [metrics, recentAgentRuns, todaySchedule] = await Promise.all([
+    getDashboardMetrics(),
+    getRecentAiAgentRunViews(),
+    getTodayScheduleView(),
+  ]);
+  const pickups = todaySchedule.filter((item) => item.eventType === "Pickup");
+  const deliveries = todaySchedule.filter(
+    (item) => item.eventType === "Delivery",
+  );
+
   const dashboardCards = [
     {
       icon: Headphones,
@@ -49,36 +63,6 @@ export default async function DashboardPage() {
       value: metrics.projectedMargin,
       note: "Margin from loads with carrier costs entered.",
       href: "/loads",
-    },
-  ];
-  const priorityWork = [
-    {
-      icon: Headphones,
-      title: "Work today's calls",
-      body: "Start with high-priority follow-ups and audit-driven leads.",
-      href: "/leads",
-      action: "Open leads",
-    },
-    {
-      icon: FileText,
-      title: "Price quote requests",
-      body: "Validate service details, lane, equipment, and timing before quoting.",
-      href: "/quote-requests",
-      action: "Open quotes",
-    },
-    {
-      icon: Truck,
-      title: "Check active loads",
-      body: "Confirm pickup, watch exceptions, and keep shipper updates moving.",
-      href: "/loads",
-      action: "Open loads",
-    },
-    {
-      icon: ReceiptText,
-      title: "Collect POD / billing",
-      body: "Find delivered loads that need POD, invoice, or payment follow-up.",
-      href: "/loads",
-      action: "Review loads",
     },
   ];
   const operatingChecklist = [
@@ -128,34 +112,62 @@ export default async function DashboardPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-              Priority work
+              Today&apos;s schedule
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              What should happen first today
+              Pickups &amp; deliveries today
             </h2>
           </div>
-          <p className="text-sm leading-6 text-slate-600">
-            Sales, pricing, load execution, and billing readiness in one view.
-          </p>
-        </div>
-        <div className="mt-6 grid gap-4 lg:grid-cols-4">
-          {priorityWork.map((item) => (
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+              {pickups.length} pickups
+            </span>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+              {deliveries.length} deliveries
+            </span>
             <Link
-              key={item.title}
-              href={item.href}
-              className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+              href="/loads"
+              className="inline-flex items-center gap-1 text-sm font-bold text-emerald-700 hover:text-emerald-900"
             >
-              <item.icon className="h-5 w-5 text-emerald-600" />
-              <h3 className="mt-4 font-semibold">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {item.body}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700">
-                {item.action}
-                <ArrowRight className="h-4 w-4" />
-              </span>
+              All loads <ArrowRight className="h-4 w-4" />
             </Link>
-          ))}
+          </div>
+        </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div>
+            <p className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700">
+              <Truck className="h-4 w-4 text-emerald-600" />
+              Pickups
+            </p>
+            {pickups.length ? (
+              <div className="grid gap-2">
+                {pickups.map((item) => (
+                  <ScheduleRow key={`${item.id}-pickup`} item={item} />
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                No pickups scheduled today.
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700">
+              <Package className="h-4 w-4 text-emerald-600" />
+              Deliveries
+            </p>
+            {deliveries.length ? (
+              <div className="grid gap-2">
+                {deliveries.map((item) => (
+                  <ScheduleRow key={`${item.id}-delivery`} item={item} />
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                No deliveries scheduled today.
+              </p>
+            )}
+          </div>
         </div>
       </section>
 
@@ -347,6 +359,39 @@ export default async function DashboardPage() {
         </article>
       </section>
     </InternalShell>
+  );
+}
+
+import type { TodayScheduleItem } from "@/lib/crm";
+
+function ScheduleRow({ item }: { item: TodayScheduleItem }) {
+  return (
+    <Link
+      href={`/loads/${item.id}`}
+      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+    >
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-bold text-slate-900">
+            {item.loadNumber}
+          </span>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+            {item.status}
+          </span>
+        </div>
+        <p className="mt-1 text-sm font-medium text-slate-700">
+          {item.shipper}
+        </p>
+        <p className="mt-0.5 text-xs text-slate-500">{item.lane}</p>
+      </div>
+      <div className="text-right">
+        <p className="flex items-center gap-1 text-xs font-semibold text-slate-600">
+          <CalendarDays className="h-3 w-3" />
+          {item.window}
+        </p>
+        <p className="mt-1 text-xs text-slate-500">{item.carrier}</p>
+      </div>
+    </Link>
   );
 }
 

@@ -694,6 +694,126 @@ function getSampleDashboardMetrics() {
   };
 }
 
+export type TodayScheduleItem = {
+  id: string;
+  loadNumber: string;
+  shipper: string;
+  carrier: string;
+  lane: string;
+  eventType: "Pickup" | "Delivery";
+  window: string;
+  status: string;
+};
+
+export async function getTodayScheduleView(): Promise<TodayScheduleItem[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return getSampleTodaySchedule();
+  }
+  try {
+    const today = new Date();
+    const start = new Date(today);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(today);
+    end.setHours(23, 59, 59, 999);
+
+    const loads = await prisma.load.findMany({
+      where: {
+        OR: [
+          { pickupDate: { gte: start, lte: end } },
+          { deliveryDate: { gte: start, lte: end } },
+        ],
+        status: {
+          in: ["TENDERED", "BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"],
+        },
+      },
+      select: {
+        id: true,
+        loadNumber: true,
+        shipper: { select: { companyName: true } },
+        carrier: { select: { companyName: true } },
+        originCity: true,
+        originState: true,
+        destinationCity: true,
+        destinationState: true,
+        pickupDate: true,
+        pickupWindow: true,
+        deliveryDate: true,
+        deliveryWindow: true,
+        status: true,
+      },
+      orderBy: [{ pickupDate: "asc" }, { deliveryDate: "asc" }],
+    });
+
+    const items: TodayScheduleItem[] = [];
+    for (const load of loads) {
+      const lane = `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`;
+      const loadNum = load.loadNumber
+        ? `LD-${String(load.loadNumber).padStart(4, "0")}`
+        : "LD-????";
+      if (
+        load.pickupDate &&
+        load.pickupDate >= start &&
+        load.pickupDate <= end
+      ) {
+        items.push({
+          id: load.id,
+          loadNumber: loadNum,
+          shipper: load.shipper.companyName,
+          carrier: load.carrier?.companyName ?? "Carrier needed",
+          lane,
+          eventType: "Pickup",
+          window: load.pickupWindow ?? "Window needed",
+          status: titleCaseEnum(load.status),
+        });
+      }
+      if (
+        load.deliveryDate &&
+        load.deliveryDate >= start &&
+        load.deliveryDate <= end
+      ) {
+        items.push({
+          id: load.id,
+          loadNumber: loadNum,
+          shipper: load.shipper.companyName,
+          carrier: load.carrier?.companyName ?? "Carrier needed",
+          lane,
+          eventType: "Delivery",
+          window: load.deliveryWindow ?? "Window needed",
+          status: titleCaseEnum(load.status),
+        });
+      }
+    }
+    return items;
+  } catch {
+    return getSampleTodaySchedule();
+  }
+}
+
+function getSampleTodaySchedule(): TodayScheduleItem[] {
+  return [
+    {
+      id: "load-atl-dal-001",
+      loadNumber: "LD-0001",
+      shipper: "Peachtree Building Supply",
+      carrier: "Blue Ridge Transport",
+      lane: "Atlanta, GA -> Dallas, TX",
+      eventType: "Pickup",
+      window: "08:00–10:00",
+      status: "Booked",
+    },
+    {
+      id: "load-sav-nas-002",
+      loadNumber: "LD-0002",
+      shipper: "Southline Foods",
+      carrier: "Magnolia Reefer Lines",
+      lane: "Savannah, GA -> Nashville, TN",
+      eventType: "Delivery",
+      window: "14:00–16:00",
+      status: "In Transit",
+    },
+  ];
+}
+
 function getSampleEmailEventDashboardView(): EmailEventDashboardView {
   return buildEmailDashboard(
     [

@@ -49,6 +49,7 @@ export const internalNavGroups = [
     label: "Operations",
     items: [
       { label: "Load Board", href: "/loads", icon: Truck },
+      { label: "Tracking", href: "/tracking", icon: MapPinned },
       { label: "Carriers", href: "/carriers", icon: ShieldCheck },
       { label: "Documents", href: "/documents", icon: Files },
     ],

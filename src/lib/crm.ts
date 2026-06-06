@@ -189,6 +189,9 @@ export type LoadView = {
   integrationLogs: IntegrationLogView[];
   events: LoadEventView[];
   documents: LoadDocumentView[];
+  // For internal tracking computations (Phase 5.1)
+  rawPickupDate?: Date | null;
+  rawDeliveryDate?: Date | null;
 };
 export type LoadDetailView = LoadView;
 export type ContactSummaryView = {
@@ -1831,6 +1834,130 @@ export async function getLoadViews(): Promise<LoadView[]> {
   }
 }
 
+export type TrackingRiskGroup = {
+  title: string;
+  description: string;
+  loads: LoadView[];
+};
+
+export async function getTrackingWorkspaceView(): Promise<{
+  groups: TrackingRiskGroup[];
+  totalActive: number;
+}> {
+  const loads = await getLoadViews();
+
+  // Focus on in-flight loads that need monitoring
+  const activeLoads = loads.filter((l) =>
+    ["TENDERED", "BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"].includes(l.status) ||
+    (l.status === "INVOICED" && !l.invoice?.paidAt)
+  );
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayStart.getDate() + 1);
+
+  const groups: TrackingRiskGroup[] = [];
+
+  // Pickup today
+  const pickupToday = activeLoads.filter((l) => {
+    if (!l.rawPickupDate) return false;
+    const d = new Date(l.rawPickupDate);
+    return d >= todayStart && d < todayEnd && !["PICKED_UP", "IN_TRANSIT", "DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status);
+  });
+  if (pickupToday.length) {
+    groups.push({
+      title: "Pickup today",
+      description: "Loads scheduled for pickup today that are not yet in transit",
+      loads: pickupToday,
+    });
+  }
+
+  // Delivery today
+  const deliveryToday = activeLoads.filter((l) => {
+    if (!l.rawDeliveryDate) return false;
+    const d = new Date(l.rawDeliveryDate);
+    return d >= todayStart && d < todayEnd && !["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status);
+  });
+  if (deliveryToday.length) {
+    groups.push({
+      title: "Delivery today",
+      description: "Loads scheduled for delivery today without final status",
+      loads: deliveryToday,
+    });
+  }
+
+  // No recent check call / update (proxy: no events or stale customer update >24h)
+  const noRecent = activeLoads.filter((l) => {
+    if (l.events.length === 0) return true;
+    if (!l.lastCustomerUpdateAt) return true;
+    const last = new Date(l.lastCustomerUpdateAt);
+    return now.getTime() - last.getTime() > 24 * 60 * 60 * 1000;
+  });
+  if (noRecent.length) {
+    groups.push({
+      title: "No recent check call / update",
+      description: "Loads without recent activity or customer update in the last 24 hours",
+      loads: noRecent,
+    });
+  }
+
+  // Customer update due
+  const customerUpdateDue = activeLoads.filter((l) => l.customerUpdateStatus === "NEEDED");
+  if (customerUpdateDue.length) {
+    groups.push({
+      title: "Customer update due",
+      description: "Loads where a customer update has been flagged as needed",
+      loads: customerUpdateDue,
+    });
+  }
+
+  // Delivered but missing POD
+  const missingPod = activeLoads.filter((l) =>
+    ["DELIVERED", "INVOICED"].includes(l.status) && !l.hasPod
+  );
+  if (missingPod.length) {
+    groups.push({
+      title: "Delivered but missing POD",
+      description: "Loads marked delivered or invoiced without a POD document",
+      loads: missingPod,
+    });
+  }
+
+  // Late pickup / delivery risk
+  const lateRisk = activeLoads.filter((l) => {
+    if (l.rawPickupDate && new Date(l.rawPickupDate) < now && !["PICKED_UP", "IN_TRANSIT", "DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status)) {
+      return true;
+    }
+    if (l.rawDeliveryDate && new Date(l.rawDeliveryDate) < now && !["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status)) {
+      return true;
+    }
+    return false;
+  });
+  if (lateRisk.length) {
+    groups.push({
+      title: "Late pickup / delivery risk",
+      description: "Loads past their scheduled date without corresponding status progression",
+      loads: lateRisk,
+    });
+  }
+
+  // Uncovered or not booked (still tendered without carrier)
+  const uncovered = activeLoads.filter((l) => l.status === "TENDERED" && l.carrier === "Carrier needed");
+  if (uncovered.length) {
+    groups.push({
+      title: "Uncovered / not booked",
+      description: "Tendered loads that still need a carrier assigned",
+      loads: uncovered,
+    });
+  }
+
+  return {
+    groups,
+    totalActive: activeLoads.length,
+  };
+}
+
 export async function getLoadDetailView(
   id: string,
 ): Promise<LoadDetailView | null> {
@@ -2934,6 +3061,8 @@ function mapLoad(load: {
       time: formatFollowUp(event.occurredAt),
     })),
     documents,
+    rawPickupDate: load.pickupDate,
+    rawDeliveryDate: load.deliveryDate,
   };
 }
 

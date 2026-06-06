@@ -33,7 +33,7 @@ export default async function LeadsPage() {
 
   return (
     <InternalShell
-      active="Customers"
+      active="Leads"
       eyebrow="CRM"
       title="Customer pipeline"
       description="The day-one sales desk: who to call, what lane they care about, where they sit in the pipeline, and what the AI thinks should happen next."

@@ -92,7 +92,7 @@ export default async function DashboardPage() {
     { label: "Communications", href: "/communications", detail: "Calls, email, SMS, and requests" },
     { label: "Quotes & Pricing", href: "/quote-requests", detail: "Price work and quote-to-load" },
     { label: "Load Board", href: "/loads", detail: "Tracking, POD, margin" },
-    { label: "Customers", href: "/customers", detail: "Relationships, contacts, lanes" },
+    { label: "Customers", href: "/shippers", detail: "Company files, contacts, and lanes" },
     { label: "Billing & Accounting", href: "/billing", detail: "POD, invoices, payment status" },
     { label: "Carriers", href: "/carriers", detail: "Compliance and coverage" },
   ];

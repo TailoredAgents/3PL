@@ -37,7 +37,8 @@ export const internalNavGroups = [
   {
     label: "Sales & Pricing",
     items: [
-      { label: "Customers", href: "/customers", icon: Building2 },
+      { label: "Leads", href: "/leads", icon: Users },
+      { label: "Customers", href: "/shippers", icon: Building2 },
       { label: "Quotes & Pricing", href: "/quote-requests", icon: FileText },
     ],
   },

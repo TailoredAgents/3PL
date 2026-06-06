@@ -101,7 +101,7 @@ export default async function CommunicationsPage() {
           {
             title: "SMS",
             body: "SMS sends through Twilio from the active customer thread and is logged as outbound activity for that customer.",
-            href: "/customers",
+            href: "/leads",
           },
           {
             title: "Email",

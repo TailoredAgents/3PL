@@ -52,7 +52,7 @@ export async function PATCH(
 
   revalidatePath("/shippers");
   revalidatePath(`/shippers/${id}`);
-  revalidatePath("/customers");
+  revalidatePath("/leads");
   revalidatePath("/dashboard");
 
   return Response.json({ message: "Shipper updated." });

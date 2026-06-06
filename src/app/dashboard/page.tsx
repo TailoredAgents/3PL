@@ -5,7 +5,6 @@ import {
   Bot,
   Building2,
   CalendarDays,
-  CheckCircle2,
   ClipboardList,
   FileText,
   Headphones,
@@ -165,7 +164,7 @@ export default async function DashboardPage() {
                 >
                   <card.icon className="h-5 w-5" />
                 </div>
-                <p className="mt-4 text-sm font-medium text-slate-500">
+                <p className="mt-4 text-sm font-medium text-slate-600">
                   {card.label}
                 </p>
                 <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
@@ -192,10 +191,10 @@ export default async function DashboardPage() {
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+            <span className={`rounded-full px-3 py-1 text-sm font-semibold ${pickups.length > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
               {pickups.length} pickups
             </span>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600">
+            <span className={`rounded-full px-3 py-1 text-sm font-semibold ${deliveries.length > 0 ? "bg-sky-50 text-sky-700" : "bg-slate-100 text-slate-600"}`}>
               {deliveries.length} deliveries
             </span>
             <Link
@@ -323,13 +322,13 @@ export default async function DashboardPage() {
                     <p className="text-sm font-semibold text-slate-800">
                       {stage.stage}
                     </p>
-                    <span className="text-sm font-bold text-slate-700">
-                      {stage.count}
+                    <span className="text-xs font-bold text-slate-500">
+                      {stage.count} lead{stage.count !== 1 ? "s" : ""}
                     </span>
                   </div>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                  <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
-                      className="h-1.5 rounded-full bg-emerald-400 transition-all duration-500"
+                      className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
                       style={{ width: stage.count === 0 ? "0%" : `${Math.max(pct, 4)}%` }}
                     />
                   </div>
@@ -448,10 +447,9 @@ export default async function DashboardPage() {
                 key={item}
                 className="flex items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
               >
-                <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
+                <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
                   {i + 1}
                 </span>
-                <CheckCircle2 className="h-4 w-4 flex-none text-emerald-400" />
                 <span className="text-sm font-medium text-slate-700">{item}</span>
               </div>
             ))}

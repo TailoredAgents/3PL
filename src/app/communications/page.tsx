@@ -17,6 +17,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const CARD_ACCENTS = [
+  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
+  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
+  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
+  { border: "border-l-[3px] border-l-red-400", icon: "bg-red-50 text-red-700" },
+] as const;
+
 export default async function CommunicationsPage() {
   const [workspace, intakeItems, calls, emailDashboard] = await Promise.all([
     getCommunicationWorkspaceView(),
@@ -33,89 +40,74 @@ export default async function CommunicationsPage() {
       call.extractionStatus === "Not Started",
   ).length;
 
+  const metrics = [
+    { icon: MessageSquareText, label: "Conversations", value: workspace.threads.length.toString(), href: "/communications" },
+    { icon: ClipboardList, label: "New requests", value: intakeItems.length.toString(), href: "/quote-requests" },
+    { icon: PhoneCall, label: "Call work", value: (needsTranscript + needsExtraction).toString(), href: "/calls" },
+    { icon: Mail, label: "Email issues", value: emailDashboard.exceptionCount.toString(), href: "/email" },
+  ];
+
+  const channels = [
+    {
+      title: "Calls",
+      body: "Click-to-call starts a Twilio call, creates a call record, and logs the result to the customer timeline.",
+      href: "/calls",
+    },
+    {
+      title: "SMS",
+      body: "SMS sends through Twilio from the active customer thread and is logged as outbound activity.",
+      href: "/leads",
+    },
+    {
+      title: "Email",
+      body: "Customer emails send through Resend with suppression checks. Quote emails live on quote records.",
+      href: "/email",
+    },
+  ];
+
   return (
     <InternalShell
       active="Communications"
-      eyebrow="Customer contact"
+      eyebrow="Sales & CRM"
       title="Communications"
-      description="A CRM-style workspace for customer conversations, call/SMS/email actions, internal notes, and customer context."
+      description="Customer conversations, call/SMS/email actions, and contact context in one workspace."
       action={{ label: "Settings", href: "/settings" }}
     >
+      {/* Metrics */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            icon: MessageSquareText,
-            label: "Conversations",
-            value: workspace.threads.length.toString(),
-            note: "Customer communication threads",
-            href: "/communications",
-          },
-          {
-            icon: ClipboardList,
-            label: "New requests",
-            value: intakeItems.length.toString(),
-            note: "Audits and quote forms",
-            href: "/quote-requests",
-          },
-          {
-            icon: PhoneCall,
-            label: "Call work",
-            value: (needsTranscript + needsExtraction).toString(),
-            note: "Transcripts and AI extraction",
-            href: "/calls",
-          },
-          {
-            icon: Mail,
-            label: "Email issues",
-            value: emailDashboard.exceptionCount.toString(),
-            note: "Bounces and complaints",
-            href: "/email",
-          },
-        ].map((item) => (
+        {metrics.map((item, i) => (
           <Link
             key={item.label}
             href={item.href}
-            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/10"
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/10 ${CARD_ACCENTS[i].border}`}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <item.icon className="h-5 w-5" />
+            <div className="p-5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                <item.icon className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+                {item.value}
+              </p>
             </div>
-            <p className="mt-5 text-sm font-medium text-slate-600">
-              {item.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold">{item.value}</p>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{item.note}</p>
           </Link>
         ))}
       </section>
 
       <CommunicationsWorkspace workspace={workspace} />
 
+      {/* Channel cards */}
       <section className="grid gap-4 lg:grid-cols-3">
-        {[
-          {
-            title: "Calls",
-            body: "Click-to-call starts a Twilio call, creates a call record, records when configured, and logs the result to the customer timeline.",
-            href: "/calls",
-          },
-          {
-            title: "SMS",
-            body: "SMS sends through Twilio from the active customer thread and is logged as outbound activity for that customer.",
-            href: "/leads",
-          },
-          {
-            title: "Email",
-            body: "Customer emails send through Resend with suppression checks. Quote emails still live on quote records.",
-            href: "/email",
-          },
-        ].map((item) => (
+        {channels.map((item) => (
           <Link
             key={item.title}
             href={item.href}
-            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/10"
+            className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/10"
           >
-            <h2 className="text-xl font-semibold">{item.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+            <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
+              <p className="text-sm font-semibold text-slate-700">{item.title}</p>
+            </div>
+            <p className="p-5 text-sm leading-6 text-slate-600">{item.body}</p>
           </Link>
         ))}
       </section>

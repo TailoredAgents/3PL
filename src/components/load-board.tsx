@@ -10,7 +10,6 @@ import {
   DollarSign,
   ExternalLink,
   FileCheck2,
-  Filter,
   Package,
   Plus,
   RefreshCcw,
@@ -38,16 +37,6 @@ type BoardFilter =
 
 type SortKey = "pickup" | "margin" | "shipper" | "status";
 
-const filterOptions: { id: BoardFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "needs-carrier", label: "Needs carrier" },
-  { id: "posted", label: "Posted" },
-  { id: "customer-update", label: "Customer update" },
-  { id: "pod", label: "Needs POD" },
-  { id: "ready-invoice", label: "Ready invoice" },
-  { id: "exceptions", label: "Exceptions" },
-];
-
 export function LoadBoard({ loads }: LoadBoardProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<BoardFilter>("all");
@@ -74,30 +63,52 @@ export function LoadBoard({ loads }: LoadBoardProps) {
 
   return (
     <>
+      {/* Status filter cards — clicking sets the active filter */}
       <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
-        {boardMetrics.map((metric) => (
-          <button
-            key={metric.label}
-            type="button"
-            onClick={() => setFilter(metric.filter)}
-            className={cn(
-              "rounded-lg border bg-white p-4 text-left shadow-sm hover:-translate-y-0.5 hover:shadow-md",
-              filter === metric.filter
-                ? "border-slate-950 ring-2 ring-slate-950/10"
-                : "border-slate-200",
-            )}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-bold uppercase text-slate-500">
-                {metric.label}
+        {boardMetrics.map((metric) => {
+          const active = filter === metric.filter;
+          return (
+            <button
+              key={metric.label}
+              type="button"
+              onClick={() => setFilter(metric.filter)}
+              className={cn(
+                "rounded-lg border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                active
+                  ? "border-slate-950 bg-slate-950 shadow-md"
+                  : "border-slate-200 bg-white hover:border-slate-300",
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p
+                  className={cn(
+                    "text-xs font-semibold",
+                    active ? "text-slate-400" : "text-slate-500",
+                  )}
+                >
+                  {metric.label}
+                </p>
+                <metric.icon
+                  className={cn(
+                    "h-4 w-4",
+                    active ? "text-slate-400" : metric.iconClass,
+                  )}
+                />
+              </div>
+              <p
+                className={cn(
+                  "mt-2 text-2xl font-bold",
+                  active ? "text-white" : "text-slate-900",
+                )}
+              >
+                {metric.value}
               </p>
-              <metric.icon className={cn("h-4 w-4", metric.iconClass)} />
-            </div>
-            <p className="mt-2 text-2xl font-semibold">{metric.value}</p>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </section>
 
+      {/* Search, equipment filter, sort, create */}
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="grid gap-3 md:grid-cols-[minmax(240px,1fr)_190px_170px] xl:min-w-[760px]">
@@ -132,10 +143,10 @@ export function LoadBoard({ loads }: LoadBoardProps) {
                 onChange={(event) => setSortKey(event.target.value as SortKey)}
                 className="w-full bg-transparent text-sm font-semibold text-slate-800 outline-none"
               >
-                <option value="pickup">Pickup</option>
-                <option value="margin">Margin</option>
-                <option value="shipper">Shipper</option>
-                <option value="status">Status</option>
+                <option value="pickup">Sort: Pickup date</option>
+                <option value="margin">Sort: Margin</option>
+                <option value="shipper">Sort: Shipper</option>
+                <option value="status">Sort: Status</option>
               </select>
             </label>
           </div>
@@ -150,43 +161,28 @@ export function LoadBoard({ loads }: LoadBoardProps) {
             </div>
           </details>
         </div>
-
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {filterOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setFilter(option.id)}
-              className={cn(
-                "flex-none rounded-full border px-3 py-1.5 text-sm font-semibold",
-                filter === option.id
-                  ? "border-slate-950 bg-slate-950 text-white"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700",
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
       </section>
 
+      {/* Results table */}
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-500" />
-            <p className="text-sm font-semibold text-slate-800">
-              {boardRows.length} visible loads
-            </p>
-          </div>
-          <p className="hidden text-sm text-slate-500 md:block">
-            Margin total{" "}
+          <p className="text-sm font-semibold text-slate-800">
+            {boardRows.length} {boardRows.length === 1 ? "load" : "loads"}
+            {filter !== "all" && (
+              <span className="ml-2 text-slate-500 font-normal">
+                · filtered
+              </span>
+            )}
+          </p>
+          <p className="hidden text-sm font-semibold text-emerald-700 md:block">
+            Margin{" "}
             {toCurrency(boardRows.reduce((sum, load) => sum + load.margin, 0))}
           </p>
         </div>
 
         <div className="hidden overflow-x-auto xl:block">
-          <table className="min-w-[1440px] text-left text-sm">
-            <thead className="bg-white text-xs font-bold uppercase text-slate-500">
+          <table className="min-w-[1300px] text-left text-sm">
+            <thead className="border-b border-slate-100 bg-white text-xs font-semibold text-slate-400">
               <tr>
                 <Th>Load</Th>
                 <Th>Status</Th>
@@ -194,9 +190,9 @@ export function LoadBoard({ loads }: LoadBoardProps) {
                 <Th>Freight</Th>
                 <Th>Coverage</Th>
                 <Th>Rates</Th>
-                <Th>Board</Th>
-                <Th>Tracking</Th>
-                <Th>Docs / billing</Th>
+                <Th>Market</Th>
+                <Th>Cust. update</Th>
+                <Th>Docs</Th>
                 <Th>Actions</Th>
               </tr>
             </thead>
@@ -215,8 +211,8 @@ export function LoadBoard({ loads }: LoadBoardProps) {
         </div>
 
         {!boardRows.length ? (
-          <div className="border-t border-dashed border-slate-200 bg-slate-50 p-6 text-sm font-medium text-slate-600">
-            No loads match the current board filters.
+          <div className="border-t border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+            No loads match the current filter.
           </div>
         ) : null}
       </section>
@@ -230,22 +226,27 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
 
   return (
     <tr className={cn("align-top hover:bg-emerald-50/40", riskLevel.rowClass)}>
+      {/* Load */}
       <Td>
-        <div className="min-w-[170px]">
+        <div className="min-w-[160px]">
           <Link
             href={`/loads/${load.id}`}
             className="font-semibold text-slate-950 hover:text-emerald-700"
           >
             {load.shipper}
           </Link>
-          <p className="mt-1 text-xs font-medium text-slate-500">
-            Ref {load.customerReference ?? load.loadNumber}
-          </p>
-          <p className="mt-2 rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+          {load.customerReference && (
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              Ref {load.customerReference}
+            </p>
+          )}
+          <p className="mt-2 w-fit rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
             {load.loadNumber}
           </p>
         </div>
       </Td>
+
+      {/* Status */}
       <Td>
         <StatusPill label={load.status} />
         <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-slate-500">
@@ -253,45 +254,62 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
           {riskLevel.label}
         </div>
       </Td>
+
+      {/* Lane / dates */}
       <Td>
-        <div className="min-w-[260px]">
+        <div className="min-w-[240px]">
           <p className="font-semibold text-slate-900">{load.lane}</p>
-          <p className="mt-2 text-xs font-medium text-slate-600">
-            Pickup: {load.pickup} | {load.pickupWindow ?? "Window needed"}
+          <p className="mt-2 text-xs font-medium text-slate-500">
+            PU {load.pickup}
+            {load.pickupWindow ? ` · ${load.pickupWindow}` : ""}
           </p>
-          <p className="mt-1 text-xs font-medium text-slate-600">
-            Delivery: {load.delivery} | {load.deliveryWindow ?? "Window needed"}
+          <p className="mt-0.5 text-xs font-medium text-slate-500">
+            DEL {load.delivery}
+            {load.deliveryWindow ? ` · ${load.deliveryWindow}` : ""}
           </p>
         </div>
       </Td>
+
+      {/* Freight */}
       <Td>
-        <div className="min-w-[160px] text-xs font-medium text-slate-600">
+        <div className="min-w-[140px] text-xs text-slate-600">
           <p className="font-semibold text-slate-900">{load.equipment}</p>
-          <p className="mt-1">{load.commodity ?? "Commodity needed"}</p>
-          <p className="mt-1">{load.weight ?? "Weight needed"}</p>
-          <p className="mt-1">
-            {load.hazmat === "Yes" ? "Hazmat" : "Non-hazmat"} | Temp{" "}
-            {load.temperatureRequirement ?? "None"}
-          </p>
+          {load.commodity && <p className="mt-1">{load.commodity}</p>}
+          {load.weight && <p className="mt-0.5">{load.weight}</p>}
+          {load.hazmat === "Yes" && (
+            <p className="mt-1 font-semibold text-amber-700">Hazmat</p>
+          )}
         </div>
       </Td>
+
+      {/* Coverage */}
       <Td>
-        <div className="min-w-[170px]">
+        <div className="min-w-[155px]">
           <p className="font-semibold text-slate-900">{load.carrier}</p>
-          <p className="mt-1 text-xs font-medium text-slate-600">
-            Candidates {load.carrierCandidates.length} | Offers{" "}
-            {load.carrierQuotes.length}
+          <p className="mt-1 text-xs text-slate-500">
+            {load.carrierCandidates.length} candidates ·{" "}
+            {load.carrierQuotes.length} offers
           </p>
-          <p className="mt-2 w-fit rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
+          <p
+            className={cn(
+              "mt-2 w-fit rounded-full px-2 py-0.5 text-xs font-bold",
+              getCoverageClass(load),
+            )}
+          >
             {getCoverageLabel(load)}
           </p>
         </div>
       </Td>
+
+      {/* Rates */}
       <Td>
-        <div className="min-w-[145px] text-xs font-medium text-slate-600">
-          <p>Customer {toCurrency(load.customerRate)}</p>
+        <div className="min-w-[130px] text-xs text-slate-500">
+          <p>Cust {toCurrency(load.customerRate)}</p>
           <p className="mt-1">
-            Carrier {load.carrierRate ? toCurrency(load.carrierRate) : "Needed"}
+            Carrier{" "}
+            {load.carrierRate ? toCurrency(load.carrierRate) : (
+              <span className="text-red-600 font-semibold">needed</span>
+            )}
           </p>
           <p
             className={cn(
@@ -303,40 +321,76 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
           </p>
         </div>
       </Td>
+
+      {/* Market (board posting) */}
       <Td>
-        <div className="min-w-[140px]">
+        <div className="min-w-[100px]">
           <p
             className={cn(
-              "w-fit rounded-full px-2 py-1 text-xs font-bold",
+              "w-fit rounded-full px-2 py-0.5 text-xs font-bold",
               marketplaceStatus.className,
             )}
           >
             {marketplaceStatus.label}
           </p>
-          <p className="mt-2 text-xs font-medium text-slate-600">
-            {marketplaceStatus.detail}
-          </p>
+          {marketplaceStatus.label !== "Not posted" && (
+            <p className="mt-1.5 text-xs text-slate-500">
+              {marketplaceStatus.detail}
+            </p>
+          )}
         </div>
       </Td>
+
+      {/* Customer update */}
       <Td>
-        <div className="min-w-[180px] text-xs font-medium text-slate-600">
-          <p className="font-semibold text-slate-900">
+        <div className="min-w-[120px]">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-bold",
+              load.customerUpdateStatus === "Needed"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-slate-100 text-slate-600",
+            )}
+          >
             {load.customerUpdateStatus ?? "Not needed"}
-          </p>
-          <p className="mt-1">{load.lastCustomerUpdateAt}</p>
-          <p className="mt-2 leading-5">{load.risk}</p>
+          </span>
+          {load.lastCustomerUpdateAt && (
+            <p className="mt-2 text-xs text-slate-500">
+              {load.lastCustomerUpdateAt}
+            </p>
+          )}
         </div>
       </Td>
+
+      {/* Docs */}
       <Td>
-        <div className="min-w-[170px] text-xs font-medium text-slate-600">
-          <p>POD {load.hasPod ? "Received" : "Needed"}</p>
-          <p className="mt-1">Rate conf {load.rateConfirmationStatus}</p>
-          <p className="mt-1">Invoice {load.invoice?.status ?? "Not created"}</p>
-          <p className="mt-2 font-bold text-slate-900">
-            {load.billingReadiness}
-          </p>
+        <div className="min-w-[120px] grid gap-1.5">
+          <DocStatus
+            label="Rate conf"
+            done={load.rateConfirmationStatus === "Signed"}
+            pending={
+              load.rateConfirmationStatus !== "Not Started" &&
+              load.rateConfirmationStatus !== "Signed"
+            }
+          />
+          <DocStatus label="POD" done={load.hasPod} />
+          <DocStatus
+            label="Invoice"
+            done={
+              load.invoice?.status === "PAID" ||
+              load.invoice?.status === "PARTIAL"
+            }
+            pending={load.invoice?.status === "SENT"}
+          />
+          {load.billingReadiness && load.billingReadiness !== "On track" && (
+            <p className="mt-0.5 text-xs font-semibold text-slate-700">
+              {load.billingReadiness}
+            </p>
+          )}
         </div>
       </Td>
+
+      {/* Actions */}
       <Td>
         <QuickActions load={load} />
       </Td>
@@ -420,7 +474,7 @@ function LoadBoardMobileRow({ load }: { load: LoadView }) {
 
 function QuickActions({ load }: { load: LoadView }) {
   return (
-    <div className="grid min-w-[150px] gap-2">
+    <div className="grid min-w-[130px] gap-2">
       <Link
         href={`/loads/${load.id}`}
         className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
@@ -429,14 +483,14 @@ function QuickActions({ load }: { load: LoadView }) {
         <ExternalLink className="h-3.5 w-3.5" />
       </Link>
       <Link
-        href={`/loads/${load.id}#coverage`}
+        href={`/loads/${load.id}?tab=coverage`}
         className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
       >
         <Truck className="h-3.5 w-3.5" />
         Cover
       </Link>
       <Link
-        href={`/loads/${load.id}#marketplace`}
+        href={`/loads/${load.id}?tab=coverage`}
         className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
       >
         <Send className="h-3.5 w-3.5" />
@@ -446,11 +500,48 @@ function QuickActions({ load }: { load: LoadView }) {
   );
 }
 
+function DocStatus({
+  label,
+  done,
+  pending,
+}: {
+  label: string;
+  done: boolean;
+  pending?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span
+        className={cn(
+          "h-2 w-2 flex-none rounded-full",
+          done
+            ? "bg-emerald-500"
+            : pending
+              ? "bg-amber-400"
+              : "bg-slate-300",
+        )}
+      />
+      <span
+        className={cn(
+          "font-medium",
+          done
+            ? "text-emerald-700"
+            : pending
+              ? "text-amber-700"
+              : "text-slate-400",
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
 function StatusPill({ label }: { label: string }) {
   return (
     <span
       className={cn(
-        "rounded-full px-2.5 py-1 text-xs font-bold",
+        "rounded-full px-2.5 py-0.5 text-xs font-bold",
         getStatusClass(label),
       )}
     >
@@ -460,7 +551,7 @@ function StatusPill({ label }: { label: string }) {
 }
 
 function Th({ children }: { children: ReactNode }) {
-  return <th className="px-4 py-3">{children}</th>;
+  return <th className="px-4 py-3 tracking-wide">{children}</th>;
 }
 
 function Td({ children }: { children: ReactNode }) {
@@ -470,27 +561,33 @@ function Td({ children }: { children: ReactNode }) {
 function MobileFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md bg-white p-3">
-      <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+      <p className="text-xs font-bold uppercase text-slate-400">{label}</p>
       <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
     </div>
   );
 }
 
 function getBoardMetrics(loads: LoadView[]) {
-  const needsCarrier = loads.filter((load) => load.carrier === "Carrier needed");
+  const needsCarrier = loads.filter(
+    (load) => load.carrier === "Carrier needed",
+  );
   const posted = loads.filter((load) =>
     load.integrationLogs.some(
       (log) => log.action === "Load Post" && log.status === "Success",
     ),
   );
-  const needsPod = loads.filter((load) => load.billingReadiness === "Needs POD");
+  const needsPod = loads.filter(
+    (load) => load.billingReadiness === "Needs POD",
+  );
   const readyToInvoice = loads.filter(
     (load) => load.billingReadiness === "Ready to invoice",
   );
   const needsCustomerUpdate = loads.filter(
     (load) => load.customerUpdateStatus === "Needed",
   );
-  const exceptions = loads.filter((load) => getLoadRiskLevel(load).level !== 0);
+  const exceptions = loads.filter(
+    (load) => getLoadRiskLevel(load).level !== 0,
+  );
 
   return [
     {
@@ -504,42 +601,42 @@ function getBoardMetrics(loads: LoadView[]) {
       label: "Needs carrier",
       value: needsCarrier.length.toString(),
       icon: Truck,
-      iconClass: "text-red-600",
+      iconClass: "text-red-500",
       filter: "needs-carrier" as const,
     },
     {
       label: "Posted",
       value: posted.length.toString(),
       icon: Send,
-      iconClass: "text-emerald-600",
+      iconClass: "text-emerald-500",
       filter: "posted" as const,
     },
     {
       label: "Cust update",
       value: needsCustomerUpdate.length.toString(),
       icon: RefreshCcw,
-      iconClass: "text-amber-600",
+      iconClass: "text-amber-500",
       filter: "customer-update" as const,
     },
     {
       label: "Needs POD",
       value: needsPod.length.toString(),
       icon: FileCheck2,
-      iconClass: "text-amber-600",
+      iconClass: "text-amber-500",
       filter: "pod" as const,
     },
     {
       label: "Ready invoice",
       value: readyToInvoice.length.toString(),
       icon: DollarSign,
-      iconClass: "text-emerald-600",
+      iconClass: "text-emerald-500",
       filter: "ready-invoice" as const,
     },
     {
       label: "Exceptions",
       value: exceptions.length.toString(),
       icon: AlertTriangle,
-      iconClass: "text-red-600",
+      iconClass: "text-red-500",
       filter: "exceptions" as const,
     },
   ];
@@ -547,11 +644,7 @@ function getBoardMetrics(loads: LoadView[]) {
 
 function matchesSearch(load: LoadView, search: string) {
   const normalized = search.trim().toLowerCase();
-
-  if (!normalized) {
-    return true;
-  }
-
+  if (!normalized) return true;
   return [
     load.id,
     load.shipper,
@@ -567,87 +660,60 @@ function matchesSearch(load: LoadView, search: string) {
 }
 
 function matchesFilter(load: LoadView, filter: BoardFilter) {
-  if (filter === "all") {
-    return true;
-  }
-
-  if (filter === "needs-carrier") {
-    return load.carrier === "Carrier needed";
-  }
-
-  if (filter === "posted") {
+  if (filter === "all") return true;
+  if (filter === "needs-carrier") return load.carrier === "Carrier needed";
+  if (filter === "posted")
     return getMarketplaceStatus(load).label !== "Not posted";
-  }
-
-  if (filter === "customer-update") {
+  if (filter === "customer-update")
     return load.customerUpdateStatus === "Needed";
-  }
-
-  if (filter === "pod") {
-    return load.billingReadiness === "Needs POD";
-  }
-
-  if (filter === "ready-invoice") {
+  if (filter === "pod") return load.billingReadiness === "Needs POD";
+  if (filter === "ready-invoice")
     return load.billingReadiness === "Ready to invoice";
-  }
-
   return getLoadRiskLevel(load).level !== 0;
 }
 
 function sortLoads(a: LoadView, b: LoadView, sortKey: SortKey) {
-  if (sortKey === "margin") {
-    return b.margin - a.margin;
-  }
-
-  if (sortKey === "shipper") {
-    return a.shipper.localeCompare(b.shipper);
-  }
-
-  if (sortKey === "status") {
-    return a.status.localeCompare(b.status);
-  }
-
+  if (sortKey === "margin") return b.margin - a.margin;
+  if (sortKey === "shipper") return a.shipper.localeCompare(b.shipper);
+  if (sortKey === "status") return a.status.localeCompare(b.status);
   return getDateSortValue(a.pickup) - getDateSortValue(b.pickup);
 }
 
 function getDateSortValue(value: string) {
-  if (!value || value === "Not set") {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
+  if (!value || value === "Not set") return Number.MAX_SAFE_INTEGER;
   const parsed = Date.parse(value);
   return Number.isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
 }
 
 function getCoverageLabel(load: LoadView) {
-  if (load.carrier !== "Carrier needed") {
-    return "Covered";
-  }
-
-  if (load.carrierQuotes.some((quote) => quote.status === "Received")) {
+  if (load.carrier !== "Carrier needed") return "Covered";
+  if (load.carrierQuotes.some((q) => q.status === "Received"))
     return "Offer received";
-  }
-
-  if (load.carrierCandidates.length) {
-    return "Working coverage";
-  }
-
+  if (load.carrierCandidates.length) return "Working";
   return "Needs sourcing";
+}
+
+function getCoverageClass(load: LoadView) {
+  if (load.carrier !== "Carrier needed")
+    return "bg-emerald-50 text-emerald-700";
+  if (load.carrierQuotes.some((q) => q.status === "Received"))
+    return "bg-sky-50 text-sky-700";
+  if (load.carrierCandidates.length)
+    return "bg-amber-50 text-amber-700";
+  return "bg-red-50 text-red-700";
 }
 
 function getMarketplaceStatus(load: LoadView) {
   const latestPost = load.integrationLogs.find(
     (log) => log.action === "Load Post",
   );
-
   if (!latestPost) {
     return {
       label: "Not posted",
       detail: "Internal only",
-      className: "bg-slate-100 text-slate-700",
+      className: "bg-slate-100 text-slate-600",
     };
   }
-
   if (latestPost.status === "Success") {
     return {
       label: "Posted",
@@ -655,7 +721,6 @@ function getMarketplaceStatus(load: LoadView) {
       className: "bg-emerald-50 text-emerald-700",
     };
   }
-
   if (latestPost.status === "Failed") {
     return {
       label: "Post failed",
@@ -663,7 +728,6 @@ function getMarketplaceStatus(load: LoadView) {
       className: "bg-red-50 text-red-700",
     };
   }
-
   return {
     label: latestPost.status,
     detail: latestPost.provider,
@@ -677,41 +741,37 @@ function getLoadRiskLevel(load: LoadView) {
       level: 3,
       label: "No carrier",
       rowClass: "bg-red-50/30",
-      iconClass: "text-red-600",
+      iconClass: "text-red-500",
       badgeClass: "bg-red-50 text-red-700",
     };
   }
-
   if (load.customerUpdateStatus === "Needed") {
     return {
       level: 2,
       label: "Update due",
       rowClass: "bg-amber-50/40",
-      iconClass: "text-amber-600",
+      iconClass: "text-amber-500",
       badgeClass: "bg-amber-50 text-amber-700",
     };
   }
-
   if (load.rateConfirmationStatus !== "Signed") {
     return {
       level: 2,
       label: "Rate conf",
       rowClass: "bg-amber-50/30",
-      iconClass: "text-amber-600",
+      iconClass: "text-amber-500",
       badgeClass: "bg-amber-50 text-amber-700",
     };
   }
-
   if (load.billingReadiness === "Needs POD") {
     return {
       level: 2,
       label: "POD needed",
       rowClass: "bg-amber-50/30",
-      iconClass: "text-amber-600",
+      iconClass: "text-amber-500",
       badgeClass: "bg-amber-50 text-amber-700",
     };
   }
-
   if (load.marginPercent < 12) {
     return {
       level: 1,
@@ -721,12 +781,11 @@ function getLoadRiskLevel(load: LoadView) {
       badgeClass: "bg-slate-100 text-slate-700",
     };
   }
-
   return {
     level: 0,
     label: "On track",
     rowClass: "",
-    iconClass: "text-emerald-600",
+    iconClass: "text-emerald-500",
     badgeClass: "bg-emerald-50 text-emerald-700",
   };
 }
@@ -735,10 +794,8 @@ function getStatusClass(status: string) {
   if (["Delivered", "Pod Received", "Invoiced", "Paid"].includes(status)) {
     return "bg-emerald-50 text-emerald-700";
   }
-
   if (["Picked Up", "In Transit", "Booked"].includes(status)) {
     return "bg-sky-50 text-sky-700";
   }
-
   return "bg-amber-50 text-amber-700";
 }

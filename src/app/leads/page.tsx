@@ -19,6 +19,13 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+const CARD_ACCENTS = [
+  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
+  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
+  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
+  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+] as const;
+
 export default async function LeadsPage() {
   const [leadViews, activityViews] = await Promise.all([
     getLeadViews(),
@@ -32,114 +39,90 @@ export default async function LeadsPage() {
   ).length;
   const followUpLeads = leadViews.slice(0, 4);
 
+  const metrics = [
+    { icon: Users, label: "Active leads", value: leadViews.length.toString() },
+    { icon: CalendarClock, label: "Follow-ups due", value: followUpLeads.length.toString() },
+    { icon: Target, label: "High priority", value: highPriorityCount.toString() },
+    { icon: TrendingUp, label: "Quote-ready", value: quoteReadyCount.toString() },
+  ];
+
   return (
     <InternalShell
       active="Leads"
-      eyebrow="CRM"
-      title="Customer pipeline"
-      description="The day-one sales desk: who to call, what lane they care about, where they sit in the pipeline, and what the AI thinks should happen next."
+      eyebrow="Sales & CRM"
+      title="Leads"
+      description="Who to call, what lane they care about, and where they sit in the pipeline."
       action={{ label: "Instant quote form", href: "/#quote" }}
     >
+      {/* Metrics */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            icon: Users,
-            label: "Active leads",
-            value: leadViews.length.toString(),
-            note: "Total working pipeline",
-          },
-          {
-            icon: CalendarClock,
-            label: "Follow-ups due",
-            value: followUpLeads.length.toString(),
-            note: "Start here today",
-          },
-          {
-            icon: Target,
-            label: "High priority",
-            value: highPriorityCount.toString(),
-            note: "Needs tight follow-up",
-          },
-          {
-            icon: TrendingUp,
-            label: "Quote-ready",
-            value: quoteReadyCount.toString(),
-            note: "Qualified or quoted",
-          },
-        ].map((item) => (
+        {metrics.map((item, i) => (
           <article
             key={item.label}
-            className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5"
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <item.icon className="h-5 w-5" />
+            <div className="p-5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                <item.icon className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+                {item.value}
+              </p>
             </div>
-            <p className="mt-5 text-sm font-medium text-slate-600">
-              {item.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold">{item.value}</p>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{item.note}</p>
           </article>
         ))}
       </section>
 
-      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <div className="flex items-center gap-3">
-          <CalendarClock className="h-6 w-6 text-emerald-600" />
-          <div>
-            <h2 className="text-2xl font-semibold">Today&apos;s calls</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Start with these accounts before opening new work.
-            </p>
+      {/* Today's calls */}
+      <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-slate-500" />
+            <p className="text-sm font-semibold text-slate-700">Today&apos;s calls</p>
           </div>
+          <p className="text-xs text-slate-500">Start here before opening new work</p>
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {followUpLeads.map((lead, index) => (
+        <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
+          {followUpLeads.length ? followUpLeads.map((lead, index) => (
             <Link
               key={lead.id}
               href={`/leads/${lead.id}`}
               className="grid gap-2 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold">{lead.company}</p>
-                <span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-600">
-                  #{index + 1}
+                <p className="font-semibold text-slate-900">{lead.company}</p>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                  {index + 1}
                 </span>
               </div>
-              <p className="text-sm font-medium text-slate-700">
+              <p className="text-sm font-medium text-emerald-700">
                 {lead.nextFollowUp}
               </p>
-              <p className="line-clamp-3 text-sm leading-6 text-slate-600">
+              <p className="line-clamp-2 text-sm leading-6 text-slate-600">
                 {lead.pain}
               </p>
-              <span className="mt-1 w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
-                Open lead
-              </span>
             </Link>
-          ))}
+          )) : (
+            <div className="col-span-4 py-8 text-center text-sm text-slate-400">
+              No follow-ups scheduled — pipeline is clear.
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      {/* Pipeline kanban */}
+      <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-              Pipeline board
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Move prospects toward booked freight
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Each card should move through a clear sales action: call, qualify,
-              quote, or close.
-            </p>
+            <p className="text-sm font-semibold text-slate-700">Pipeline board</p>
           </div>
-          <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
             {leadViews.length} leads
-          </p>
+          </span>
         </div>
 
-        <div className="mt-6 overflow-x-auto pb-2">
+        <div className="overflow-x-auto p-4 pb-2">
           <div className="grid min-w-[1260px] grid-cols-6 gap-4">
             {leadStages.map((stage) => {
               const stageLeads = leadViews.filter(
@@ -149,7 +132,7 @@ export default async function LeadsPage() {
               return (
                 <div
                   key={stage}
-                  className="min-h-[300px] rounded-lg border border-slate-100 bg-slate-50 p-3"
+                  className="min-h-[280px] rounded-lg border border-slate-100 bg-slate-50 p-3"
                 >
                   <div
                     className={cn(
@@ -158,7 +141,7 @@ export default async function LeadsPage() {
                     )}
                   >
                     <p className="text-sm font-bold">{stage}</p>
-                    <span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-600 shadow-sm">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-600 shadow-sm">
                       {stageLeads.length}
                     </span>
                   </div>
@@ -168,9 +151,7 @@ export default async function LeadsPage() {
                         <LeadKanbanCard key={lead.id} lead={lead} />
                       ))
                     ) : (
-                      <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm leading-6 text-slate-500">
-                        No leads in this stage.
-                      </div>
+                      <p className="px-2 py-4 text-xs text-slate-400">Empty</p>
                     )}
                   </div>
                 </div>
@@ -180,69 +161,64 @@ export default async function LeadsPage() {
         </div>
       </section>
 
-      <section className="grid items-start gap-6 xl:grid-cols-[1fr_360px]">
-        <details className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+      {/* Create lead + import — equal width */}
+      <section className="grid items-start gap-6 xl:grid-cols-2">
+        <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-                <UserPlus className="h-6 w-6" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
+                <UserPlus className="h-4 w-4 text-slate-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-semibold">Create lead</h2>
-                <p className="mt-1 leading-7 text-slate-600">
-                  Add a prospect manually when they come from a call, referral,
-                  outbound list, or savings conversation.
-                </p>
+                <p className="text-sm font-semibold text-slate-900">Create lead</p>
+                <p className="text-xs text-slate-500">Add a prospect manually</p>
               </div>
             </div>
-            <span className="flex-none rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white group-open:bg-slate-700">
-              <span className="group-open:hidden">Open form</span>
-              <span className="hidden group-open:inline">Hide form</span>
-            </span>
+            <span className="text-xs font-semibold text-slate-400 group-open:hidden">Expand</span>
+            <span className="hidden text-xs font-semibold text-slate-400 group-open:inline">Collapse</span>
           </summary>
-          <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4">
+          <div className="border-t border-slate-200 p-5">
             <LeadCreateForm />
           </div>
         </details>
 
-        <details className="group rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+        <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
             <div className="flex items-center gap-3">
-              <FileUp className="h-6 w-6 text-emerald-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
+                <FileUp className="h-4 w-4 text-slate-600" />
+              </div>
               <div>
-                <h2 className="text-2xl font-semibold">Contact import</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Upload CSV contacts when adding a list.
-                </p>
+                <p className="text-sm font-semibold text-slate-900">Contact import</p>
+                <p className="text-xs text-slate-500">Upload a CSV contact list</p>
               </div>
             </div>
-            <span className="flex-none rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white group-open:bg-slate-700">
-              <span className="group-open:hidden">Open</span>
-              <span className="hidden group-open:inline">Hide</span>
-            </span>
+            <span className="text-xs font-semibold text-slate-400 group-open:hidden">Expand</span>
+            <span className="hidden text-xs font-semibold text-slate-400 group-open:inline">Collapse</span>
           </summary>
-          <div className="mt-5 rounded-md border border-dashed border-slate-300 bg-slate-50 p-4">
+          <div className="border-t border-slate-200 p-5">
             <ContactImportForm />
           </div>
         </details>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <div className="flex items-center gap-3">
-            <Bot className="h-6 w-6 text-emerald-600" />
-            <h2 className="text-2xl font-semibold">AI sales assistant</h2>
+      {/* AI assistant + Recent activity */}
+      <section className="grid gap-6 xl:grid-cols-2">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <Bot className="h-4 w-4 text-slate-500" />
+            <p className="text-sm font-semibold text-slate-700">AI sales assistant</p>
           </div>
-          <div className="mt-5 grid gap-4">
-            {leadViews.map((lead) => (
+          <div className="grid gap-3 p-4">
+            {leadViews.length ? leadViews.map((lead) => (
               <Link
                 key={lead.company}
                 href={`/leads/${lead.id}`}
                 className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:border-emerald-200 hover:bg-white"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold">{lead.company}</p>
-                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800">
+                  <p className="font-semibold text-slate-900">{lead.company}</p>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${stageBadgeClass(lead.stage)}`}>
                     {lead.stage}
                   </span>
                 </div>
@@ -250,30 +226,32 @@ export default async function LeadsPage() {
                   {lead.aiNextAction}
                 </p>
               </Link>
-            ))}
+            )) : (
+              <p className="py-6 text-center text-sm text-slate-400">No leads yet.</p>
+            )}
           </div>
         </article>
 
-        <article className="rounded-lg border border-white bg-white p-5 shadow-lg shadow-slate-950/5">
-          <div className="flex items-center gap-3">
-            <Phone className="h-6 w-6 text-emerald-600" />
-            <h2 className="text-2xl font-semibold">Recent activity</h2>
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <Phone className="h-4 w-4 text-slate-500" />
+            <p className="text-sm font-semibold text-slate-700">Recent activity</p>
           </div>
-          <div className="mt-5 grid gap-4">
-            {activityViews.map((activity) => (
+          <div className="grid gap-3 p-4">
+            {activityViews.length ? activityViews.map((activity) => (
               <div
                 key={`${activity.company}-${activity.time}`}
                 className="flex gap-4 rounded-md border border-slate-100 bg-slate-50 p-4"
               >
-                <div className="mt-2 h-2.5 w-2.5 flex-none rounded-full bg-emerald-500 shadow-sm shadow-emerald-900/20" />
+                <div className="mt-2 h-2 w-2 flex-none rounded-full bg-emerald-400" />
                 <div>
-                  <p className="font-semibold">
+                  <p className="font-semibold text-slate-900">
                     {activity.company}
                     <span className="ml-2 text-sm font-medium text-slate-500">
                       {activity.time}
                     </span>
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-700">
+                  <p className="mt-0.5 text-sm font-semibold text-slate-700">
                     {activity.type}
                   </p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
@@ -281,7 +259,9 @@ export default async function LeadsPage() {
                   </p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="py-6 text-center text-sm text-slate-400">No recent activity.</p>
+            )}
           </div>
         </article>
       </section>
@@ -300,4 +280,16 @@ function stageHeaderClass(stage: string) {
   };
 
   return styles[stage] ?? "border-slate-100 bg-white text-slate-900";
+}
+
+function stageBadgeClass(stage: string) {
+  const map: Record<string, string> = {
+    New: "bg-sky-50 text-sky-800",
+    Contacted: "bg-cyan-50 text-cyan-800",
+    Qualified: "bg-emerald-50 text-emerald-800",
+    Quoted: "bg-amber-50 text-amber-800",
+    Won: "bg-lime-50 text-lime-800",
+    Lost: "bg-slate-100 text-slate-600",
+  };
+  return map[stage] ?? "bg-slate-100 text-slate-700";
 }

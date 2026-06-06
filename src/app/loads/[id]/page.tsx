@@ -684,6 +684,25 @@ export default async function LoadDetailPage({
                 loadId={load.id}
                 defaultAmount={load.invoice?.amount ?? load.customerRate}
               />
+              {load.invoice && (
+                <div className="mt-3 flex gap-2">
+                  <form action={`/api/loads/${load.id}/invoice/generate`} method="POST">
+                    <button
+                      type="submit"
+                      className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Generate Printable Invoice
+                    </button>
+                  </form>
+                  <a
+                    href={`/api/loads/${load.id}/invoice/print`}
+                    target="_blank"
+                    className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center"
+                  >
+                    Print / PDF
+                  </a>
+                </div>
+              )}
             </div>
           </article>
 

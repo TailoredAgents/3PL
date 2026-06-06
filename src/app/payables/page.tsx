@@ -180,6 +180,21 @@ export default async function PayablesPage() {
           <p>QuickPay requests typically carry a 2–3% fee — confirm before processing.</p>
           <p>Record payment method (ACH, check, QuickPay) when marking paid for audit trail.</p>
         </div>
+
+        {/* Batch pay action (Phase 4.2) */}
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <form action="/api/carrier-invoices/batch-pay" method="POST">
+            <button
+              type="submit"
+              className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+            >
+              Pay All Approved as Batch
+            </button>
+            <p className="mt-1 text-[10px] text-slate-500">
+              Marks all APPROVED carrier invoices as PAID and assigns a batch reference.
+            </p>
+          </form>
+        </div>
       </aside>
     </InternalShell>
   );

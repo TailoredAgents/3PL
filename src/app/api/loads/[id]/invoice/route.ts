@@ -4,6 +4,7 @@ import { sendTransactionalEmail } from "@/lib/email";
 import { formValue, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { invoiceCreateSchema } from "@/lib/validation";
+import { generateCustomerInvoiceDocument } from "@/lib/invoice";
 
 export async function POST(
   request: Request,
@@ -114,7 +115,16 @@ export async function POST(
 
   revalidatePath("/loads");
   revalidatePath(`/loads/${id}`);
+  revalidatePath("/billing");
   revalidatePath("/dashboard");
+
+  if (input.status === "SENT") {
+    try {
+      await generateCustomerInvoiceDocument(id);
+    } catch {
+      // Non-fatal: generation is best-effort for printable view
+    }
+  }
 
   const billingContact = load.shipper?.contacts?.[0];
   if (input.status === "SENT" && billingContact?.email) {

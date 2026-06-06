@@ -116,6 +116,9 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
         ) : (
           <p className="text-xs text-slate-400">No due date</p>
         )}
+        {invoice.paymentBatch ? (
+          <p className="mt-0.5 text-[10px] text-emerald-700">Batch: {invoice.paymentBatch}</p>
+        ) : null}
       </Td>
       <Td>
         <div className="flex flex-col gap-1.5">
@@ -204,6 +207,9 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
           <p className={cn("font-semibold", invoice.isOverdue ? "text-red-600" : "text-slate-700")}>
             {invoice.paidAt ? `Paid ${invoice.paidAt}` : invoice.dueDate ?? "—"}
           </p>
+          {invoice.paymentBatch ? (
+            <p className="text-[10px] text-emerald-700">Batch: {invoice.paymentBatch}</p>
+          ) : null}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">

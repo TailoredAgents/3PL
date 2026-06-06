@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 
-export const platformName = "Atlanta Freight OS";
+export const platformName = "DAO Logistics";
 
 export const navItems = [
   { label: "Savings Audit", href: "#audit" },

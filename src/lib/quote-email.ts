@@ -38,7 +38,7 @@ export async function buildQuoteEmailDraft(
   ].filter(Boolean);
 
   const variables: Record<string, string> = {
-    brokerageName: "Atlanta Freight OS",
+    brokerageName: "DAO Logistics",
     companyName: quote.company ?? "",
     contactFirstName: contactName,
     originCity: quote.originCity ?? "",

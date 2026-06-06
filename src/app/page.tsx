@@ -226,8 +226,8 @@ export default function Home() {
 
       <footer className="border-t border-slate-200 bg-white px-5 py-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-          <p>{platformName} is a working placeholder until branding is final.</p>
-          <p>Built for a pure non-asset freight brokerage.</p>
+          <p>© {new Date().getFullYear()} {platformName}. All rights reserved.</p>
+          <p>Non-asset freight brokerage. Atlanta, GA.</p>
         </div>
       </footer>
     </main>

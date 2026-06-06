@@ -36,7 +36,7 @@ export default async function LeadDetailPage({
   }
   const outreachPhone = lead.phone === "No phone" ? undefined : lead.phone;
   const outreachEmail = lead.email === "No email" ? undefined : lead.email;
-  const defaultSmsMessage = `Hi ${lead.contact}, this is Atlanta Freight OS following up on your freight lanes. Is now a good time to confirm your shipment needs?`;
+  const defaultSmsMessage = `Hi ${lead.contact}, this is DAO Logistics following up on your freight lanes. Is now a good time to confirm your shipment needs?`;
   const defaultEmailBody = `Hi ${lead.contact},\n\nI wanted to follow up on your freight lanes and see what shipments you need help with next.\n\nThanks,`;
 
   return (

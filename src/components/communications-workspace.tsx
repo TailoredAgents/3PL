@@ -198,7 +198,7 @@ export function CommunicationsWorkspace({
             <LeadSmsForm
               leadId={selectedThread.leadId}
               defaultPhone={cleanValue(selectedThread.phone)}
-              defaultMessage={`Hi ${selectedThread.contact}, this is Atlanta Freight OS following up on your freight lanes. Is now a good time to confirm what you need moved next?`}
+              defaultMessage={`Hi ${selectedThread.contact}, this is DAO Logistics following up on your freight lanes. Is now a good time to confirm what you need moved next?`}
             />
           ) : null}
           {composerMode === "email" ? (

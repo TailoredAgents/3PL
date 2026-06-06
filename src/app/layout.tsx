@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Atlanta Freight OS | AI-Native Freight Brokerage Platform",
+  title: "DAO Logistics | AI-Native Freight Brokerage",
   description:
-    "A modern AI-native CRM and TMS foundation for a non-asset freight brokerage.",
+    "DAO Logistics — AI-native freight brokerage connecting shippers with carriers across the Southeast and beyond.",
 };
 
 export default function RootLayout({

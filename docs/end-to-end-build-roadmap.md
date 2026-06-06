@@ -187,30 +187,30 @@ Completion criteria for full Phase 2:
 
 Goal: turn carriers from simple records into fully vetted partner files.
 
-Status: not started.
+Status: 3.1 complete (core model + checklist + docs + alerts + gate foundation); remaining items (performance scorecard depth, full callback workflow, external vetting adapters) for follow-on sub-phases.
 
-Build:
+Build (Phase 3.1 completed):
 
-- Add carrier onboarding checklist.
-- Track W-9, certificate of insurance, broker-carrier agreement, payment setup,
-  factoring company, insurance expiration, authority age, and compliance notes.
-- Add compliance expiration alerts.
-- Add blocked/conditional carrier reasons.
-- Add callback verification workflow for new carriers.
-- Add carrier performance scorecard: on-time pickup, on-time delivery,
-  communication quality, claims/issues, and load count.
-- Add carrier contacts beyond one main contact.
+- Extended DocumentType with W9, CERTIFICATE_OF_INSURANCE, BROKER_CARRIER_AGREEMENT (explicit migration) — compliance docs now flow into the existing Document Center from Phase 1/2 (upload, download, extraction, review all work for them).
+- Extended Carrier model (explicit migration) with insuranceExpiration, w9ReceivedAt, agreementSignedAt, paymentSetup, callbackVerifiedAt, blockedReason, additionalContacts.
+- Updated schemas (carrierComplianceUpdateSchema), API (PATCH /api/carriers/[id]), forms (CarrierComplianceForm + CreateForm) to persist new fields.
+- Rich onboarding checklist + compliance UI on carrier detail page: dynamic list of fields, required docs status (cross-references linked Documents by new types), expiration visibility, blocked/conditional alerts, display of additional contacts.
+- Basic booking gate foundation: non-approved or blocked carriers clearly flagged (red badges, notes); reinforced existing "Approved" checks in sourcing/loads with the new fields.
+- All changes extend existing Carrier + Document patterns (no parallel systems, leverages Phase 2 document links on carriers).
+- Followed all handoff rules.
 
-Integrations:
+Remaining for full Phase 3:
 
-- Prepare clean adapter boundaries for Carrier411, Highway, RMIS, CarrierOk,
-  FMCSA, and Truckstop SaferWatch style data.
+- Deeper performance scorecard (on-time stats computed from loads/events).
+- Full callback verification workflow UI + logging.
+- External integration adapters (FMCSA snapshot already partially present; prepare clean boundaries for Carrier411 etc.).
+- Enforce hard "cannot book" in backend/API (UI warnings + status already in place).
 
-Completion criteria:
+Completion criteria progress:
 
-- A load cannot be booked with a carrier that fails required compliance gates.
-- Compliance status is explainable from documents, external checks, and internal
-  decisions.
+- Compliance status and required docs (W-9/COI/agreement via Documents) are visible and explainable.
+- Blocked/conditional carriers surfaced.
+- Foundation for "load cannot be booked with non-compliant carrier" (UI + data model ready).
 
 ## Phase 4: Accounting, AR, AP, And Settlements
 

@@ -36,7 +36,7 @@ import {
   LoadCommissionAttributionForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
-import { getLoadDetailView, getUserOptions } from "@/lib/crm";
+import { getLoadDetailView, getUserOptions, type LoadDetailView } from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -100,7 +100,9 @@ export default async function LoadDetailPage({
       {/* ── Overview tab ─────────────────────────────────────────── */}
       {tab === "overview" && (
         <>
-          <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <LoadCommandStrip load={load} />
+
+          <section className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
             {/* Left: load details */}
             <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
@@ -195,30 +197,51 @@ export default async function LoadDetailPage({
                     </p>
                   </div>
                 </div>
+
+                <div className="mt-4 overflow-hidden rounded-md border border-slate-100 bg-white">
+                  <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Shipment timeline</p>
+                    </div>
+                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                      {load.events.length}
+                    </span>
+                  </div>
+                  {load.events.length ? (
+                    <div className="divide-y divide-slate-100">
+                      {load.events.slice(0, 4).map((event) => (
+                        <div
+                          key={`${event.type}-${event.time}-${event.message}`}
+                          className="flex gap-3 px-4 py-3"
+                        >
+                          <div className="mt-2 h-2 w-2 flex-none rounded-full bg-emerald-500" />
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {event.type}
+                              <span className="ml-2 text-xs font-medium text-slate-400">
+                                {event.time}
+                              </span>
+                            </p>
+                            <p className="mt-0.5 text-xs font-medium text-slate-600">
+                              {event.location}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                              {event.message}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-4 py-5 text-sm text-slate-400">No tracking events yet.</p>
+                  )}
+                </div>
               </div>
             </article>
 
             {/* Right: operations */}
             <div className="grid gap-6">
-              <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-                <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
-                  <Bot className="h-4 w-4 text-slate-400" />
-                  <p className="text-sm font-semibold text-slate-700">AI operations agent</p>
-                </div>
-                <div className="p-5">
-                  <AiAgentRunForm
-                    relatedEntityType="Load"
-                    relatedEntityId={load.id}
-                    defaultAgent="Load Tracking Agent"
-                    agentOptions={[
-                      "Load Tracking Agent",
-                      "Carrier Coverage Agent",
-                      "Billing Readiness Agent",
-                    ]}
-                  />
-                </div>
-              </article>
-
               <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
                 <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
                   <Truck className="h-4 w-4 text-slate-400" />
@@ -230,6 +253,30 @@ export default async function LoadDetailPage({
                     currentStatus={load.status}
                     currentCarrier={load.carrier}
                     currentCarrierRate={load.carrierRate}
+                  />
+                </div>
+              </article>
+
+              <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+                <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+                  <Bot className="h-4 w-4 text-slate-400" />
+                  <p className="text-sm font-semibold text-slate-700">Operations assistant</p>
+                </div>
+                <div className="p-5">
+                  <p className="mb-3 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800">
+                    Use agents for tracking risk, carrier coverage, and billing
+                    readiness. The primary operational action remains in the
+                    command strip above.
+                  </p>
+                  <AiAgentRunForm
+                    relatedEntityType="Load"
+                    relatedEntityId={load.id}
+                    defaultAgent="Load Tracking Agent"
+                    agentOptions={[
+                      "Load Tracking Agent",
+                      "Carrier Coverage Agent",
+                      "Billing Readiness Agent",
+                    ]}
                   />
                 </div>
               </article>
@@ -355,47 +402,6 @@ export default async function LoadDetailPage({
               </article>
             </div>
           </section>
-
-          {/* Shipment timeline */}
-          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-slate-400" />
-                <p className="text-sm font-semibold text-slate-700">Shipment timeline</p>
-              </div>
-              <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                {load.events.length}
-              </span>
-            </div>
-            {load.events.length ? (
-              <div className="divide-y divide-slate-100">
-                {load.events.map((event) => (
-                  <div
-                    key={`${event.type}-${event.time}-${event.message}`}
-                    className="flex gap-4 px-5 py-4"
-                  >
-                    <div className="mt-2 h-2 w-2 flex-none rounded-full bg-emerald-500" />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {event.type}
-                        <span className="ml-2 text-xs font-medium text-slate-400">
-                          {event.time}
-                        </span>
-                      </p>
-                      <p className="mt-0.5 text-sm font-medium text-slate-700">
-                        {event.location}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {event.message}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-slate-400">No tracking events yet.</p>
-            )}
-          </article>
         </>
       )}
 
@@ -897,6 +903,141 @@ function DocumentLink({ href, label }: { href: string; label: string }) {
       {label}
     </a>
   );
+}
+
+function LoadCommandStrip({ load }: { load: LoadDetailView }) {
+  const command = getLoadCommand(load);
+
+  return (
+    <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      <article className={`rounded-lg border p-5 shadow-md shadow-slate-950/5 ${command.className}`}>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">
+              Load command
+            </p>
+            <h2 className="mt-1 text-2xl font-black tracking-normal">
+              {command.label}
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 opacity-85">
+              {command.detail}
+            </p>
+          </div>
+          <Link
+            href={command.href}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 hover:bg-slate-800"
+          >
+            {command.cta}
+            <Truck className="h-4 w-4" />
+          </Link>
+        </div>
+      </article>
+
+      <article className="grid gap-3 sm:grid-cols-2">
+        <CommandMetric
+          label="Coverage"
+          value={load.carrier === "Carrier needed" ? "Needs carrier" : "Covered"}
+          tone={load.carrier === "Carrier needed" ? "red" : "emerald"}
+        />
+        <CommandMetric
+          label="Tracking"
+          value={load.events.length ? `${load.events.length} events` : "No events"}
+          tone={load.events.length ? "emerald" : "amber"}
+        />
+        <CommandMetric
+          label="Billing"
+          value={load.billingReadiness}
+          tone={load.billingReadiness === "Ready to invoice" ? "emerald" : "slate"}
+        />
+        <CommandMetric
+          label="Margin"
+          value={`${toCurrency(load.margin)} / ${load.marginPercent}%`}
+          tone={load.marginPercent < 12 ? "amber" : "emerald"}
+        />
+      </article>
+    </section>
+  );
+}
+
+function CommandMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "amber" | "emerald" | "red" | "slate";
+}) {
+  const toneClass = {
+    amber: "border-amber-100 bg-amber-50 text-amber-950",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950",
+    red: "border-red-100 bg-red-50 text-red-950",
+    slate: "border-slate-100 bg-white text-slate-800",
+  }[tone];
+
+  return (
+    <div className={`rounded-lg border p-4 shadow-md shadow-slate-950/5 ${toneClass}`}>
+      <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-black leading-5">{value}</p>
+    </div>
+  );
+}
+
+function getLoadCommand(load: LoadDetailView) {
+  if (load.carrier === "Carrier needed") {
+    return {
+      label: "Source carrier",
+      detail:
+        "This load is not covered. Source capacity, vet the carrier, collect a quote, and book the best compliant option.",
+      cta: "Cover load",
+      href: `/loads/${load.id}?tab=coverage`,
+      className: "border-red-100 bg-red-50 text-red-950",
+    };
+  }
+
+  if (load.customerUpdateStatus === "Needed") {
+    return {
+      label: "Send customer update",
+      detail:
+        "The shipper needs a proactive status update. Log the message before the customer asks for tracking.",
+      cta: "Update customer",
+      href: `/loads/${load.id}?tab=overview`,
+      className: "border-amber-100 bg-amber-50 text-amber-950",
+    };
+  }
+
+  if (load.billingReadiness === "Needs POD") {
+    return {
+      label: "Collect POD",
+      detail:
+        "The load cannot cleanly move to billing until proof of delivery is uploaded and reviewed.",
+      cta: "Open documents",
+      href: `/loads/${load.id}?tab=documents`,
+      className: "border-amber-100 bg-amber-50 text-amber-950",
+    };
+  }
+
+  if (load.billingReadiness === "Ready to invoice") {
+    return {
+      label: "Invoice customer",
+      detail:
+        "The load is ready for customer billing. Create or review the invoice and move it through finance.",
+      cta: "Open billing",
+      href: `/loads/${load.id}?tab=billing`,
+      className: "border-emerald-100 bg-emerald-50 text-emerald-950",
+    };
+  }
+
+  return {
+    label: "Monitor load",
+    detail:
+      "Keep tracking events, customer updates, documents, and billing readiness current through delivery.",
+    cta: "Review load",
+    href: `/loads/${load.id}?tab=overview`,
+    className: "border-slate-100 bg-white text-slate-900",
+  };
 }
 
 function OfferMetric({ label, value }: { label: string; value: string }) {

@@ -544,17 +544,25 @@ Next for Phase 8: 8.3+ for any remaining (e.g. deeper tender details, payment di
 
 Goal: help salespeople quote better and build repeat lanes.
 
-Status: not started.
+Status: 9.1 complete; lane intelligence is derived from existing quote/load history. Saved quote templates, explicit margin rules, deeper DAT/Truckstop benchmark automation, and expanded sales insights remain for 9.2+.
 
 Build:
 
-- Add lane profile records or structured lane history derived from quotes/loads.
+- Complete 9.1: add structured lane history derived from quotes/loads inside Analytics.
 - Show customer lane history, carrier lane history, margin history, win/loss,
   seasonality, and quote confidence.
 - Add saved quote templates for recurring lanes.
 - Add target margin rules by customer, lane, equipment, and urgency.
 - Add sales opportunity insights: dormant shippers, repeat-lane opportunities,
   underpriced lanes, and customers needing follow-up.
+
+Build (Phase 9.1 completed):
+
+- Added lane intelligence profiles derived from existing completed loads and quote requests; no duplicate lane table or pricing system.
+- Profiles include lane/equipment, load count, quote count, customer count, carrier depth, average sell/buy rate, gross profit, margin percent, win rate, quote confidence, benchmark presence, latest activity, and seasonality.
+- Added revenue opportunity detection for underpriced lanes, repeat-lane candidates, benchmark gaps, and carrier coverage gaps.
+- Updated Analytics with lane intelligence summary cards, detailed lane profile table, and opportunity cards.
+- Kept DAT/Truckstop as benchmark inputs when rate benchmark records exist, while leaving live marketplace automation and saved templates for later Phase 9 sub-phases.
 
 Completion criteria:
 

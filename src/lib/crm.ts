@@ -3454,9 +3454,48 @@ export type AnalyticsData = {
     count: number;
     avgGrossProfit: number;
   }[];
+  laneIntelligence: {
+    totalLanes: number;
+    repeatLanes: number;
+    avgQuoteConfidence: number;
+    underpricedLanes: number;
+    profiles: LaneIntelligenceProfile[];
+    opportunities: LaneRevenueOpportunity[];
+  };
   topCarriers: { name: string; loads: number; totalGrossProfit: number }[];
   salesFunnel: { stage: string; count: number }[];
   quoteConversion: { status: string; count: number }[];
+};
+
+export type LaneIntelligenceProfile = {
+  key: string;
+  origin: string;
+  destination: string;
+  equipment: string;
+  loadCount: number;
+  quoteRequestCount: number;
+  customerCount: number;
+  carrierCount: number;
+  avgSellRate: number;
+  avgBuyRate: number | null;
+  avgGrossProfit: number;
+  avgMarginPercent: number;
+  winRate: number;
+  quoteConfidence: number;
+  benchmarkAverage: number | null;
+  benchmarkSources: string[];
+  topCustomer: string;
+  topCarrier: string;
+  latestActivity: string;
+  seasonality: string;
+  recommendation: string;
+};
+
+export type LaneRevenueOpportunity = {
+  title: string;
+  detail: string;
+  impact: string;
+  tone: "amber" | "emerald" | "red" | "sky";
 };
 
 export async function getAnalyticsData(): Promise<AnalyticsData> {
@@ -3473,6 +3512,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       loadsThisMonth,
       loadGroups,
       topCarrierLoads,
+      quoteRequests,
       leadGroups,
       quoteGroups,
     ] = await Promise.all([
@@ -3484,6 +3524,12 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
           originState: true,
           destinationCity: true,
           destinationState: true,
+          equipmentType: true,
+          carrierRate: true,
+          status: true,
+          createdAt: true,
+          shipper: { select: { companyName: true } },
+          carrier: { select: { companyName: true } },
         },
         where: { status: { in: ["INVOICED", "PAID", "POD_RECEIVED", "DELIVERED"] } },
       }),
@@ -3505,6 +3551,28 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         },
         where: { carrierId: { not: null } },
         take: 500,
+      }),
+      prisma.quoteRequest.findMany({
+        select: {
+          originCity: true,
+          originState: true,
+          destinationCity: true,
+          destinationState: true,
+          equipmentType: true,
+          status: true,
+          createdAt: true,
+          shipper: { select: { companyName: true } },
+          customerQuotes: {
+            select: { status: true, quotedRate: true },
+            orderBy: { createdAt: "desc" },
+          },
+          rateBenchmarks: {
+            select: { source: true, averageRate: true, confidence: true },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1000,
       }),
       prisma.lead.groupBy({ by: ["stage"], _count: true }),
       prisma.quoteRequest.groupBy({ by: ["status"], _count: true }),
@@ -3577,6 +3645,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       .sort((a, b) => b[1].loads - a[1].loads)
       .slice(0, 8)
       .map(([name, data]) => ({ name, ...data, totalGrossProfit: data.totalGP }));
+    const laneIntelligence = buildLaneIntelligence(allLoads, quoteRequests);
 
     const statusOrder = [
       "TENDERED",
@@ -3616,6 +3685,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       },
       loadsByStatus,
       topLanes,
+      laneIntelligence,
       topCarriers,
       salesFunnel,
       quoteConversion,
@@ -3623,6 +3693,375 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   } catch {
     return getSampleAnalyticsData();
   }
+}
+
+type LaneSourceLoad = {
+  customerRate: unknown;
+  carrierRate: unknown;
+  grossProfit: unknown;
+  originCity: string;
+  originState: string;
+  destinationCity: string;
+  destinationState: string;
+  equipmentType: string;
+  status: string;
+  createdAt: Date;
+  shipper: { companyName: string } | null;
+  carrier: { companyName: string } | null;
+};
+
+type LaneSourceQuote = {
+  originCity: string;
+  originState: string;
+  destinationCity: string;
+  destinationState: string;
+  equipmentType: string;
+  status: string;
+  createdAt: Date;
+  shipper: { companyName: string } | null;
+  customerQuotes: {
+    status: string;
+    quotedRate: unknown;
+  }[];
+  rateBenchmarks: {
+    source: string;
+    averageRate: unknown;
+    confidence: unknown;
+  }[];
+};
+
+type LaneAggregation = {
+  origin: string;
+  destination: string;
+  equipment: string;
+  loads: LaneSourceLoad[];
+  quotes: LaneSourceQuote[];
+  customers: Map<string, number>;
+  carriers: Map<string, number>;
+  benchmarkRates: number[];
+  benchmarkSources: Set<string>;
+  activityDates: Date[];
+};
+
+function buildLaneIntelligence(
+  loads: LaneSourceLoad[],
+  quoteRequests: LaneSourceQuote[],
+): AnalyticsData["laneIntelligence"] {
+  const laneMap = new Map<string, LaneAggregation>();
+
+  for (const load of loads) {
+    const lane = getLaneAggregation(laneMap, {
+      originCity: load.originCity,
+      originState: load.originState,
+      destinationCity: load.destinationCity,
+      destinationState: load.destinationState,
+      equipmentType: load.equipmentType,
+    });
+
+    lane.loads.push(load);
+    lane.activityDates.push(load.createdAt);
+    addCount(lane.customers, load.shipper?.companyName ?? "Unknown customer");
+    if (load.carrier?.companyName) {
+      addCount(lane.carriers, load.carrier.companyName);
+    }
+  }
+
+  for (const quote of quoteRequests) {
+    const lane = getLaneAggregation(laneMap, quote);
+    lane.quotes.push(quote);
+    lane.activityDates.push(quote.createdAt);
+    addCount(lane.customers, quote.shipper?.companyName ?? "Unknown customer");
+
+    for (const benchmark of quote.rateBenchmarks) {
+      const rate = Number(benchmark.averageRate);
+      if (Number.isFinite(rate)) {
+        lane.benchmarkRates.push(rate);
+      }
+      lane.benchmarkSources.add(titleCaseEnum(benchmark.source));
+    }
+  }
+
+  const profiles = [...laneMap.entries()]
+    .map(([key, lane]) => buildLaneProfile(key, lane))
+    .sort((a, b) => {
+      const bActivity = b.loadCount * 3 + b.quoteRequestCount;
+      const aActivity = a.loadCount * 3 + a.quoteRequestCount;
+      return bActivity - aActivity || b.avgGrossProfit - a.avgGrossProfit;
+    })
+    .slice(0, 10);
+
+  const repeatLanes = profiles.filter(
+    (profile) => profile.loadCount >= 2 || profile.quoteRequestCount >= 3,
+  ).length;
+  const avgQuoteConfidence = averageNumber(
+    profiles.map((profile) => profile.quoteConfidence),
+  );
+  const underpricedLanes = profiles.filter(
+    (profile) => profile.loadCount > 0 && profile.avgMarginPercent < 15,
+  ).length;
+
+  return {
+    totalLanes: laneMap.size,
+    repeatLanes,
+    avgQuoteConfidence: Math.round(avgQuoteConfidence ?? 0),
+    underpricedLanes,
+    profiles,
+    opportunities: buildLaneOpportunities(profiles),
+  };
+}
+
+function buildLaneProfile(
+  key: string,
+  lane: LaneAggregation,
+): LaneIntelligenceProfile {
+  const sellRates = [
+    ...lane.loads.map((load) => Number(load.customerRate)),
+    ...lane.quotes.flatMap((quote) =>
+      quote.customerQuotes.map((customerQuote) =>
+        Number(customerQuote.quotedRate),
+      ),
+    ),
+  ].filter(Number.isFinite);
+  const buyRates = lane.loads
+    .map((load) => Number(load.carrierRate))
+    .filter(Number.isFinite);
+  const grossProfits = lane.loads
+    .map((load) => Number(load.grossProfit ?? 0))
+    .filter(Number.isFinite);
+  const acceptedQuotes = lane.quotes.filter(
+    (quote) =>
+      quote.status === "ACCEPTED" ||
+      quote.customerQuotes.some((customerQuote) => customerQuote.status === "ACCEPTED"),
+  ).length;
+  const rejectedQuotes = lane.quotes.filter(
+    (quote) =>
+      quote.status === "REJECTED" ||
+      quote.customerQuotes.some((customerQuote) => customerQuote.status === "REJECTED"),
+  ).length;
+  const decisionCount = acceptedQuotes + rejectedQuotes;
+  const avgSellRate = Math.round(averageNumber(sellRates) ?? 0);
+  const avgBuyRate = averageNumber(buyRates);
+  const avgGrossProfit = Math.round(averageNumber(grossProfits) ?? 0);
+  const avgMarginPercent =
+    avgSellRate > 0 ? Number(((avgGrossProfit / avgSellRate) * 100).toFixed(1)) : 0;
+  const latestDate = new Date(
+    Math.max(...lane.activityDates.map((date) => date.getTime())),
+  );
+
+  return {
+    key,
+    origin: lane.origin,
+    destination: lane.destination,
+    equipment: lane.equipment,
+    loadCount: lane.loads.length,
+    quoteRequestCount: lane.quotes.length,
+    customerCount: lane.customers.size,
+    carrierCount: lane.carriers.size,
+    avgSellRate,
+    avgBuyRate: avgBuyRate === null ? null : Math.round(avgBuyRate),
+    avgGrossProfit,
+    avgMarginPercent,
+    winRate: decisionCount > 0 ? Math.round((acceptedQuotes / decisionCount) * 100) : 0,
+    quoteConfidence: getLaneQuoteConfidence({
+      benchmarkCount: lane.benchmarkRates.length,
+      carrierCount: lane.carriers.size,
+      loadCount: lane.loads.length,
+      marginPercent: avgMarginPercent,
+      quoteRequestCount: lane.quotes.length,
+    }),
+    benchmarkAverage: averageNumber(lane.benchmarkRates),
+    benchmarkSources: [...lane.benchmarkSources].slice(0, 3),
+    topCustomer: getTopMapEntry(lane.customers) ?? "No customer history",
+    topCarrier: getTopMapEntry(lane.carriers) ?? "No carrier history",
+    latestActivity: formatDate(latestDate),
+    seasonality: getLaneSeasonality(lane.activityDates),
+    recommendation: getLaneRecommendation({
+      loadCount: lane.loads.length,
+      quoteRequestCount: lane.quotes.length,
+      avgMarginPercent,
+      benchmarkCount: lane.benchmarkRates.length,
+      carrierCount: lane.carriers.size,
+    }),
+  };
+}
+
+function getLaneAggregation(
+  laneMap: Map<string, LaneAggregation>,
+  input: {
+    originCity: string;
+    originState: string;
+    destinationCity: string;
+    destinationState: string;
+    equipmentType: string;
+  },
+) {
+  const origin = `${input.originCity}, ${input.originState}`;
+  const destination = `${input.destinationCity}, ${input.destinationState}`;
+  const equipment = input.equipmentType || "Dry van";
+  const key = [
+    origin.toLowerCase(),
+    destination.toLowerCase(),
+    equipment.toLowerCase(),
+  ].join("|");
+
+  const existing = laneMap.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  const lane: LaneAggregation = {
+    origin,
+    destination,
+    equipment,
+    loads: [],
+    quotes: [],
+    customers: new Map(),
+    carriers: new Map(),
+    benchmarkRates: [],
+    benchmarkSources: new Set(),
+    activityDates: [],
+  };
+  laneMap.set(key, lane);
+  return lane;
+}
+
+function buildLaneOpportunities(
+  profiles: LaneIntelligenceProfile[],
+): LaneRevenueOpportunity[] {
+  const opportunities: LaneRevenueOpportunity[] = [];
+  const underpriced = profiles
+    .filter((profile) => profile.loadCount > 0 && profile.avgMarginPercent < 15)
+    .sort((a, b) => a.avgMarginPercent - b.avgMarginPercent)[0];
+  const repeat = profiles
+    .filter((profile) => profile.loadCount >= 2 || profile.quoteRequestCount >= 3)
+    .sort((a, b) => b.avgGrossProfit - a.avgGrossProfit)[0];
+  const lowConfidence = profiles
+    .filter((profile) => profile.quoteRequestCount > 0 && profile.quoteConfidence < 55)
+    .sort((a, b) => a.quoteConfidence - b.quoteConfidence)[0];
+  const carrierGap = profiles
+    .filter((profile) => profile.loadCount > 0 && profile.carrierCount <= 1)
+    .sort((a, b) => b.loadCount - a.loadCount)[0];
+
+  if (underpriced) {
+    opportunities.push({
+      title: "Margin rule needed",
+      detail: `${underpriced.origin} -> ${underpriced.destination} is averaging ${underpriced.avgMarginPercent}% margin.`,
+      impact: "Review target margin before the next quote.",
+      tone: "red",
+    });
+  }
+
+  if (repeat) {
+    opportunities.push({
+      title: "Repeat lane candidate",
+      detail: `${repeat.topCustomer} has recurring activity on ${repeat.origin} -> ${repeat.destination}.`,
+      impact: "Build a saved quote template in the next Phase 9 slice.",
+      tone: "emerald",
+    });
+  }
+
+  if (lowConfidence) {
+    opportunities.push({
+      title: "Benchmark gap",
+      detail: `${lowConfidence.origin} -> ${lowConfidence.destination} has ${lowConfidence.quoteConfidence}% confidence.`,
+      impact: "Add DAT/Truckstop or manual benchmarks before quoting.",
+      tone: "amber",
+    });
+  }
+
+  if (carrierGap) {
+    opportunities.push({
+      title: "Carrier coverage gap",
+      detail: `${carrierGap.origin} -> ${carrierGap.destination} has ${carrierGap.carrierCount} carrier in history.`,
+      impact: "Source more vetted carriers before tendering repeat freight.",
+      tone: "sky",
+    });
+  }
+
+  return opportunities.slice(0, 4);
+}
+
+function getLaneQuoteConfidence(input: {
+  benchmarkCount: number;
+  carrierCount: number;
+  loadCount: number;
+  marginPercent: number;
+  quoteRequestCount: number;
+}) {
+  const historyScore = Math.min(input.loadCount * 8, 32);
+  const quoteScore = Math.min(input.quoteRequestCount * 4, 16);
+  const benchmarkScore = Math.min(input.benchmarkCount * 10, 30);
+  const carrierScore = Math.min(input.carrierCount * 4, 12);
+  const marginScore = input.marginPercent >= 15 && input.marginPercent <= 30 ? 10 : 4;
+
+  return Math.min(
+    100,
+    Math.round(historyScore + quoteScore + benchmarkScore + carrierScore + marginScore),
+  );
+}
+
+function getLaneRecommendation(input: {
+  avgMarginPercent: number;
+  benchmarkCount: number;
+  carrierCount: number;
+  loadCount: number;
+  quoteRequestCount: number;
+}) {
+  if (input.loadCount > 0 && input.avgMarginPercent < 15) {
+    return "Raise target margin or validate buy rate before quoting again.";
+  }
+
+  if (input.benchmarkCount === 0) {
+    return "Add DAT/Truckstop or manual benchmark before the next customer quote.";
+  }
+
+  if (input.carrierCount <= 1 && input.loadCount > 0) {
+    return "Add carrier options so one truck does not control the lane.";
+  }
+
+  if (input.loadCount >= 2 || input.quoteRequestCount >= 3) {
+    return "Good candidate for a recurring-lane quote template.";
+  }
+
+  return "Watch for repeat volume before creating a lane rule.";
+}
+
+function getLaneSeasonality(dates: Date[]) {
+  if (!dates.length) {
+    return "No history";
+  }
+
+  const monthCounts = new Map<number, number>();
+  for (const date of dates) {
+    addCount(monthCounts, date.getMonth());
+  }
+
+  const topMonth = [...monthCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (!topMonth) {
+    return "No pattern";
+  }
+
+  return new Intl.DateTimeFormat("en-US", { month: "short" }).format(
+    new Date(2024, topMonth[0], 1),
+  );
+}
+
+function addCount<T>(map: Map<T, number>, key: T) {
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+function getTopMapEntry(map: Map<string, number>) {
+  return [...map.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}
+
+function averageNumber(values: number[]) {
+  const numbers = values.filter(Number.isFinite);
+
+  if (!numbers.length) {
+    return null;
+  }
+
+  return numbers.reduce((total, value) => total + value, 0) / numbers.length;
 }
 
 // ─── Carrier Invoices (AP / Payables) ─────────────────────────────────────────
@@ -3915,6 +4354,103 @@ function getSampleAnalyticsData(): AnalyticsData {
       { origin: "Atlanta, GA", destination: "Memphis, TN", count: 6, avgGrossProfit: 940 },
       { origin: "Atlanta, GA", destination: "Dallas, TX", count: 5, avgGrossProfit: 1400 },
     ],
+    laneIntelligence: {
+      totalLanes: 14,
+      repeatLanes: 5,
+      avgQuoteConfidence: 72,
+      underpricedLanes: 1,
+      profiles: [
+        {
+          key: "atlanta-ga|nashville-tn|dry-van",
+          origin: "Atlanta, GA",
+          destination: "Nashville, TN",
+          equipment: "Dry Van",
+          loadCount: 12,
+          quoteRequestCount: 7,
+          customerCount: 4,
+          carrierCount: 6,
+          avgSellRate: 2450,
+          avgBuyRate: 1975,
+          avgGrossProfit: 475,
+          avgMarginPercent: 19.4,
+          winRate: 68,
+          quoteConfidence: 86,
+          benchmarkAverage: 2050,
+          benchmarkSources: ["Dat", "Truckstop"],
+          topCustomer: "Apex Manufacturing",
+          topCarrier: "Blue Ridge Freight",
+          latestActivity: "Jun 04",
+          seasonality: "Jun",
+          recommendation: "Good candidate for a recurring-lane quote template.",
+        },
+        {
+          key: "savannah-ga|atlanta-ga|reefer",
+          origin: "Savannah, GA",
+          destination: "Atlanta, GA",
+          equipment: "Reefer",
+          loadCount: 7,
+          quoteRequestCount: 4,
+          customerCount: 2,
+          carrierCount: 3,
+          avgSellRate: 1850,
+          avgBuyRate: 1625,
+          avgGrossProfit: 225,
+          avgMarginPercent: 12.2,
+          winRate: 50,
+          quoteConfidence: 64,
+          benchmarkAverage: 1700,
+          benchmarkSources: ["Manual"],
+          topCustomer: "Cold Chain Foods",
+          topCarrier: "Southern Express",
+          latestActivity: "May 28",
+          seasonality: "May",
+          recommendation: "Raise target margin or validate buy rate before quoting again.",
+        },
+        {
+          key: "atlanta-ga|dallas-tx|dry-van",
+          origin: "Atlanta, GA",
+          destination: "Dallas, TX",
+          equipment: "Dry Van",
+          loadCount: 5,
+          quoteRequestCount: 6,
+          customerCount: 3,
+          carrierCount: 1,
+          avgSellRate: 3200,
+          avgBuyRate: 2600,
+          avgGrossProfit: 600,
+          avgMarginPercent: 18.8,
+          winRate: 57,
+          quoteConfidence: 58,
+          benchmarkAverage: null,
+          benchmarkSources: [],
+          topCustomer: "Northstar Building Supply",
+          topCarrier: "Appalachian Transport",
+          latestActivity: "May 19",
+          seasonality: "Apr",
+          recommendation: "Add DAT/Truckstop or manual benchmark before the next customer quote.",
+        },
+      ],
+      opportunities: [
+        {
+          title: "Margin rule needed",
+          detail: "Savannah, GA -> Atlanta, GA is averaging 12.2% margin.",
+          impact: "Review target margin before the next quote.",
+          tone: "red",
+        },
+        {
+          title: "Repeat lane candidate",
+          detail: "Apex Manufacturing has recurring activity on Atlanta, GA -> Nashville, TN.",
+          impact: "Build a saved quote template in the next Phase 9 slice.",
+          tone: "emerald",
+        },
+        {
+          title: "Benchmark gap",
+          detail: "Atlanta, GA -> Dallas, TX has 58% confidence.",
+          impact: "Add DAT/Truckstop or manual benchmarks before quoting.",
+          tone: "amber",
+        },
+      ],
+    },
     topCarriers: [
       { name: "Blue Ridge Freight", loads: 14, totalGrossProfit: 15400 },
       { name: "Southern Express", loads: 11, totalGrossProfit: 9900 },

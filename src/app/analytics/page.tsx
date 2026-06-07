@@ -1,4 +1,14 @@
-import { BarChart3, DollarSign, Package, TrendingUp, Truck, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  BarChart3,
+  DollarSign,
+  MapPinned,
+  Package,
+  Target,
+  TrendingUp,
+  Truck,
+  Users,
+} from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
 import { getAnalyticsData } from "@/lib/crm";
@@ -13,7 +23,15 @@ const CARD_ACCENTS = [
 
 export default async function AnalyticsPage() {
   const data = await getAnalyticsData();
-  const { revenue, loadsByStatus, topLanes, topCarriers, salesFunnel, quoteConversion } = data;
+  const {
+    revenue,
+    loadsByStatus,
+    topLanes,
+    laneIntelligence,
+    topCarriers,
+    salesFunnel,
+    quoteConversion,
+  } = data;
 
   const totalLeads = salesFunnel.reduce((s, f) => s + f.count, 0);
   const wonLeads = salesFunnel.find((f) => f.stage === "Won")?.count ?? 0;
@@ -44,6 +62,26 @@ export default async function AnalyticsPage() {
       sub: `$${revenue.grossProfitThisMonth.toLocaleString()} gross profit`,
     },
   ];
+  const laneCards = [
+    {
+      icon: MapPinned,
+      label: "Tracked lanes",
+      value: laneIntelligence.totalLanes.toLocaleString(),
+      sub: `${laneIntelligence.repeatLanes} repeat lane candidates`,
+    },
+    {
+      icon: Target,
+      label: "Quote confidence",
+      value: `${laneIntelligence.avgQuoteConfidence}%`,
+      sub: "Based on history, benchmarks, and carrier depth",
+    },
+    {
+      icon: AlertTriangle,
+      label: "Underpriced lanes",
+      value: laneIntelligence.underpricedLanes.toLocaleString(),
+      sub: "Below 15% average gross margin",
+    },
+  ];
 
   return (
     <InternalShell
@@ -55,6 +93,26 @@ export default async function AnalyticsPage() {
       {/* Revenue cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {revenueCards.map((item, i) => (
+          <article
+            key={item.label}
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
+          >
+            <div className="p-5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                <item.icon className="h-4 w-4" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+                {item.value}
+              </p>
+              <p className="mt-2 text-xs text-slate-500">{item.sub}</p>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {laneCards.map((item, i) => (
           <article
             key={item.label}
             className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
@@ -179,6 +237,102 @@ export default async function AnalyticsPage() {
         )}
       </article>
 
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,0.8fr)]">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <Target className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Lane intelligence profiles</p>
+          </div>
+          {laneIntelligence.profiles.length ? (
+            <div className="overflow-x-auto p-5">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                    <th className="pb-3 pr-4">Lane</th>
+                    <th className="pb-3 pr-4">Equipment</th>
+                    <th className="pb-3 pr-4 text-right">History</th>
+                    <th className="pb-3 pr-4 text-right">Avg sell</th>
+                    <th className="pb-3 pr-4 text-right">Avg buy</th>
+                    <th className="pb-3 pr-4 text-right">Margin</th>
+                    <th className="pb-3 pr-4 text-right">Win rate</th>
+                    <th className="pb-3 pr-4 text-right">Confidence</th>
+                    <th className="pb-3">Next move</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {laneIntelligence.profiles.map((lane) => (
+                    <tr key={lane.key} className="align-top hover:bg-slate-50">
+                      <td className="py-3 pr-4">
+                        <p className="font-semibold text-slate-900">{lane.origin} → {lane.destination}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {lane.customerCount} customer{lane.customerCount !== 1 ? "s" : ""} · top: {lane.topCustomer}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          Peak month: {lane.seasonality} · latest: {lane.latestActivity}
+                        </p>
+                      </td>
+                      <td className="py-3 pr-4 text-slate-600">{lane.equipment}</td>
+                      <td className="py-3 pr-4 text-right font-semibold text-slate-900">
+                        {lane.loadCount} loads
+                        <p className="text-xs font-normal text-slate-500">{lane.quoteRequestCount} quotes</p>
+                      </td>
+                      <td className="py-3 pr-4 text-right font-semibold text-slate-900">{formatCurrency(lane.avgSellRate)}</td>
+                      <td className="py-3 pr-4 text-right font-semibold text-slate-700">
+                        {lane.avgBuyRate === null ? "TBD" : formatCurrency(lane.avgBuyRate)}
+                      </td>
+                      <td className={`py-3 pr-4 text-right font-bold ${lane.avgMarginPercent < 15 ? "text-red-700" : "text-emerald-700"}`}>
+                        {formatCurrency(lane.avgGrossProfit)}
+                        <p className="text-xs font-normal">{lane.avgMarginPercent}%</p>
+                      </td>
+                      <td className="py-3 pr-4 text-right font-semibold text-slate-900">{lane.winRate}%</td>
+                      <td className="py-3 pr-4 text-right">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${confidenceClass(lane.quoteConfidence)}`}>
+                          {lane.quoteConfidence}%
+                        </span>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {lane.benchmarkAverage ? `${formatCurrency(Math.round(lane.benchmarkAverage))} benchmark` : "No benchmark"}
+                        </p>
+                      </td>
+                      <td className="py-3 text-xs leading-5 text-slate-600">
+                        {lane.recommendation}
+                        <p className="mt-1 text-slate-400">
+                          Carrier depth: {lane.carrierCount} · top: {lane.topCarrier}
+                        </p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState text="Lane intelligence will populate once quotes or completed loads exist." />
+          )}
+        </article>
+
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <AlertTriangle className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Revenue opportunities</p>
+          </div>
+          {laneIntelligence.opportunities.length ? (
+            <div className="grid gap-3 p-5">
+              {laneIntelligence.opportunities.map((opportunity) => (
+                <div
+                  key={`${opportunity.title}-${opportunity.detail}`}
+                  className={`rounded-lg border p-4 ${opportunityToneClass(opportunity.tone)}`}
+                >
+                  <p className="text-sm font-bold">{opportunity.title}</p>
+                  <p className="mt-1 text-sm leading-6">{opportunity.detail}</p>
+                  <p className="mt-2 text-xs font-semibold">{opportunity.impact}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState text="No lane revenue gaps detected yet." />
+          )}
+        </article>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-2">
         {/* Sales funnel */}
         <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
@@ -272,6 +426,33 @@ function quoteBarColor(status: string) {
     Rejected: "bg-red-400",
   };
   return map[status] ?? "bg-emerald-400";
+}
+
+function confidenceClass(confidence: number) {
+  if (confidence >= 75) {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  if (confidence >= 55) {
+    return "bg-amber-50 text-amber-700";
+  }
+
+  return "bg-red-50 text-red-700";
+}
+
+function opportunityToneClass(tone: "amber" | "emerald" | "red" | "sky") {
+  const map = {
+    amber: "border-amber-100 bg-amber-50 text-amber-900",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-900",
+    red: "border-red-100 bg-red-50 text-red-900",
+    sky: "border-sky-100 bg-sky-50 text-sky-900",
+  };
+
+  return map[tone];
+}
+
+function formatCurrency(value: number) {
+  return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
 function EmptyState({ text }: { text: string }) {

@@ -45,6 +45,15 @@ libraries wherever practical.
   push passed. Prepares raw extractedText for later BOL/POD parsing,
   carrier invoice matching, and billing automation with human review gate.
 
+- Phase 6.1 completed: Integrations admin page. New /integrations route with
+  credential presence (env key checks for DAT, TRUCKSTOP, Twilio, Resend,
+  xAI/Grok, FMCSA, HERE, EIA, CarrierOk), last success/failure + recent per-
+  provider logs from IntegrationLog, global recent activity table (status
+  badges, error surfacing), metrics (configured count, failure rate). Reuses
+  existing marketplace logging, per-load log surfaces, InternalShell, nav
+  patterns. No new models or migrations. Full validation + push passed. Roadmap
+  updated. Followed all handoff rules.
+
 ## Multi-Agent Handoff Rules
 
 Use these rules when switching between Codex, Grok terminal agent, and Claude
@@ -293,25 +302,27 @@ Next: 5.4 for provider adapters when needed.
 
 Goal: make external provider connectivity manageable from inside the app.
 
-Status: not started.
+Status: 6.1 complete (admin visibility); remaining items (deeper logging for non-marketplace providers, retry actions, DAT/Truckstop payload details, webhook callback expansions) deferred to 6.2+.
 
-Build:
+Build (Phase 6.1 completed):
 
-- Add Integrations page or expand Settings with provider-specific panels.
-- Show credential presence, webhook status, last successful sync, last failure,
-  and test actions.
-- Add integration logs by provider/action/entity.
-- Add retry actions for failed integrations where safe.
-- Add DAT and Truckstop final payload mappings once account documentation is
-  available.
-- Add SMS delivery callbacks and inbound SMS reply handling.
-- Add inbound email reply tracking.
+- Added "Integrations" nav item (Admin / AI group) + dedicated /integrations page using InternalShell (force-dynamic, metrics + provider panels).
+- Provider overview cards for DAT, TRUCKSTOP, Twilio, Resend, xAI (Grok), FMCSA, HERE, EIA, CarrierOk: credential presence via representative env vars, last success/failure timestamps (from IntegrationLog where present), recent 5 logs per provider.
+- Cross-provider recent activity table (latest 12 entries) with time, provider, action, status badge (SUCCESS/FAILED color), message or error (trunc + title for full).
+- Top metrics: # providers, configured count, total recent logs, failure rate %.
+- Links from cards to exercise the integrations (e.g. /loads, /quote-requests for marketplace rate/post flows).
+- Notes on existing webhook endpoints and that per-load DAT/Truckstop logs continue to appear on load detail pages (no duplication).
+- Implementation reuses: existing IntegrationLog model + creates (from marketplace-workflow.ts for DAT/TRUCKSTOP capacity + post), Load.integrationLogs includes + views, formatters, nav data, InternalShell active highlighting. No schema change, no new migrations, no parallel logging system.
+- Graceful degradation when DB absent or no logs yet.
+- Full pre-commit validation (lint clean, tsc --noEmit, prisma:generate, npm run build with /integrations route) + commit + push + this roadmap update.
+- Followed all Multi-Agent Handoff Rules exactly.
 
-Completion criteria:
+Completion criteria progress:
+- Admins can now tell at a glance whether the listed providers are configured (env key) and see recent health/failures for those that write to IntegrationLog (primarily DAT/TRUCKSTOP marketplace today).
+- Integration failures for logged providers are visible in the UI without server logs or per-load drilldown.
+- 6.1 delivers the core "Integrations page" + "credential presence, last successful sync, last failure, and ... logs" items from the build list.
 
-- Admins can tell whether DAT, Truckstop, Twilio, Resend, xAI, FMCSA, HERE,
-  EIA, and carrier vetting providers are configured and healthy.
-- Integration failures are visible without checking server logs.
+Next for Phase 6: 6.2+ for expanded logging (Twilio/Resend/xAI/FMCSA calls), safe retry/test actions, inbound reply surfaces, and any provider-specific payload details once account docs available.
 
 ## Phase 7: Customer Portal
 

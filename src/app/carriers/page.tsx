@@ -1,4 +1,4 @@
-import { Plus, ShieldCheck, Truck, TrendingUp, Package } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, Plus, ShieldCheck, Truck, TrendingUp } from "lucide-react";
 
 import { CarrierCreateForm } from "@/components/crm-forms";
 import { CarrierListFilter } from "@/components/carrier-list-filter";
@@ -19,17 +19,19 @@ export default async function CarriersPage() {
   const approved = carrierViews.filter(
     (c) => c.complianceStatus === "Approved",
   ).length;
+  const pending = carrierViews.filter(
+    (c) => c.complianceStatus === "Pending",
+  ).length;
+  const blocked = carrierViews.filter(
+    (c) => c.blockedReason || ["Blocked", "Rejected"].includes(c.complianceStatus),
+  ).length;
   const totalLoads = carrierViews.reduce((sum, c) => sum + c.loadCount, 0);
-  const totalDelivered = carrierViews.reduce(
-    (sum, c) => sum + (c.deliveredLoads ?? 0),
-    0,
-  );
 
   const metrics = [
-    { icon: Truck, label: "Carriers", value: carrierViews.length.toString() },
-    { icon: ShieldCheck, label: "Approved", value: approved.toString() },
-    { icon: Package, label: "Loads covered", value: totalLoads.toString() },
-    { icon: TrendingUp, label: "Delivered", value: totalDelivered.toString() },
+    { icon: Truck, label: "Total carriers", value: carrierViews.length.toString(), helper: "In carrier file" },
+    { icon: ShieldCheck, label: "Tender ready", value: approved.toString(), helper: "Approved to book" },
+    { icon: ClipboardCheck, label: "Needs vetting", value: pending.toString(), helper: "Compliance not finished" },
+    { icon: TrendingUp, label: "Loads covered", value: totalLoads.toString(), helper: "Historical coverage" },
   ];
 
   return (
@@ -55,10 +57,25 @@ export default async function CarriersPage() {
               <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
                 {item.value}
               </p>
+              <p className="mt-2 text-xs font-semibold text-slate-400">{item.helper}</p>
             </div>
           </article>
         ))}
       </section>
+
+      {blocked > 0 ? (
+        <section className="rounded-lg border border-red-100 bg-red-50 p-4 text-red-950 shadow-sm">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-red-600" />
+            <div>
+              <p className="font-black">Blocked carrier review needed</p>
+              <p className="mt-1 text-sm leading-6 text-red-800">
+                {blocked} carrier {blocked === 1 ? "has" : "have"} a block or rejection signal. Do not tender until compliance clears the record.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* Create carrier — collapsed by default */}
       <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -102,6 +119,15 @@ export default async function CarriersPage() {
           loadCount: c.loadCount,
           deliveredLoads: c.deliveredLoads ?? 0,
           avgMargin: c.avgMargin ?? 0,
+          authorityStatus: c.authorityStatus,
+          insuranceStatus: c.insuranceStatus,
+          safetyRating: c.safetyRating,
+          fraudRiskLevel: c.fraudRiskLevel,
+          lastVettedAt: c.lastVettedAt,
+          callbackVerifiedAt: c.callbackVerifiedAt,
+          blockedReason: c.blockedReason,
+          onTimePickupRate: c.onTimePickupRate,
+          issuesCount: c.issuesCount,
         }))}
       />
     </InternalShell>

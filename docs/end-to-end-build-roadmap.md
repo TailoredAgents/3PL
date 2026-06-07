@@ -70,6 +70,10 @@ libraries wherever practical.
   test endpoint + added Retry forms on /integrations for DAT/TRUCKSTOP
   (re-runs capacity/post, new logs). Instrumented FMCSA lookups in
   agent-enrichment. Page notes updated. Validation + push passed. Followed rules.
+- Phase 6.5 completed: HERE/EIA logging + deeper actions. Real pings in test
+  route for HERE mileage and EIA diesel (logged). Instrumented enrichment
+  calls for HERE/EIA. Page updated for visibility. Validation + push passed.
+  Followed rules.
 
 ## Multi-Agent Handoff Rules
 
@@ -319,7 +323,7 @@ Next: 5.4 for provider adapters when needed.
 
 Goal: make external provider connectivity manageable from inside the app.
 
-Status: 6.3 complete; remaining (full FMCSA/HERE/EIA logging, safe retry buttons for failed marketplace posts, deeper per-provider dashboards, DAT/Truckstop payload mapping details) deferred to 6.4+.
+Status: 6.5 complete; remaining (deeper per-provider dashboards, DAT/Truckstop payload mapping details, and any final provider-specific surfaces) deferred to 6.6+.
 
 Build (Phase 6.1 completed): [see prior entry in Current State Log + previous roadmap update]
 
@@ -374,7 +378,21 @@ Completion criteria progress:
 - FMCSA activity is now logged when agents/enrichment run carrier lookups (visible in /integrations logs).
 - The page has deeper per-provider actions (test + retry) for the marketplace providers.
 
-Next for Phase 6: 6.5+ for HERE/EIA logging, deeper per-provider dashboards, DAT/Truckstop payload mapping details, and any remaining provider-specific surfaces.
+Build (Phase 6.5 completed):
+
+- Extended /api/integrations/test to support real pings for HERE (getTruckMileage sample route) and EIA (getEiaDieselPrice). Results logged as HEALTH_CHECK with details (miles/price, cached, errors).
+- Instrumented HERE and EIA usages in src/lib/agent-enrichment.ts (enrichQuotePricing for mileage+diesel, load tracking for HERE, diesel-only path) with logIntegration calls (provider HERE/EIA, action HEALTH_CHECK, status derived from result.error/configured/found, message with value).
+- Updated /integrations page description and aside notes to document real Test health pings for HERE/EIA and logging coverage for all listed providers.
+- Reuses logIntegration, the external here/eia libs, enrichment patterns (no duplication). Makes "Test health" actionable for routing/fuel providers and completes logging for FMCSA/HERE/EIA.
+- Full validation (lint, tsc --noEmit, prisma:generate, build) + commit + push + roadmap update.
+- Followed all handoff rules.
+
+Completion criteria progress:
+- Full FMCSA/HERE/EIA logging complete (via enrichment paths and test pings).
+- Deeper per-provider actions on /integrations (real pings now for HERE/EIA; retries for marketplace).
+- "Integration failures are visible" expanded to routing and fuel benchmark providers.
+
+Next for Phase 6: 6.6+ for deeper per-provider dashboards, DAT/Truckstop payload mapping details, and any remaining provider-specific surfaces.
 
 ## Phase 7: Customer Portal
 

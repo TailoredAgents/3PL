@@ -396,7 +396,7 @@ export default async function QuoteRequestDetailPage({
                   {quote.customerReference ? (
                     <p>Customer ref: {quote.customerReference}</p>
                   ) : null}
-                  {quote.hazmat ? <p>Hazmat: Yes</p> : null}
+                  {quote.hazmat === "Yes" ? <p>Hazmat: Yes</p> : null}
                   {quote.temperatureRequirement &&
                   quote.temperatureRequirement !== "Not set" ? (
                     <p>Temp: {quote.temperatureRequirement}</p>

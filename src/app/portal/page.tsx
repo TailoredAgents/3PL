@@ -185,7 +185,9 @@ export default async function CustomerPortalPage() {
                 <p className="mt-3 font-semibold text-slate-700 text-sm">Recent Invoices</p>
                 <ul className="mt-1 space-y-1 text-xs">
                   {myInvoices.map((inv: any) => (
-                    <li key={inv.id}>• INV for load {inv.load?.loadNumber || 'N/A'} - ${inv.amount || 0} {inv.status}</li>
+                    <li key={inv.id}>
+                      • INV for load {inv.load?.loadNumber || 'N/A'} - {formatCurrency(inv.amount)} {inv.status}
+                    </li>
                   ))}
                 </ul>
               </>
@@ -203,4 +205,20 @@ export default async function CustomerPortalPage() {
       </div>
     </main>
   );
+}
+
+function formatCurrency(value: unknown) {
+  const amount =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : value && typeof value === "object" && "toString" in value
+          ? Number(value.toString())
+          : 0;
+
+  return `$${amount.toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  })}`;
 }

@@ -100,6 +100,18 @@ libraries wherever practical.
   Local password-mode smoke checks passed for protected documents/outbound call
   routes, login redirect, Twilio form callbacks, and malformed callback
   handling. Full local validation passed.
+- Phase 12.3 completed: Local record-based QA foundation. Created local
+  Postgres database `dao_logistics_qa`, added ignored local `.env`, applied all
+  migrations locally, and added idempotent `npm run qa:seed` script with
+  realistic records for users, commission plan, shipper/contact/customer portal,
+  quotes, DAT/Truckstop benchmark placeholders, carriers, active/completed
+  loads, tracking exception, documents, billing/payables, AI run, call
+  transcript, and audit log. Smoke-tested login, health/database reachability,
+  dashboard, communications, quote detail, load board/detail, tracking,
+  documents, billing, payables, agents, admin, customer portal, carrier portal,
+  blocked-carrier booking gate, daily brief, and document automation locally.
+  Fixed quote detail conversion summary so non-hazmat quote display no longer
+  shows "Hazmat: Yes" due to string truthiness.
 
 ## Multi-Agent Handoff Rules
 
@@ -787,9 +799,9 @@ Completion criteria:
 
 Goal: stabilize the finished product after all major functionality exists.
 
-Status: 12.2 complete. Local QA script, initial hardening audit, and first
-high-risk API protection batch are complete. Record-based manual workflow
-testing and bug fixing remain.
+Status: 12.3 complete. Local QA script, local seeded database, initial hardening
+audit, and first high-risk API protection batch are complete. Deeper
+record-based manual workflow testing and bug fixing remain.
 
 Build:
 

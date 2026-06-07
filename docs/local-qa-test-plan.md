@@ -45,6 +45,47 @@ npm run dev
 
 Open `http://localhost:3000` and sign in through `/login`.
 
+### Local QA Database
+
+For record-based QA on Austin's local machine, use the dedicated local Postgres
+database instead of Render:
+
+```bash
+createdb -h localhost dao_logistics_qa
+```
+
+Create a local ignored `.env`:
+
+```txt
+DATABASE_URL=postgresql://richardaustindugger@localhost:5432/dao_logistics_qa?schema=public
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+INTERNAL_APP_PASSWORD=qa-phase-12
+INTERNAL_AUTH_COOKIE=dao_logistics_internal
+XAI_MODEL=grok-4.3
+```
+
+Apply migrations and seed realistic QA records:
+
+```bash
+npm run prisma:deploy
+npm run qa:seed
+```
+
+Seeded records include:
+
+- Users: Austin, Conner, Devon, and Michael.
+- Commission plan: manager 35%, lifetime client owner 15%, Austin 20%,
+  company 30%.
+- Customer account: `jordan.reed@qa-apex.example`.
+- Carrier portal account: `dispatch@qa-reliable.example`.
+- Password-gate login: `qa-phase-12`.
+- Primary quote: `qa-quote-atl-nash`.
+- Active load: `qa-load-active`.
+- Completed paid load: `qa-load-completed`.
+
+The seed is idempotent; rerun `npm run qa:seed` whenever the local QA records
+need to be restored.
+
 ## 3. Test Data To Create
 
 Create realistic records instead of relying only on sample fallback data:

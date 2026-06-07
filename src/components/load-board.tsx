@@ -69,7 +69,6 @@ export function LoadBoard({ loads }: LoadBoardProps) {
     [equipment, filter, loads, search, sortKey],
   );
   const boardMetrics = getBoardMetrics(loads);
-  const operationsSummary = getOperationsSummary(loads);
 
   return (
     <>
@@ -123,33 +122,6 @@ export function LoadBoard({ loads }: LoadBoardProps) {
             </button>
           );
         })}
-      </section>
-
-      <section className="grid gap-3 xl:grid-cols-5">
-        {operationsSummary.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            onClick={() => setFilter(item.filter)}
-            className={cn(
-              "rounded-lg border p-4 text-left shadow-sm hover:-translate-y-0.5 hover:shadow-md",
-              item.className,
-            )}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.14em] opacity-75">
-                  {item.label}
-                </p>
-                <p className="mt-1 text-xl font-black tracking-normal">
-                  {item.value}
-                </p>
-              </div>
-              <item.icon className="h-4 w-4 opacity-70" />
-            </div>
-            <p className="mt-3 text-sm leading-6 opacity-85">{item.detail}</p>
-          </button>
-        ))}
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -276,23 +248,11 @@ export function LoadBoard({ loads }: LoadBoardProps) {
       </section>
 
       {boardRows.length > 0 && boardRows.length < 4 ? (
-        <section className="rounded-lg border border-dashed border-slate-200 bg-white/70 p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                Board capacity
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-700">
-                This area will fill with active freight as more loads enter the
-                board. Current view is intentionally compact so the active load
-                remains the focus.
-              </p>
-            </div>
-            <Link href="/tracking" className="dao-secondary-action shrink-0 text-xs">
-              Open Tracking <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </section>
+        <div className="flex justify-end">
+          <Link href="/tracking" className="dao-secondary-action shrink-0 text-xs">
+            Open Tracking <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       ) : null}
     </>
   );
@@ -334,10 +294,6 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
       {/* Status */}
       <Td>
         <StatusPill label={load.status} />
-        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-slate-500">
-          <AlertTriangle className={cn("h-3.5 w-3.5", riskLevel.iconClass)} />
-          {riskLevel.label}
-        </div>
       </Td>
 
       {/* Lane / dates */}
@@ -370,18 +326,20 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
       {/* Coverage */}
       <Td>
         <div className="min-w-[155px]">
-          <p className="font-semibold text-slate-900">{load.carrier}</p>
-          <p className="mt-1 text-xs text-slate-500">
-            {load.carrierCandidates.length} candidates ·{" "}
-            {load.carrierQuotes.length} offers
-          </p>
           <p
             className={cn(
-              "mt-2 w-fit rounded-full px-2 py-0.5 text-xs font-bold",
+              "w-fit rounded-full px-2 py-0.5 text-xs font-bold",
               getCoverageClass(load),
             )}
           >
             {getCoverageLabel(load)}
+          </p>
+          {load.carrier !== "Carrier needed" && (
+            <p className="mt-2 font-semibold text-slate-900">{load.carrier}</p>
+          )}
+          <p className="mt-1 text-xs text-slate-500">
+            {load.carrierCandidates.length} candidates ·{" "}
+            {load.carrierQuotes.length} offers
           </p>
         </div>
       </Td>
@@ -592,20 +550,14 @@ function QuickActions({
         {nextAction.cta}
         <ExternalLink className="h-3.5 w-3.5" />
       </Link>
-      <Link
-        href={`/loads/${load.id}?tab=coverage`}
-        className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
-      >
-        <Truck className="h-3.5 w-3.5" />
-        Cover
-      </Link>
-      <Link
-        href={`/loads/${load.id}?tab=coverage`}
-        className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
-      >
-        <Send className="h-3.5 w-3.5" />
-        Post
-      </Link>
+      {nextAction.cta !== "Open" && (
+        <Link
+          href={`/loads/${load.id}`}
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+        >
+          Open load
+        </Link>
+      )}
     </div>
   );
 }
@@ -738,90 +690,6 @@ function getBoardMetrics(loads: LoadView[]) {
       icon: AlertTriangle,
       iconClass: "text-red-500",
       filter: "exceptions" as const,
-    },
-  ];
-}
-
-function getOperationsSummary(loads: LoadView[]) {
-  const needsCarrier = loads.filter(
-    (load) => load.carrier === "Carrier needed",
-  );
-  const exceptions = loads.filter(
-    (load) => getLoadRiskLevel(load).level !== 0,
-  );
-  const needsCustomerUpdate = loads.filter(
-    (load) => load.customerUpdateStatus === "Needed",
-  );
-  const readyToInvoice = loads.filter(
-    (load) => load.billingReadiness === "Ready to invoice",
-  );
-  const marginAtRisk = loads.filter((load) => load.marginPercent < 12);
-
-  return [
-    {
-      label: "Coverage needed",
-      value: needsCarrier.length.toString(),
-      detail: needsCarrier.length
-        ? "Source, quote, vet, and book a carrier."
-        : "Every visible load has carrier coverage.",
-      icon: Truck,
-      filter: "needs-carrier" as const,
-      className:
-        needsCarrier.length > 0
-          ? "border-red-100 bg-red-50 text-red-950"
-          : "border-emerald-100 bg-emerald-50 text-emerald-950",
-    },
-    {
-      label: "Exceptions",
-      value: exceptions.length.toString(),
-      detail: exceptions.length
-        ? "Resolve high-risk loads before routine work."
-        : "No active board exceptions.",
-      icon: AlertTriangle,
-      filter: "exceptions" as const,
-      className:
-        exceptions.length > 0
-          ? "border-red-100 bg-red-50 text-red-950"
-          : "border-slate-100 bg-slate-50 text-slate-800",
-    },
-    {
-      label: "Customer updates",
-      value: needsCustomerUpdate.length.toString(),
-      detail: needsCustomerUpdate.length
-        ? "Send proactive shipper updates."
-        : "No customer update currently due.",
-      icon: RefreshCcw,
-      filter: "customer-update" as const,
-      className:
-        needsCustomerUpdate.length > 0
-          ? "border-amber-100 bg-amber-50 text-amber-950"
-          : "border-slate-100 bg-slate-50 text-slate-800",
-    },
-    {
-      label: "Ready to invoice",
-      value: readyToInvoice.length.toString(),
-      detail: readyToInvoice.length
-        ? "Push clean delivered loads to billing."
-        : "No load is billing-ready yet.",
-      icon: DollarSign,
-      filter: "ready-invoice" as const,
-      className:
-        readyToInvoice.length > 0
-          ? "border-emerald-100 bg-emerald-50 text-emerald-950"
-          : "border-slate-100 bg-slate-50 text-slate-800",
-    },
-    {
-      label: "Margin at risk",
-      value: marginAtRisk.length.toString(),
-      detail: marginAtRisk.length
-        ? "Review customer/carrier rate spread."
-        : "Visible load margins are above floor.",
-      icon: DollarSign,
-      filter: "all" as const,
-      className:
-        marginAtRisk.length > 0
-          ? "border-amber-100 bg-amber-50 text-amber-950"
-          : "border-slate-100 bg-slate-50 text-slate-800",
     },
   ];
 }

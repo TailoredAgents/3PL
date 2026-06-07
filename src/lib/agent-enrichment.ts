@@ -151,6 +151,28 @@ async function enrichQuotePricingFromQuoteRequest(
 
   const mileage = mileageResult.status === "fulfilled" ? mileageResult.value : null;
   const diesel = dieselResult.status === "fulfilled" ? dieselResult.value : null;
+
+  // Log HERE and EIA for integrations monitoring
+  if (mileage) {
+    const hasError = !!mileage.error;
+    await logIntegration({
+      provider: "HERE",
+      action: "HEALTH_CHECK",
+      status: hasError ? "FAILED" : mileage.miles ? "SUCCESS" : "SKIPPED",
+      message: mileage.miles ? `HERE mileage: ${mileage.miles} (cached: ${mileage.fromCache})` : "No HERE mileage",
+      error: mileage.error ?? null,
+    });
+  }
+  if (diesel) {
+    const hasError = !!diesel.error;
+    await logIntegration({
+      provider: "EIA",
+      action: "HEALTH_CHECK",
+      status: hasError ? "FAILED" : diesel.price ? "SUCCESS" : "SKIPPED",
+      message: diesel.price ? `EIA diesel: $${diesel.price} (cached: ${diesel.fromCache})` : "No EIA price",
+      error: diesel.error ?? null,
+    });
+  }
   const rate = rateResult.status === "fulfilled" ? rateResult.value : null;
 
   if (mileage?.miles) {
@@ -259,6 +281,17 @@ async function enrichQuotePricingFromLead(
   // Diesel price is always useful even without a specific lane
   const dieselResult = await Promise.allSettled([getEiaDieselPrice()]);
   const diesel = dieselResult[0].status === "fulfilled" ? dieselResult[0].value : null;
+
+  if (diesel) {
+    const hasError = !!diesel.error;
+    await logIntegration({
+      provider: "EIA",
+      action: "HEALTH_CHECK",
+      status: hasError ? "FAILED" : diesel.price ? "SUCCESS" : "SKIPPED",
+      message: diesel.price ? `EIA diesel: $${diesel.price} (cached: ${diesel.fromCache})` : "No EIA price",
+      error: diesel.error ?? null,
+    });
+  }
 
   if (diesel?.price) {
     enrichment.dieselPricePerGallon = diesel.price;
@@ -415,6 +448,7 @@ async function enrichCarrierCoverage(
       const fmcsaRes = fmcsa.status === "fulfilled" ? fmcsa.value : null;
       if (fmcsaRes) {
         const hasError = "error" in fmcsaRes && !!fmcsaRes.error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const f = fmcsaRes as any;
         await logIntegration({
           provider: "FMCSA",
@@ -489,6 +523,19 @@ async function enrichLoadTracking(
               )
             : Promise.resolve({ configured: false, miles: null, fromCache: false }),
         ]);
+
+        if (mileage.status === "fulfilled" && mileage.value) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const m = mileage.value as any;
+          const hasError = !!m.error;
+          await logIntegration({
+            provider: "HERE",
+            action: "HEALTH_CHECK",
+            status: hasError ? "FAILED" : m.miles ? "SUCCESS" : "SKIPPED",
+            message: m.miles ? `HERE mileage for load: ${m.miles} (cached: ${m.fromCache})` : "No HERE mileage",
+            error: hasError ? m.error : null,
+          });
+        }
 
         if (eld.status === "fulfilled" && eld.value.found) {
           enrichment.eldPosition = {
@@ -646,6 +693,7 @@ async function enrichCarrierCompliance(
       action: "CARRIER_RESPONSE_SYNC",
       status: fmcsaHasError ? "FAILED" : fmcsaResult.found ? "SUCCESS" : "SKIPPED",
       message: fmcsaResult.found ? `FMCSA data for ${fmcsaResult.dotNumber || fmcsaResult.mcNumber || ""}` : "No FMCSA match or not configured",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       error: fmcsaHasError ? (fmcsaResult as any).error : null,
     });
 

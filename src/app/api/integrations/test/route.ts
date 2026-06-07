@@ -6,6 +6,8 @@ import {
   searchAndStoreMarketplaceCapacity,
   postLoadToMarketplaces,
 } from "@/lib/marketplace/marketplace-workflow";
+import { getTruckMileage } from "@/lib/external/here";
+import { getEiaDieselPrice } from "@/lib/external/eia";
 
 const xaiApiKey = process.env.XAI_API_KEY;
 const xaiModel = process.env.XAI_MODEL ?? "grok-4.3";
@@ -98,6 +100,58 @@ export async function POST(request: Request) {
         action: "LOAD_POST", // or CAPACITY_SEARCH, but generic
         status: "FAILED",
         loadId,
+        error: message,
+      });
+    }
+  } else if (provider === "HERE") {
+    // Real ping: dummy mileage lookup
+    try {
+      const ping = await getTruckMileage("Atlanta, GA", "Dallas, TX");
+      const ok = !!ping.miles && !ping.error;
+      result = {
+        ok,
+        message: ok ? `HERE ping succeeded: ${ping.miles} miles (cached: ${ping.fromCache})` : `HERE ping failed: ${ping.error || "no data"}`,
+      };
+      await logIntegration({
+        provider: "HERE",
+        action: "HEALTH_CHECK",
+        status: ok ? "SUCCESS" : "FAILED",
+        message: result.message,
+        error: ping.error ?? null,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "HERE ping failed";
+      result = { ok: false, message, error: message };
+      await logIntegration({
+        provider: "HERE",
+        action: "HEALTH_CHECK",
+        status: "FAILED",
+        error: message,
+      });
+    }
+  } else if (provider === "EIA") {
+    // Real ping: current diesel price
+    try {
+      const ping = await getEiaDieselPrice();
+      const ok = !!ping.price && !ping.error;
+      result = {
+        ok,
+        message: ok ? `EIA ping succeeded: $${ping.price}/gal (cached: ${ping.fromCache})` : `EIA ping failed: ${ping.error || "no data"}`,
+      };
+      await logIntegration({
+        provider: "EIA",
+        action: "HEALTH_CHECK",
+        status: ok ? "SUCCESS" : "FAILED",
+        message: result.message,
+        error: ping.error ?? null,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "EIA ping failed";
+      result = { ok: false, message, error: message };
+      await logIntegration({
+        provider: "EIA",
+        action: "HEALTH_CHECK",
+        status: "FAILED",
         error: message,
       });
     }

@@ -14,7 +14,7 @@ export default async function IntegrationsPage() {
       active="Integrations"
       eyebrow="Admin"
       title="Integrations"
-      description="Monitor external provider connectivity, credentials, last success/failure, and logs. Use Test health buttons to run safe pings (xAI + others). xAI agent/document calls now write logs automatically."
+      description="Monitor external provider connectivity, credentials, last success/failure, and logs. Test health now performs real pings for HERE (sample mileage) and EIA (diesel price). Use Retry buttons for DAT/TRUCKSTOP. FMCSA/HERE/EIA logged via agent enrichment."
       action={{ label: "Settings", href: "/settings" }}
     >
       {/* Overview metrics */}
@@ -181,7 +181,7 @@ export default async function IntegrationsPage() {
       {/* Global logs note */}
       <aside className="mt-6 rounded-lg border border-slate-100 bg-white p-5 text-sm text-slate-600">
         <p className="font-semibold">Integration logs</p>
-        <p className="mt-1">DAT and TRUCKSTOP marketplace activity (including manual retries) writes here via the marketplace workflow. xAI (Grok) agent and document extraction calls are now logged automatically. FMCSA lookups are logged on agent enrichment. Use Test health / Retry buttons on cards.</p>
+        <p className="mt-1">DAT/TRUCKSTOP (with retries), xAI, FMCSA/HERE/EIA (via enrichment), Twilio/Resend webhooks now log here. Test health does real pings for HERE/EIA.</p>
         <p className="mt-2 text-xs">Webhook endpoints (Twilio voice, Resend) are active at /api/twilio/... and /api/resend/... . Inbound calls, transcriptions, status callbacks, and email events now emit WEBHOOK_RECEIVED logs.</p>
       </aside>
     </InternalShell>

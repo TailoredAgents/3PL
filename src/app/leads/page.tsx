@@ -1,6 +1,7 @@
 import {
   Bot,
   CalendarClock,
+  CheckCircle2,
   FileUp,
   Phone,
   Target,
@@ -38,12 +39,13 @@ export default async function LeadsPage() {
     ["Qualified", "Quoted"].includes(lead.stage),
   ).length;
   const followUpLeads = leadViews.slice(0, 4);
+  const topFollowUp = followUpLeads[0];
 
   const metrics = [
-    { icon: Users, label: "Active leads", value: leadViews.length.toString() },
-    { icon: CalendarClock, label: "Follow-ups due", value: followUpLeads.length.toString() },
-    { icon: Target, label: "High priority", value: highPriorityCount.toString() },
-    { icon: TrendingUp, label: "Quote-ready", value: quoteReadyCount.toString() },
+    { icon: Users, label: "Active leads", value: leadViews.length.toString(), helper: "Open sales records" },
+    { icon: CalendarClock, label: "Follow-ups due", value: followUpLeads.length.toString(), helper: "Start here today" },
+    { icon: Target, label: "High priority", value: highPriorityCount.toString(), helper: "Needs focused touch" },
+    { icon: TrendingUp, label: "Quote-ready", value: quoteReadyCount.toString(), helper: "Qualified or quoted" },
   ];
 
   return (
@@ -69,9 +71,50 @@ export default async function LeadsPage() {
               <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
                 {item.value}
               </p>
+              <p className="mt-2 text-xs font-semibold text-slate-400">{item.helper}</p>
             </div>
           </article>
         ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
+        <article className="rounded-lg border border-amber-100 bg-amber-50 p-5 text-amber-900 shadow-sm">
+          <div className="flex gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+              <CalendarClock className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-75">
+                Sales priority
+              </p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight">
+                {topFollowUp ? `Call ${topFollowUp.company}` : "Pipeline is clear"}
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 opacity-85">
+                {topFollowUp
+                  ? `${topFollowUp.nextFollowUp} · ${topFollowUp.pain}`
+                  : "No scheduled follow-ups are currently waiting. Add new prospects or review quote-ready accounts."}
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
+          <div className="flex gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-75">
+                Sales rhythm
+              </p>
+              <h2 className="mt-2 text-xl font-black tracking-tight">Touch, log, advance</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 opacity-85">
+                Work follow-ups first, record the result, then move leads toward quote-ready freight.
+              </p>
+            </div>
+          </div>
+        </article>
       </section>
 
       {/* Today's calls */}
@@ -164,14 +207,16 @@ export default async function LeadsPage() {
       {/* Create lead + import — equal width */}
       <section className="grid items-start gap-6 xl:grid-cols-2">
         <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
+          <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 hover:bg-slate-100/60">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
-                <UserPlus className="h-4 w-4 text-slate-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50">
+                <UserPlus className="h-4 w-4 text-emerald-700" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Create lead</p>
-                <p className="text-xs text-slate-500">Add a prospect manually</p>
+                <p className="text-sm font-black text-slate-900">Create lead</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                  Add a prospect with lane, equipment, volume, and follow-up context.
+                </p>
               </div>
             </div>
             <span className="text-xs font-semibold text-slate-400 group-open:hidden">Expand</span>
@@ -183,14 +228,16 @@ export default async function LeadsPage() {
         </details>
 
         <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
+          <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 hover:bg-slate-100/60">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
-                <FileUp className="h-4 w-4 text-slate-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-sky-50">
+                <FileUp className="h-4 w-4 text-sky-700" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Contact import</p>
-                <p className="text-xs text-slate-500">Upload a CSV contact list</p>
+                <p className="text-sm font-black text-slate-900">Contact import</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                  Upload CSV prospects and preserve source context for follow-up.
+                </p>
               </div>
             </div>
             <span className="text-xs font-semibold text-slate-400 group-open:hidden">Expand</span>
@@ -207,7 +254,12 @@ export default async function LeadsPage() {
         <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
           <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
             <Bot className="h-4 w-4 text-slate-500" />
-            <p className="text-sm font-semibold text-slate-700">AI sales assistant</p>
+            <div>
+              <p className="text-sm font-black text-slate-800">AI sales assistant</p>
+              <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                Suggested next move by account.
+              </p>
+            </div>
           </div>
           <div className="grid gap-3 p-4">
             {leadViews.length ? leadViews.map((lead) => (
@@ -235,7 +287,12 @@ export default async function LeadsPage() {
         <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
           <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
             <Phone className="h-4 w-4 text-slate-500" />
-            <p className="text-sm font-semibold text-slate-700">Recent activity</p>
+            <div>
+              <p className="text-sm font-black text-slate-800">Recent activity</p>
+              <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                Logged touches and CRM notes.
+              </p>
+            </div>
           </div>
           <div className="grid gap-3 p-4">
             {activityViews.length ? activityViews.map((activity) => (

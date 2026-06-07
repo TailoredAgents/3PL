@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
+import { ShipperContactCreateForm, ShipperLanesForm } from "@/components/crm-forms";
 import { getCustomerQuoteRequestViews, getShipperDetailView } from "@/lib/crm";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
@@ -33,6 +34,12 @@ export default async function CustomerPortalPage() {
   const detail = shipper?.portalEnabled ? await getShipperDetailView(shipperId) : null;
   const myLoads = detail?.loads || [];
   const myDocuments = detail?.documents || [];
+  const myInvoices = shipper?.portalEnabled ? await prisma.invoice.findMany({
+    where: { shipperId },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+    include: { load: { select: { loadNumber: true } } },
+  }) : [];
 
   if (!shipper?.portalEnabled) {
     return (
@@ -92,6 +99,32 @@ export default async function CustomerPortalPage() {
             </details>
             <Link href="/quote-requests" className="mt-2 inline-block text-xs text-emerald-700">Full quote history →</Link>
           </div>
+          <div className="rounded-lg border p-6 md:col-span-2">
+            <h2 className="font-semibold">Your Saved Preferences</h2>
+            <div className="mt-3 grid gap-4 md:grid-cols-2 text-sm">
+              <div>
+                <p className="font-semibold text-slate-700">Lanes</p>
+                <p className="text-xs text-slate-600 mt-1">{detail?.lanes?.length ? detail.lanes.join('; ') : 'No lanes saved yet.'}</p>
+                <div className="mt-2">
+                  <ShipperLanesForm shipperId={shipperId} currentLanes={detail?.lanes?.join('; ') || ''} />
+                </div>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-700">Contacts</p>
+                {detail?.contacts?.length ? (
+                  <ul className="text-xs text-slate-600 mt-1 space-y-0.5">
+                    {detail.contacts.slice(0,3).map((c: any) => (
+                      <li key={c.id}>• {c.fullName} {c.email ? `(${c.email})` : ''}</li>
+                    ))}
+                  </ul>
+                ) : <p className="text-xs text-slate-600 mt-1">No contacts saved.</p>}
+                <div className="mt-2">
+                  <ShipperContactCreateForm shipperId={shipperId} />
+                </div>
+              </div>
+            </div>
+            <p className="mt-2 text-[10px] text-slate-500">Update your preferred lanes and contacts here. Changes are visible to your broker team.</p>
+          </div>
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Active Loads &amp; Tracking</h2>
             {myLoads.filter(l => !['DELIVERED','POD_RECEIVED','INVOICED','PAID'].includes(l.status)).length > 0 ? (
@@ -127,7 +160,17 @@ export default async function CustomerPortalPage() {
             ) : (
               <p className="mt-2 text-sm text-slate-600">No recent documents.</p>
             )}
-            <p className="mt-2 text-xs text-slate-500">Invoices and PODs attached to your loads. Contact broker for full access.</p>
+            {myInvoices.length > 0 && (
+              <>
+                <p className="mt-3 font-semibold text-slate-700 text-sm">Recent Invoices</p>
+                <ul className="mt-1 space-y-1 text-xs">
+                  {myInvoices.map((inv: any) => (
+                    <li key={inv.id}>• INV for load {inv.load?.loadNumber || 'N/A'} - ${inv.amount || 0} {inv.status}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <p className="mt-2 text-xs text-slate-500">Full details and downloads via your broker or attached documents.</p>
           </div>
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Support</h2>

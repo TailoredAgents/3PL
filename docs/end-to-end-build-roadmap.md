@@ -66,6 +66,10 @@ libraries wherever practical.
   voice routes (incoming, status callbacks, transcription). Inbound calls,
   transcripts, and email events now appear in /integrations activity. Updated
   page notes. Reused 6.2 helper/enum. Validation + push passed. Followed rules.
+- Phase 6.4 completed: Safe retry for marketplace + FMCSA logging. Extended
+  test endpoint + added Retry forms on /integrations for DAT/TRUCKSTOP
+  (re-runs capacity/post, new logs). Instrumented FMCSA lookups in
+  agent-enrichment. Page notes updated. Validation + push passed. Followed rules.
 
 ## Multi-Agent Handoff Rules
 
@@ -355,7 +359,22 @@ Completion criteria progress:
 - Inbound events from these providers are now visible in the central Integrations admin page without checking server logs.
 - The /integrations page now shows meaningful recent activity for communication providers when webhooks fire (e.g. customer calls or email deliveries).
 
-Next for Phase 6: 6.4+ for full FMCSA/HERE/EIA logging, safe retry buttons for failed marketplace posts, deeper per-provider dashboards, and any remaining provider-specific surfaces.
+Build (Phase 6.4 completed):
+
+- Added safe retry support to /api/integrations/test for DAT/TRUCKSTOP marketplace: accepts loadId + action ("retry-capacity" or "retry-post"), calls the existing searchAndStoreMarketplaceCapacity or postLoadToMarketplaces (which auto-create fresh IntegrationLog entries via the workflow).
+- Added "Retry capacity" and "Retry post" forms (with loadId input) directly on the DAT and TRUCKSTOP provider cards in /integrations page. Retries are explicit, user-triggered, and surface new logs in the recent activity table.
+- Instrumented FMCSA lookups: added logIntegration calls (provider "FMCSA", action "CARRIER_RESPONSE_SYNC") in the two main call sites in src/lib/agent-enrichment.ts (enrichCarrierCoverage and enrichCarrierCompliance paths). Uses the result's found/error fields to set status.
+- Minor page updates: health summary and global notes now reference retry capability and FMCSA logging.
+- Reuses logIntegration (from 6.2), marketplace-workflow functions (no duplication of posting logic), existing form posting + revalidate pattern, and the /integrations card structure. Safe (no auto-retries, explicit loadId required). Starts delivering on "FMCSA logging" and "safe retry buttons for failed marketplace posts".
+- Full validation (lint clean, tsc, prisma:generate, build) + commit + push + this roadmap update.
+- Followed all handoff rules.
+
+Completion criteria progress:
+- Safe retry buttons for failed marketplace posts (DAT/TRUCKSTOP capacity and load post) are now available on the admin Integrations page.
+- FMCSA activity is now logged when agents/enrichment run carrier lookups (visible in /integrations logs).
+- The page has deeper per-provider actions (test + retry) for the marketplace providers.
+
+Next for Phase 6: 6.5+ for HERE/EIA logging, deeper per-provider dashboards, DAT/Truckstop payload mapping details, and any remaining provider-specific surfaces.
 
 ## Phase 7: Customer Portal
 

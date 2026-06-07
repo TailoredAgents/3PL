@@ -141,9 +141,9 @@ export function CommunicationsWorkspace({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 xl:grid xl:min-h-[760px] xl:grid-cols-[330px_minmax(0,1fr)_340px]">
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 xl:grid xl:h-[calc(100vh-18rem)] xl:min-h-[560px] xl:max-h-[760px] xl:grid-cols-[330px_minmax(0,1fr)_340px]">
       {/* Left — inbox */}
-      <aside className="border-b border-slate-200 bg-slate-50/80 xl:border-b-0 xl:border-r">
+      <aside className="border-b border-slate-200 bg-slate-50/80 xl:grid xl:min-h-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:border-b-0 xl:border-r">
         <div className="border-b border-slate-200 bg-white px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export function CommunicationsWorkspace({
             Prioritized conversations, follow-ups, and quote-ready sales work.
           </p>
         </div>
-        <div className="max-h-[690px] overflow-y-auto p-3">
+        <div className="min-h-0 overflow-y-auto p-3">
           {workspace.threads.map((thread) => (
             <button
               key={thread.id}
@@ -200,7 +200,7 @@ export function CommunicationsWorkspace({
       </aside>
 
       {/* Center — conversation */}
-      <article className="grid min-h-[760px] grid-rows-[auto_auto_minmax(0,1fr)_auto]">
+      <article className="grid min-h-[620px] grid-rows-[auto_auto_minmax(140px,1fr)_auto] xl:min-h-0">
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
           <div>
             <div className="flex items-center gap-2">
@@ -301,22 +301,22 @@ export function CommunicationsWorkspace({
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-            {composerTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setComposerMode(tab.id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold",
-                  composerMode === tab.id
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700",
-                )}
-              >
-                <tab.icon className="h-3.5 w-3.5" />
-                {tab.label}
-              </button>
-            ))}
+              {composerTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setComposerMode(tab.id)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold",
+                    composerMode === tab.id
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700",
+                  )}
+                >
+                  <tab.icon className="h-3.5 w-3.5" />
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -369,7 +369,7 @@ export function CommunicationsWorkspace({
       </article>
 
       {/* Right — context sidebar */}
-      <aside className="border-t border-slate-200 bg-slate-50 xl:border-l xl:border-t-0">
+      <aside className="min-h-0 overflow-y-auto border-t border-slate-200 bg-slate-50 xl:border-l xl:border-t-0">
         {/* Customer context */}
         <div className="overflow-hidden rounded-none border-b border-slate-200 bg-white">
           <div className="border-b border-slate-100 bg-slate-50 px-4 py-4">
@@ -389,66 +389,48 @@ export function CommunicationsWorkspace({
           </dl>
         </div>
 
-        {/* Sales notes */}
-        <div className="overflow-hidden border-b border-slate-200 bg-white">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
-            <MessageSquareText className="h-4 w-4 text-slate-500" />
-            <p className="text-sm font-bold text-slate-900">Account facts</p>
-          </div>
-          <div className="grid gap-2 p-4 text-sm leading-6 text-slate-600">
-            <SidebarFact label="Lane" value={selectedThread.lanes} />
-            <SidebarFact label="Equipment" value={selectedThread.equipment} />
-            <SidebarFact label="Volume" value={selectedThread.volume} />
-            <SidebarFact label="Pain" value={selectedThread.pain} />
-          </div>
-        </div>
-
-        {/* AI next action */}
-        <div className="border-b border-slate-200 p-4">
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Bot className="h-4 w-4 text-emerald-600" />
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">
-                AI sales guidance
-              </p>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-emerald-900">
-              {selectedThread.aiNextAction}
-            </p>
-          </div>
-        </div>
-
-        {/* AI draft assistant */}
+        {/* AI actions */}
         <div className="border-b border-slate-200 p-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <Bot className="h-4 w-4 text-slate-500" />
+              <Bot className="h-4 w-4 text-slate-600" />
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                AI draft assistant
+                AI actions
               </p>
             </div>
-            <div className="mt-3 grid gap-2">
-              <DraftButton
-                label="Follow-up email"
-                loading={draftState.status === "loading"}
-                onClick={() => requestDraft("email", "sales_follow_up")}
-              />
-              <DraftButton
-                label="Follow-up SMS"
-                loading={draftState.status === "loading"}
-                onClick={() => requestDraft("sms", "sales_follow_up")}
-              />
-              <DraftButton
-                label="Quote follow-up"
-                loading={draftState.status === "loading"}
-                onClick={() => requestDraft("email", "quote_follow_up")}
-              />
-              <DraftButton
-                label="No-response check-in"
-                loading={draftState.status === "loading"}
-                onClick={() => requestDraft("email", "no_response_check_in")}
-              />
+            <p className="mt-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800">
+              Conversation notes update automatically after logged calls,
+              emails, SMS, and notes.
+            </p>
+
+            <div className="mt-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Draft next message
+              </p>
+              <div className="mt-2 grid gap-2">
+                <DraftButton
+                  label="Follow-up email"
+                  loading={draftState.status === "loading"}
+                  onClick={() => requestDraft("email", "sales_follow_up")}
+                />
+                <DraftButton
+                  label="Follow-up SMS"
+                  loading={draftState.status === "loading"}
+                  onClick={() => requestDraft("sms", "sales_follow_up")}
+                />
+                <DraftButton
+                  label="Quote follow-up"
+                  loading={draftState.status === "loading"}
+                  onClick={() => requestDraft("email", "quote_follow_up")}
+                />
+                <DraftButton
+                  label="No-response check-in"
+                  loading={draftState.status === "loading"}
+                  onClick={() => requestDraft("email", "no_response_check_in")}
+                />
+              </div>
             </div>
+
             {draftState.message ? (
               <p className={cn(
                 "mt-3 rounded-md px-3 py-2 text-xs leading-5",
@@ -484,25 +466,35 @@ export function CommunicationsWorkspace({
                 </p>
               </div>
             ) : null}
+
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Run agent
+              </p>
+              <div className="mt-2">
+                <AiAgentRunForm
+                  relatedEntityType="Lead"
+                  relatedEntityId={selectedThread.leadId}
+                  defaultAgent="Sales Follow-Up Agent"
+                  agentOptions={["Sales Follow-Up Agent", "Quote Pricing Agent"]}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* AI agents */}
-        <div className="p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <Bot className="h-4 w-4 text-slate-400" />
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Run agent</p>
+        {/* Sales notes */}
+        <div className="overflow-hidden border-b border-slate-200 bg-white">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
+            <MessageSquareText className="h-4 w-4 text-slate-500" />
+            <p className="text-sm font-bold text-slate-900">Account facts</p>
           </div>
-          <p className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-500 shadow-sm">
-            Conversation notes run automatically after logged calls, emails,
-            SMS, and notes.
-          </p>
-          <AiAgentRunForm
-            relatedEntityType="Lead"
-            relatedEntityId={selectedThread.leadId}
-            defaultAgent="Sales Follow-Up Agent"
-            agentOptions={["Sales Follow-Up Agent", "Quote Pricing Agent"]}
-          />
+          <div className="grid gap-2 p-4 text-sm leading-6 text-slate-600">
+            <SidebarFact label="Lane" value={selectedThread.lanes} />
+            <SidebarFact label="Equipment" value={selectedThread.equipment} />
+            <SidebarFact label="Volume" value={selectedThread.volume} />
+            <SidebarFact label="Pain" value={selectedThread.pain} />
+          </div>
         </div>
       </aside>
     </section>

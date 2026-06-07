@@ -311,6 +311,8 @@ model User {
   rejectedAiAgentRuns AiAgentRun[] @relation("AiAgentRunRejectedBy")
   promptVersions AgentPromptVersion[] @relation("AgentPromptVersionChangedBy")
   houseCommissionPlans CommissionPlan[] @relation("CommissionPlanHouseOwner")
+  approvedCarrierInvoices CarrierInvoice[] @relation("CarrierInvoiceApprovedBy")
+  paidCarrierInvoices CarrierInvoice[] @relation("CarrierInvoicePaidBy")
   auditLogs AuditLog[]        @relation("AuditLogUser")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -964,7 +966,11 @@ model CarrierInvoice {
   paymentMethod    PaymentMethod?
   dueDate          DateTime?
   approvedAt       DateTime?
+  approvedByUserId String?
+  approvedByUser   User?                 @relation("CarrierInvoiceApprovedBy", fields: [approvedByUserId], references: [id], onDelete: SetNull)
   paidAt           DateTime?
+  paidByUserId     String?
+  paidByUser       User?                 @relation("CarrierInvoicePaidBy", fields: [paidByUserId], references: [id], onDelete: SetNull)
   notes            String?
   disputeReason    String?
   approvalOwner    String?
@@ -977,6 +983,8 @@ model CarrierInvoice {
   @@index([status])
   @@index([dueDate])
   @@index([carrierId])
+  @@index([approvedByUserId])
+  @@index([paidByUserId])
 }
 
 model AiAgentRun {

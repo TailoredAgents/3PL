@@ -176,9 +176,10 @@ export default async function PayablesPage() {
         </div>
         <div className="mt-3 grid gap-2 text-sm leading-6 text-slate-600">
           <p>Match every carrier invoice to the agreed rate on the rate confirmation before approving.</p>
-          <p>Dispute any invoice that exceeds the rate con — do not pay without written approval.</p>
+          <p>Every payment must pass through approved status before it can be marked paid.</p>
+          <p>Dispute any invoice that exceeds the rate con unless an owner/admin accepts the variance.</p>
           <p>QuickPay requests typically carry a 2–3% fee — confirm before processing.</p>
-          <p>Record payment method (ACH, check, QuickPay) when marking paid for audit trail.</p>
+          <p>The approver, payer, batch, and payment method are recorded for audit trail.</p>
         </div>
 
         {/* Batch pay action (Phase 4.2) */}

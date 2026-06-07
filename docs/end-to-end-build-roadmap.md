@@ -682,10 +682,11 @@ Completion criteria:
 
 Goal: protect sensitive workflows as real users operate the system.
 
-Status: 11.1-11.2 complete. Admin controls, audit log foundation, user roster
-management, commission attribution, commission forecast, Clerk invitations,
-Clerk webhook sync, and admin-only visibility checks are in place. Deeper
-payout workflows remain for later hardening.
+Status: 11.1-11.3 complete. Admin controls, audit log foundation, user roster
+management, commission attribution, commission forecast/readiness, Clerk
+invitations, Clerk webhook sync, admin-only visibility checks, and carrier
+payable approval/payment controls are in place. Deeper payroll-style commission
+payout processing remains for later hardening.
 
 Build:
 
@@ -739,6 +740,22 @@ Completed 11.2:
   Integrations when Clerk is active and the user lacks that role.
 - Added owner/admin page/API guards for Admin Controls, Settings, Integrations,
   and integration health tests.
+
+Completed 11.3:
+
+- Carrier invoices now track the internal user who approved and the internal
+  user who marked paid.
+- Carrier invoice create/update/batch-pay routes now enforce internal role
+  checks and write audit records.
+- Carrier invoices cannot be marked paid until they have first been approved.
+- Payment marking is limited to owner/admin users when Clerk auth is active;
+  owner/admin/ops can stage approved invoices into a payment batch.
+- Payables queue now surfaces approver/payer attribution and shows API errors
+  inline instead of failing silently.
+- Commission reporting now separates gross-profit forecast from payout-ready
+  commission, where payout readiness requires customer payment and carrier
+  settlement.
+- Added `/admin/audit/[id]` for owner/admin review of before/after audit JSON.
 
 Completion criteria:
 

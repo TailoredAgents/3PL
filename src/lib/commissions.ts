@@ -54,6 +54,8 @@ export type CommissionLoadView = {
   customerOwnerShare: number;
   houseOwnerShare: number;
   companyShare: number;
+  payoutReady: boolean;
+  payoutReadiness: string;
   href: string;
 };
 
@@ -76,6 +78,8 @@ export type AdminControlsView = {
     customerOwnerPool: number;
     houseOwnerPool: number;
     companyPool: number;
+    payoutReadyCommission: number;
+    payoutReadyLoads: number;
     people: CommissionPersonView[];
     loads: CommissionLoadView[];
   };
@@ -92,6 +96,19 @@ export type AdminControlsView = {
     clerkConfigured: boolean;
     webhookConfigured: boolean;
   };
+};
+
+export type AuditLogDetailView = {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  summary: string;
+  userName: string;
+  created: string;
+  beforeJson: unknown;
+  afterJson: unknown;
+  metadata: unknown;
 };
 
 export async function getUserOptions(): Promise<UserOption[]> {
@@ -131,6 +148,36 @@ export async function getUserOptions(): Promise<UserOption[]> {
   }));
 }
 
+export async function getAuditLogDetailView(
+  id: string,
+): Promise<AuditLogDetailView | null> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return null;
+  }
+
+  const log = await prisma.auditLog.findUnique({
+    where: { id },
+    include: { user: { select: { name: true } } },
+  });
+
+  if (!log) {
+    return null;
+  }
+
+  return {
+    id: log.id,
+    action: log.action,
+    entityType: log.entityType,
+    entityId: log.entityId,
+    summary: log.summary,
+    userName: log.user?.name ?? "System",
+    created: formatDateTime(log.createdAt),
+    beforeJson: log.beforeJson,
+    afterJson: log.afterJson,
+    metadata: log.metadata,
+  };
+}
+
 export async function getAdminControlsView(): Promise<AdminControlsView> {
   if (!hasDatabaseUrl() || !prisma) {
     return getSampleAdminControlsView();
@@ -151,6 +198,8 @@ export async function getAdminControlsView(): Promise<AdminControlsView> {
               acquisitionOwner: { select: { id: true, name: true } },
             },
           },
+          invoice: { select: { status: true, paidAt: true } },
+          carrierInvoice: { select: { status: true, paidAt: true } },
         },
         orderBy: [{ createdAt: "desc" }],
         take: 250,
@@ -172,6 +221,10 @@ export async function getAdminControlsView(): Promise<AdminControlsView> {
         grossProfit: Number(load.grossProfit ?? 0),
         managingUser: load.managingUser,
         customerOwner: load.customerOwner ?? load.shipper.acquisitionOwner,
+        customerPaid: load.invoice?.status === "PAID" || Boolean(load.invoice?.paidAt),
+        carrierPaid:
+          load.carrierInvoice?.status === "PAID" ||
+          Boolean(load.carrierInvoice?.paidAt),
         plan,
       }),
     );
@@ -191,6 +244,18 @@ export async function getAdminControlsView(): Promise<AdminControlsView> {
           commissionLoads.map((load) => load.houseOwnerShare),
         ),
         companyPool: sum(commissionLoads.map((load) => load.companyShare)),
+        payoutReadyCommission: sum(
+          commissionLoads
+            .filter((load) => load.payoutReady)
+            .map(
+              (load) =>
+                load.managerShare +
+                load.customerOwnerShare +
+                load.houseOwnerShare,
+            ),
+        ),
+        payoutReadyLoads: commissionLoads.filter((load) => load.payoutReady)
+          .length,
         people,
         loads: commissionLoads,
       },
@@ -469,6 +534,8 @@ export function buildCommissionLoad(input: {
   grossProfit: number;
   managingUser?: { id: string; name: string } | null;
   customerOwner?: { id: string; name: string } | null;
+  customerPaid?: boolean;
+  carrierPaid?: boolean;
   plan: CommissionPlanView;
 }): CommissionLoadView {
   const managerShare = splitAmount(
@@ -484,6 +551,7 @@ export function buildCommissionLoad(input: {
     input.plan.houseOwnerPercent,
   );
   const companyShare = splitAmount(input.grossProfit, input.plan.companyPercent);
+  const payoutReady = Boolean(input.customerPaid && input.carrierPaid);
 
   return {
     id: input.id,
@@ -501,6 +569,14 @@ export function buildCommissionLoad(input: {
     customerOwnerShare,
     houseOwnerShare,
     companyShare,
+    payoutReady,
+    payoutReadiness: payoutReady
+      ? "Ready after customer and carrier payments"
+      : !input.customerPaid && !input.carrierPaid
+        ? "Waiting on customer payment and carrier settlement"
+        : !input.customerPaid
+          ? "Waiting on customer payment"
+          : "Waiting on carrier settlement",
     href: `/loads/${input.id}`,
   };
 }
@@ -601,6 +677,8 @@ function getSampleAdminControlsView(): AdminControlsView {
       grossProfit: 1200,
       managingUser: { id: "devon", name: "Devon" },
       customerOwner: { id: "michael", name: "Michael" },
+      customerPaid: true,
+      carrierPaid: true,
       plan,
     }),
   ];
@@ -615,6 +693,8 @@ function getSampleAdminControlsView(): AdminControlsView {
       customerOwnerPool: 180,
       houseOwnerPool: 240,
       companyPool: 360,
+      payoutReadyCommission: 840,
+      payoutReadyLoads: 1,
       people: aggregateCommissionPeople(loads),
       loads,
     },

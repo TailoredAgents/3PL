@@ -19,7 +19,10 @@ type CarrierInvoiceItem = {
   agreedRate: number | null;
   status: string;
   dueDate: string | null;
+  approvedAt: string | null;
+  approvedByName: string | null;
   paidAt: string | null;
+  paidByName: string | null;
   isOverdue: boolean;
   disputeReason?: string | null;
   approvalOwner?: string | null;
@@ -48,6 +51,7 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const variance =
     invoice.agreedRate != null ? invoice.amount - invoice.agreedRate : null;
@@ -55,13 +59,20 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
   async function updateStatus(status: string, paymentMethod?: string) {
     if (submitting) return;
     setSubmitting(true);
+    setError(null);
     try {
       const fd = new FormData();
       fd.append("status", status);
       if (paymentMethod) fd.append("paymentMethod", paymentMethod);
-      await fetch(`/api/carrier-invoices/${invoice.id}`, { method: "PATCH", body: fd });
+      const response = await fetch(`/api/carrier-invoices/${invoice.id}`, { method: "PATCH", body: fd });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to update payable.");
+      }
       setDone(status);
       router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update payable.");
     } finally {
       setSubmitting(false);
     }
@@ -99,8 +110,11 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
         <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_CLASS[invoice.status] ?? "bg-slate-100 text-slate-700")}>
           {invoice.status}
         </span>
-        {invoice.approvalOwner ? (
-          <p className="mt-0.5 text-[10px] text-slate-500">Approved by: {invoice.approvalOwner}</p>
+        {invoice.approvedByName || invoice.approvalOwner ? (
+          <p className="mt-0.5 text-[10px] text-slate-500">Approved by: {invoice.approvedByName ?? invoice.approvalOwner}</p>
+        ) : null}
+        {invoice.paidByName ? (
+          <p className="mt-0.5 text-[10px] text-slate-500">Paid by: {invoice.paidByName}</p>
         ) : null}
         {invoice.disputeReason ? (
           <p className="mt-0.5 text-[10px] font-semibold text-red-600">Disputed: {invoice.disputeReason}</p>
@@ -160,6 +174,11 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
           >
             Load <ArrowRight className="h-3 w-3" />
           </Link>
+          {error ? (
+            <p className="max-w-[150px] text-[10px] font-semibold leading-4 text-red-700">
+              {error}
+            </p>
+          ) : null}
         </div>
       </Td>
     </tr>
@@ -170,17 +189,25 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function updateStatus(status: string, paymentMethod?: string) {
     if (submitting) return;
     setSubmitting(true);
+    setError(null);
     try {
       const fd = new FormData();
       fd.append("status", status);
       if (paymentMethod) fd.append("paymentMethod", paymentMethod);
-      await fetch(`/api/carrier-invoices/${invoice.id}`, { method: "PATCH", body: fd });
+      const response = await fetch(`/api/carrier-invoices/${invoice.id}`, { method: "PATCH", body: fd });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to update payable.");
+      }
       setDone(status);
       router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update payable.");
     } finally {
       setSubmitting(false);
     }
@@ -247,6 +274,19 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
           Open load <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
+      {invoice.approvedByName || invoice.approvalOwner || invoice.paidByName ? (
+        <p className="mt-2 text-[10px] text-slate-500">
+          {invoice.approvedByName || invoice.approvalOwner
+            ? `Approved by ${invoice.approvedByName ?? invoice.approvalOwner}`
+            : ""}
+          {invoice.paidByName ? ` · Paid by ${invoice.paidByName}` : ""}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-2 text-xs font-semibold leading-5 text-red-700">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

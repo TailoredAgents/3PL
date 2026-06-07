@@ -26,7 +26,11 @@ import {
 
 export { getDailyBriefView } from "@/lib/daily-brief";
 export { getDocumentAutomationView } from "@/lib/document-automation";
-export { getAdminControlsView, getUserOptions } from "@/lib/commissions";
+export {
+  getAdminControlsView,
+  getAuditLogDetailView,
+  getUserOptions,
+} from "@/lib/commissions";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -4716,7 +4720,9 @@ export type CarrierInvoiceView = {
   paymentMethod: string | null;
   dueDate: string | null;
   approvedAt: string | null;
+  approvedByName: string | null;
   paidAt: string | null;
+  paidByName: string | null;
   notes: string | null;
   disputeReason?: string | null;
   approvalOwner?: string | null;
@@ -4869,6 +4875,8 @@ export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
           },
         },
         carrier: { select: { companyName: true } },
+        approvedByUser: { select: { name: true } },
+        paidByUser: { select: { name: true } },
       },
       orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
     });
@@ -4892,7 +4900,9 @@ export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {
       paymentMethod: r.paymentMethod,
       dueDate: formatMaybe(r.dueDate),
       approvedAt: formatMaybe(r.approvedAt),
+      approvedByName: r.approvedByUser?.name ?? null,
       paidAt: formatMaybe(r.paidAt),
+      paidByName: r.paidByUser?.name ?? null,
       notes: r.notes,
       disputeReason: r.disputeReason,
       approvalOwner: r.approvalOwner,

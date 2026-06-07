@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
+import { logAudit } from "@/lib/audit";
+import { requireInternalRole } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -10,6 +13,8 @@ export async function POST(req: Request) {
         { status: 503 },
       );
     }
+
+    const currentUser = await requireInternalRole(["OWNER", "ADMIN", "OPS"]);
 
     const fd = await req.formData();
     const loadId = fd.get("loadId") as string;
@@ -25,14 +30,54 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "loadId, carrierId, and amount are required" }, { status: 400 });
     }
 
+    const existing = await prisma.carrierInvoice.findUnique({
+      where: { loadId },
+    });
     const record = await prisma.carrierInvoice.upsert({
       where: { loadId },
       update: { carrierId, amount, agreedRate, invoiceNumber, dueDate, notes, approvalOwner, updatedAt: new Date() },
       create: { loadId, carrierId, amount, agreedRate, invoiceNumber, dueDate, notes, approvalOwner },
     });
 
+    await logAudit({
+      action: existing ? "CARRIER_INVOICE_UPDATED" : "CARRIER_INVOICE_CREATED",
+      entityType: "CarrierInvoice",
+      entityId: record.id,
+      summary: `Carrier invoice ${invoiceNumber ?? record.id} saved.`,
+      user: currentUser,
+      beforeJson: existing
+        ? {
+            carrierId: existing.carrierId,
+            amount: Number(existing.amount),
+            agreedRate:
+              existing.agreedRate === null ? null : Number(existing.agreedRate),
+            invoiceNumber: existing.invoiceNumber,
+            dueDate: existing.dueDate,
+          }
+        : null,
+      afterJson: {
+        carrierId,
+        amount,
+        agreedRate,
+        invoiceNumber,
+        dueDate,
+      },
+    });
+
+    revalidatePath("/payables");
+    revalidatePath("/admin");
+    revalidatePath("/dashboard");
+
     return NextResponse.json(record, { status: 201 });
   } catch (err) {
+    if (
+      err instanceof Error &&
+      (err.message.includes("permission") ||
+        err.message.includes("Internal user"))
+    ) {
+      return NextResponse.json({ error: err.message }, { status: 403 });
+    }
+
     console.error("carrier-invoice POST", err);
     return NextResponse.json({ error: "Failed to create carrier invoice" }, { status: 500 });
   }

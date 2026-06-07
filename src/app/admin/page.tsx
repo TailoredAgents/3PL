@@ -47,6 +47,12 @@ export default async function AdminControlsPage() {
           detail="Loads with gross profit entered"
         />
         <Metric
+          icon={CheckCircle2}
+          label="Commission ready"
+          value={toCurrency(view.commission.payoutReadyCommission)}
+          detail={`${view.commission.payoutReadyLoads} loads with customer and carrier payments complete`}
+        />
+        <Metric
           icon={Percent}
           label="Commission split"
           value={`${view.plan.totalPercent}%`}
@@ -271,9 +277,17 @@ export default async function AdminControlsPage() {
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {log.summary}
                 </p>
-                <p className="mt-2 text-xs font-semibold text-slate-500">
-                  By {log.userName}
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-slate-500">
+                    By {log.userName}
+                  </p>
+                  <Link
+                    href={`/admin/audit/${log.id}`}
+                    className="text-xs font-bold text-emerald-700 hover:text-emerald-900"
+                  >
+                    Details
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
@@ -297,6 +311,7 @@ export default async function AdminControlsPage() {
                 <th className="px-5 py-3">Client owner</th>
                 <th className="px-5 py-3">Austin</th>
                 <th className="px-5 py-3">Company</th>
+                <th className="px-5 py-3">Payout</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -336,6 +351,20 @@ export default async function AdminControlsPage() {
                   </td>
                   <td className="px-5 py-4 font-semibold">
                     {toCurrency(load.companyShare)}
+                  </td>
+                  <td className="px-5 py-4">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                        load.payoutReady
+                          ? "bg-emerald-50 text-emerald-800"
+                          : "bg-amber-50 text-amber-800"
+                      }`}
+                    >
+                      {load.payoutReady ? "Ready" : "Hold"}
+                    </span>
+                    <p className="mt-1 max-w-[180px] text-xs leading-5 text-slate-500">
+                      {load.payoutReadiness}
+                    </p>
                   </td>
                 </tr>
               ))}

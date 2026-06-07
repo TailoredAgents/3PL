@@ -441,6 +441,7 @@ export const internalUserUpsertSchema = z.object({
   email: z.email(),
   role: z.enum(["OWNER", "SALES", "OPS", "ADMIN"]),
   phone: z.string().trim().optional(),
+  sendInvite: z.boolean().default(false),
 });
 
 export const commissionPlanUpdateSchema = z.object({

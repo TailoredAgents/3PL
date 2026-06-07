@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { AlertCircle, Bot, CheckCircle2, Mail, PhoneCall, Plug, ShieldCheck } from "lucide-react";
 
 import {
@@ -9,7 +10,7 @@ import { InternalShell } from "@/components/internal-shell";
 import { getAgentAutomationPolicy } from "@/lib/agent-control";
 import { isClerkAuthConfigured } from "@/lib/auth";
 import { defaultBrokerageAgentTemplates } from "@/lib/agent-config";
-import { getCurrentInternalUser } from "@/lib/current-user";
+import { getCurrentInternalUser, requireInternalRole } from "@/lib/current-user";
 import {
   getAgentModes,
   getAppSettings,
@@ -67,6 +68,12 @@ const OPERATING_RULES = [
 ];
 
 export default async function SettingsPage() {
+  try {
+    await requireInternalRole(["OWNER", "ADMIN"]);
+  } catch {
+    redirect("/dashboard");
+  }
+
   const [settings, quoteEmailTemplate, agentModes, currentUser] = await Promise.all([
     getAppSettings(),
     getQuoteEmailTemplate(),

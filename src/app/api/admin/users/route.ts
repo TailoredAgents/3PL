@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireInternalRole } from "@/lib/current-user";
 import { upsertInternalUser } from "@/lib/commissions";
-import { formValue } from "@/lib/server-utils";
+import { checkboxValue, formValue } from "@/lib/server-utils";
 import { internalUserUpsertSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     email: formValue(formData, "email"),
     role: formValue(formData, "role"),
     phone: formValue(formData, "phone"),
+    sendInvite: checkboxValue(formData, "sendInvite"),
   });
 
   if (!parsed.success) {
@@ -37,12 +38,30 @@ export async function POST(request: Request) {
     );
   }
 
-  await upsertInternalUser({
-    ...parsed.data,
-    currentUser,
-  });
+  let result: Awaited<ReturnType<typeof upsertInternalUser>>;
+
+  try {
+    result = await upsertInternalUser({
+      ...parsed.data,
+      currentUser,
+    });
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save internal user.",
+      },
+      { status: 400 },
+    );
+  }
 
   revalidatePath("/admin");
 
-  return Response.json({ message: "Internal user saved." });
+  return Response.json({
+    message: parsed.data.sendInvite
+      ? `Internal user saved. ${result?.inviteMessage ?? ""}`.trim()
+      : "Internal user saved.",
+  });
 }

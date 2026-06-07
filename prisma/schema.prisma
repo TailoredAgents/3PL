@@ -290,6 +290,11 @@ enum EmailSuppressionReason {
 model User {
   id          String          @id @default(cuid())
   clerkUserId String?         @unique
+  clerkInvitationId String?    @unique
+  invitationStatus String?
+  invitationSentAt DateTime?
+  lastClerkSyncedAt DateTime?
+  deactivatedAt DateTime?
   name        String
   email       String          @unique
   role        UserRole        @default(SALES)
@@ -311,6 +316,8 @@ model User {
   updatedAt   DateTime        @updatedAt
 
   @@index([role])
+  @@index([invitationStatus])
+  @@index([deactivatedAt])
 }
 
 model Shipper {

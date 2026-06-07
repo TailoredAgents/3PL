@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { UserRole } from "@prisma/client";
 
 import { logAudit } from "@/lib/audit";
+import { inviteOrSyncClerkUser } from "@/lib/clerk-sync";
 import type { InternalUserView } from "@/lib/current-user";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
@@ -19,6 +20,11 @@ export type UserOption = {
   name: string;
   email: string;
   role: string;
+  clerkUserId: string | null;
+  invitationStatus: string | null;
+  invitationSentAt: string | null;
+  lastClerkSyncedAt: string | null;
+  deactivatedAt: string | null;
 };
 
 export type CommissionPlanView = {
@@ -82,6 +88,10 @@ export type AdminControlsView = {
     userName: string;
     created: string;
   }>;
+  auth: {
+    clerkConfigured: boolean;
+    webhookConfigured: boolean;
+  };
 };
 
 export async function getUserOptions(): Promise<UserOption[]> {
@@ -91,7 +101,17 @@ export async function getUserOptions(): Promise<UserOption[]> {
 
   const users = await prisma.user.findMany({
     orderBy: [{ role: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, email: true, role: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      clerkUserId: true,
+      invitationStatus: true,
+      invitationSentAt: true,
+      lastClerkSyncedAt: true,
+      deactivatedAt: true,
+    },
   });
 
   return users.map((user) => ({
@@ -99,6 +119,15 @@ export async function getUserOptions(): Promise<UserOption[]> {
     name: user.name,
     email: user.email,
     role: user.role,
+    clerkUserId: user.clerkUserId,
+    invitationStatus: user.invitationStatus,
+    invitationSentAt: user.invitationSentAt
+      ? formatDateTime(user.invitationSentAt)
+      : null,
+    lastClerkSyncedAt: user.lastClerkSyncedAt
+      ? formatDateTime(user.lastClerkSyncedAt)
+      : null,
+    deactivatedAt: user.deactivatedAt ? formatDateTime(user.deactivatedAt) : null,
   }));
 }
 
@@ -174,6 +203,13 @@ export async function getAdminControlsView(): Promise<AdminControlsView> {
         userName: log.user?.name ?? "System",
         created: formatDateTime(log.createdAt),
       })),
+      auth: {
+        clerkConfigured: Boolean(
+          process.env.CLERK_SECRET_KEY &&
+            process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+        ),
+        webhookConfigured: Boolean(process.env.CLERK_WEBHOOK_SIGNING_SECRET),
+      },
     };
   } catch {
     return getSampleAdminControlsView();
@@ -222,6 +258,7 @@ export async function upsertInternalUser(input: {
   email: string;
   role: UserRole;
   phone?: string;
+  sendInvite?: boolean;
   currentUser?: InternalUserView | null;
 }) {
   if (!hasDatabaseUrl() || !prisma) {
@@ -258,8 +295,22 @@ export async function upsertInternalUser(input: {
     afterJson: { name: user.name, email: user.email, role: user.role },
   });
 
+  let inviteMessage = "Local user saved.";
+  if (input.sendInvite) {
+    const result = await inviteOrSyncClerkUser({
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      currentUser: input.currentUser,
+    });
+    inviteMessage = result.message;
+  }
+
   revalidatePath("/admin");
   revalidatePath("/settings");
+
+  return { user, inviteMessage };
 }
 
 export async function saveCommissionPlan(input: {
@@ -534,10 +585,10 @@ function getMissingDefaultUsers(users: UserOption[]) {
 
 function getSampleAdminControlsView(): AdminControlsView {
   const users = [
-    { id: "austin", name: "Austin", email: "austin@example.com", role: "OWNER" },
-    { id: "conner", name: "Conner", email: "conner@example.com", role: "OWNER" },
-    { id: "devon", name: "Devon", email: "devon@example.com", role: "OPS" },
-    { id: "michael", name: "Michael", email: "michael@example.com", role: "SALES" },
+    sampleUser("austin", "Austin", "austin@example.com", "OWNER"),
+    sampleUser("conner", "Conner", "conner@example.com", "OWNER"),
+    sampleUser("devon", "Devon", "devon@example.com", "OPS"),
+    sampleUser("michael", "Michael", "michael@example.com", "SALES"),
   ];
   const plan = getDefaultCommissionPlanView();
   const loads = [
@@ -578,6 +629,24 @@ function getSampleAdminControlsView(): AdminControlsView {
         created: "Now",
       },
     ],
+    auth: {
+      clerkConfigured: false,
+      webhookConfigured: false,
+    },
+  };
+}
+
+function sampleUser(id: string, name: string, email: string, role: string) {
+  return {
+    id,
+    name,
+    email,
+    role,
+    clerkUserId: null,
+    invitationStatus: "sample",
+    invitationSentAt: null,
+    lastClerkSyncedAt: null,
+    deactivatedAt: null,
   };
 }
 

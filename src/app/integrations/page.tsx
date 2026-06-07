@@ -1,12 +1,20 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Plug, RefreshCw } from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
+import { requireInternalRole } from "@/lib/current-user";
 import { getIntegrationsOverview } from "@/lib/crm";
 
 export const dynamic = "force-dynamic";
 
 export default async function IntegrationsPage() {
+  try {
+    await requireInternalRole(["OWNER", "ADMIN"]);
+  } catch {
+    redirect("/dashboard");
+  }
+
   const { providers, totalLogs, failureRate, recentGlobalLogs } = await getIntegrationsOverview();
 
   return (

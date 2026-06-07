@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { requireInternalRole } from "@/lib/current-user";
 import { logIntegration } from "@/lib/integrations/logging";
 import {
   searchAndStoreMarketplaceCapacity,
@@ -22,6 +23,20 @@ const providerEnvKeys: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
+  try {
+    await requireInternalRole(["OWNER", "ADMIN"]);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "You do not have permission to test integrations.",
+      },
+      { status: 403 },
+    );
+  }
+
   const formData = await request.formData();
   const provider = (formData.get("provider") as string) || "XAI";
   const providerKey = provider.toUpperCase().replace(/[^A-Z]/g, "");

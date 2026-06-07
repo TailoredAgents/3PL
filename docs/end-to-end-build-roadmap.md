@@ -682,9 +682,10 @@ Completion criteria:
 
 Goal: protect sensitive workflows as real users operate the system.
 
-Status: 11.1 complete. Admin controls, audit log foundation, user roster
-management, commission attribution, and commission forecast are in place.
-Clerk webhook sync and deeper payout workflows remain for later hardening.
+Status: 11.1-11.2 complete. Admin controls, audit log foundation, user roster
+management, commission attribution, commission forecast, Clerk invitations,
+Clerk webhook sync, and admin-only visibility checks are in place. Deeper
+payout workflows remain for later hardening.
 
 Build:
 
@@ -721,6 +722,23 @@ Completed 11.1:
   agent mode changes, AI approvals/rejections, carrier compliance updates, load
   updates, invoice changes, user changes, commission plan changes, and load
   attribution changes.
+
+Completed 11.2:
+
+- Added Clerk invitation/sync fields to internal users.
+- Added `/api/webhooks/clerk` using Clerk's signed webhook verification for
+  `user.created`, `user.updated`, and `user.deleted` events.
+- Added shared Clerk sync helper to send invitations, sync Clerk
+  `publicMetadata.role`, mark accepted users, and deactivate deleted Clerk users
+  without deleting local attribution/history.
+- Admin user management can now save a local user and send or refresh a Clerk
+  invitation when Clerk is configured.
+- Admin Controls now shows Clerk readiness, webhook readiness, invitation
+  status, last sync time, and deactivation state.
+- Internal navigation hides owner/admin-only Admin Controls, Settings, and
+  Integrations when Clerk is active and the user lacks that role.
+- Added owner/admin page/API guards for Admin Controls, Settings, Integrations,
+  and integration health tests.
 
 Completion criteria:
 

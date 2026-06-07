@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
+  AlertCircle,
+  CheckCircle2,
   ClipboardList,
   DollarSign,
   Percent,
@@ -13,12 +16,19 @@ import {
   CommissionPlanSettingsForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
+import { requireInternalRole } from "@/lib/current-user";
 import { getAdminControlsView } from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminControlsPage() {
+  try {
+    await requireInternalRole(["OWNER", "ADMIN"]);
+  } catch {
+    redirect("/dashboard");
+  }
+
   const view = await getAdminControlsView();
 
   return (
@@ -60,6 +70,29 @@ export default async function AdminControlsPage() {
         />
       </section>
 
+      <section className="grid gap-4 md:grid-cols-2">
+        <AuthReadiness
+          icon={view.auth.clerkConfigured ? CheckCircle2 : AlertCircle}
+          label="Clerk authentication"
+          ready={view.auth.clerkConfigured}
+          detail={
+            view.auth.clerkConfigured
+              ? "Clerk env vars are configured for internal login and invitations."
+              : "Set Clerk publishable and secret keys before sending real invites."
+          }
+        />
+        <AuthReadiness
+          icon={view.auth.webhookConfigured ? CheckCircle2 : AlertCircle}
+          label="Clerk webhook sync"
+          ready={view.auth.webhookConfigured}
+          detail={
+            view.auth.webhookConfigured
+              ? "Webhook signing secret is present; user.created/updated/deleted can sync."
+              : "Set CLERK_WEBHOOK_SIGNING_SECRET and point Clerk to /api/webhooks/clerk."
+          }
+        />
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
           <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
@@ -83,6 +116,7 @@ export default async function AdminControlsPage() {
                   <tr>
                     <th className="px-4 py-3">User</th>
                     <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Clerk</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -98,6 +132,24 @@ export default async function AdminControlsPage() {
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
                           {user.role}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-xs font-bold text-slate-700">
+                          {user.deactivatedAt
+                            ? "Deactivated"
+                            : user.clerkUserId
+                              ? "Accepted"
+                              : user.invitationStatus
+                                ? user.invitationStatus
+                                : "Local only"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {user.lastClerkSyncedAt
+                            ? `Synced ${user.lastClerkSyncedAt}`
+                            : user.invitationSentAt
+                              ? `Invited ${user.invitationSentAt}`
+                              : "No Clerk sync yet"}
+                        </p>
                       </td>
                     </tr>
                   ))}
@@ -314,6 +366,36 @@ function Metric({
         {value}
       </p>
       <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
+    </article>
+  );
+}
+
+function AuthReadiness({
+  icon: Icon,
+  label,
+  ready,
+  detail,
+}: {
+  icon: typeof CheckCircle2;
+  label: string;
+  ready: boolean;
+  detail: string;
+}) {
+  return (
+    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-9 w-9 items-center justify-center rounded-md ${
+            ready ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-slate-900">{label}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{detail}</p>
+        </div>
+      </div>
     </article>
   );
 }

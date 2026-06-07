@@ -72,10 +72,25 @@ export const internalNavGroups = [
   {
     label: "Admin / AI",
     items: [
-      { label: "Integrations", href: "/integrations", icon: Plug },
+      {
+        label: "Integrations",
+        href: "/integrations",
+        icon: Plug,
+        allowedRoles: ["OWNER", "ADMIN"],
+      },
       { label: "AI Command Center", href: "/agents", icon: Bot },
-      { label: "Admin Controls", href: "/admin", icon: UserCog },
-      { label: "Settings", href: "/settings", icon: Settings },
+      {
+        label: "Admin Controls",
+        href: "/admin",
+        icon: UserCog,
+        allowedRoles: ["OWNER", "ADMIN"],
+      },
+      {
+        label: "Settings",
+        href: "/settings",
+        icon: Settings,
+        allowedRoles: ["OWNER", "ADMIN"],
+      },
     ],
   },
 ];

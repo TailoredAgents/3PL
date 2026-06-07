@@ -4,7 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { InternalAccount } from "@/components/internal-account";
 import { isClerkAuthConfigured } from "@/lib/auth";
 import { getCurrentInternalUser } from "@/lib/current-user";
-import { internalNavGroups, internalNavItems, platformName } from "@/lib/data";
+import { internalNavGroups, platformName } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 type InternalShellProps = {
@@ -29,6 +29,19 @@ export async function InternalShell({
 }: InternalShellProps) {
   const clerkEnabled = isClerkAuthConfigured();
   const internalUser = clerkEnabled ? await getCurrentInternalUser() : null;
+  const visibleNavGroups = internalNavGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          !("allowedRoles" in item) ||
+          !item.allowedRoles ||
+          !clerkEnabled ||
+          (internalUser && item.allowedRoles.includes(internalUser.role)),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+  const visibleNavItems = visibleNavGroups.flatMap((group) => group.items);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#d1fae5_0,#f1f5f9_34%,#e2e8f0_100%)] text-slate-950">
@@ -43,7 +56,7 @@ export async function InternalShell({
           </p>
         </div>
         <nav className="flex-1 overflow-y-auto grid gap-5 text-sm font-medium text-slate-300">
-          {internalNavGroups.map((group) => (
+          {visibleNavGroups.map((group) => (
             <div key={group.label}>
               <p className="px-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-slate-500">
                 {group.label}
@@ -106,7 +119,7 @@ export async function InternalShell({
             </div>
           </div>
           <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 text-sm font-medium text-slate-600">
-            {internalNavItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

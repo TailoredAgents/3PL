@@ -21,6 +21,11 @@ type UserOption = {
   name: string;
   email: string;
   role: string;
+  clerkUserId?: string | null;
+  invitationStatus?: string | null;
+  invitationSentAt?: string | null;
+  lastClerkSyncedAt?: string | null;
+  deactivatedAt?: string | null;
 };
 
 type CommissionPlanFormValue = {
@@ -1543,6 +1548,10 @@ export function AdminUserForm() {
         />
         <Field name="phone" label="Phone" />
       </div>
+      <Checkbox
+        name="sendInvite"
+        label="Send or refresh Clerk invitation"
+      />
       <FormFooter state={state} buttonLabel="Save user" />
     </form>
   );

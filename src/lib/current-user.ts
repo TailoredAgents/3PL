@@ -62,6 +62,9 @@ export async function getCurrentInternalUser(): Promise<InternalUserView | null>
             email,
             name,
             role: clerkRole ?? existing.role,
+            invitationStatus: "accepted",
+            lastClerkSyncedAt: new Date(),
+            deactivatedAt: null,
           },
         })
       : await prisma.user.create({
@@ -70,6 +73,8 @@ export async function getCurrentInternalUser(): Promise<InternalUserView | null>
             email,
             name,
             role,
+            invitationStatus: "accepted",
+            lastClerkSyncedAt: new Date(),
           },
         });
 

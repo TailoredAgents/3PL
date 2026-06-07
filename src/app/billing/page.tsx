@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -6,7 +6,9 @@ import {
   Clock,
   DollarSign,
   FileCheck2,
+  Gauge,
   ReceiptText,
+  TrendingUp,
 } from "lucide-react";
 
 import {
@@ -24,7 +26,6 @@ const CARD_ACCENTS = [
   { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
   { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
   { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
-  { border: "border-l-[3px] border-l-slate-400", icon: "bg-slate-100 text-slate-600" },
 ] as const;
 
 function getInvoiceBalance(load: LoadView) {
@@ -90,6 +91,16 @@ export default async function BillingPage() {
   const openBalance = openInvoices.reduce((sum, load) => sum + getInvoiceBalance(load), 0);
   const paidAmount = paid.reduce((sum, load) => sum + (load.invoice?.amount ?? 0), 0);
   const totalMargin = loadViews.reduce((sum, load) => sum + load.margin, 0);
+  const createdAmount = invoiced.reduce((sum, load) => sum + (load.invoice?.amount ?? 0), 0);
+  const billingExposure = readyToInvoice.reduce((sum, load) => sum + load.customerRate, 0);
+  const unpaidMargin = openInvoices.reduce((sum, load) => sum + load.margin, 0);
+  const collectionRate = createdAmount > 0 ? (paidAmount / createdAmount) * 100 : 0;
+  const overdueInvoices = openInvoices.filter((load) =>
+    isPastDue(load.invoice?.dueDate),
+  );
+  const dueSoonInvoices = openInvoices.filter((load) =>
+    isDueSoon(load.invoice?.dueDate),
+  );
   const billingQueue = [
     ...needsPod,
     ...readyToInvoice,
@@ -102,11 +113,10 @@ export default async function BillingPage() {
   const CommandIcon = billingCommand.icon;
 
   const metrics = [
-    { icon: ReceiptText, label: "Ready to invoice", value: readyToInvoice.length.toString(), helper: "Clean loads ready for AR" },
-    { icon: FileCheck2, label: "Needs POD", value: needsPod.length.toString(), helper: "Blocks customer invoice" },
+    { icon: ReceiptText, label: "Ready revenue", value: toCurrency(billingExposure), helper: `${readyToInvoice.length} ready load${readyToInvoice.length === 1 ? "" : "s"}` },
+    { icon: FileCheck2, label: "POD blockers", value: needsPod.length.toString(), helper: "Stops customer billing" },
     { icon: CircleDollarSign, label: "Open AR", value: toCurrency(openBalance), helper: `${openInvoices.length} unpaid invoice${openInvoices.length === 1 ? "" : "s"}` },
-    { icon: CheckCircle2, label: "Paid", value: toCurrency(paidAmount), helper: `${paid.length} paid invoice${paid.length === 1 ? "" : "s"}` },
-    { icon: DollarSign, label: "Visible margin", value: toCurrency(totalMargin), helper: "Across visible loads" },
+    { icon: TrendingUp, label: "Visible margin", value: toCurrency(totalMargin), helper: "Across active records" },
   ];
 
   return (
@@ -117,27 +127,20 @@ export default async function BillingPage() {
       description="Customer billing command center for POD readiness, invoice creation, open AR, payment status, and margin visibility."
       action={{ label: "Open Load Board", href: "/loads" }}
     >
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((item, index) => (
-          <article
+          <MetricCard
             key={item.label}
-            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[index].border}`}
-          >
-            <div className="p-5">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[index].icon}`}>
-                <item.icon className="h-4 w-4" />
-              </div>
-              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
-              <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-                {item.value}
-              </p>
-              <p className="mt-2 text-xs font-semibold text-slate-400">{item.helper}</p>
-            </div>
-          </article>
+            icon={item.icon}
+            label={item.label}
+            value={item.value}
+            helper={item.helper}
+            accent={CARD_ACCENTS[index]}
+          />
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)]">
         <article className={`rounded-lg border p-5 shadow-sm ${billingCommand.className}`}>
           <div className="flex gap-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
@@ -151,18 +154,50 @@ export default async function BillingPage() {
               <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 opacity-85">
                 {billingCommand.detail}
               </p>
+              <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                <BillingStep
+                  label="1. POD review"
+                  value={`${needsPod.length} blocker${needsPod.length === 1 ? "" : "s"}`}
+                />
+                <BillingStep
+                  label="2. Invoice creation"
+                  value={`${readyToInvoice.length} ready`}
+                />
+                <BillingStep
+                  label="3. Collections"
+                  value={`${openInvoices.length} open`}
+                />
+              </div>
             </div>
           </div>
         </article>
 
-        <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-            Cash snapshot
-          </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-            <BillingFact label="Created" value={invoiced.length.toString()} />
-            <BillingFact label="Open AR" value={toCurrency(openBalance)} />
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Gauge className="h-4 w-4 text-slate-400" />
+              <p className="text-sm font-black text-slate-800">Cash control</p>
+            </div>
+            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
+              {collectionRate.toFixed(0)}% collected
+            </span>
+          </div>
+          <div className="grid gap-3 p-5">
+            <BillingFact label="Invoices created" value={invoiced.length.toString()} />
             <BillingFact label="Collected" value={toCurrency(paidAmount)} />
+            <BillingFact label="Unpaid margin" value={toCurrency(unpaidMargin)} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <BillingRisk
+                label="Overdue"
+                value={overdueInvoices.length.toString()}
+                tone={overdueInvoices.length ? "red" : "slate"}
+              />
+              <BillingRisk
+                label="Due soon"
+                value={dueSoonInvoices.length.toString()}
+                tone={dueSoonInvoices.length ? "amber" : "slate"}
+              />
+            </div>
           </div>
         </article>
       </section>
@@ -207,7 +242,7 @@ export default async function BillingPage() {
         </div>
 
         {!billingQueue.length ? (
-          <div className="border-t border-slate-100 px-5 py-10 text-center">
+          <div className="border-t border-slate-100 px-5 py-8 text-center">
             <ReceiptText className="mx-auto h-9 w-9 text-slate-300" />
             <p className="mt-3 text-sm font-black text-slate-700">
               No billing work is currently waiting
@@ -219,18 +254,64 @@ export default async function BillingPage() {
         ) : null}
       </section>
 
-      <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-500" />
-          <div>
-            <p className="text-sm font-black text-slate-800">Billing guardrails</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Collect and review POD before invoicing, confirm carrier cost before trusting margin, and keep invoice status current so owners can see cash exposure.
-            </p>
-          </div>
-        </div>
+      <section className="grid gap-4 xl:grid-cols-3">
+        <Guardrail
+          icon={FileCheck2}
+          title="POD before AR"
+          text="Collect and review proof of delivery before sending a customer invoice."
+        />
+        <Guardrail
+          icon={DollarSign}
+          title="Confirm margin"
+          text="Verify carrier cost before trusting the visible margin on billing records."
+        />
+        <Guardrail
+          icon={Clock}
+          title="Keep status fresh"
+          text="Update invoice status quickly so ownership can see cash exposure."
+        />
       </section>
     </InternalShell>
+  );
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  accent,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  helper: string;
+  accent: (typeof CARD_ACCENTS)[number];
+}) {
+  return (
+    <article className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${accent.border}`}>
+      <div className="p-5">
+        <div className={`flex h-9 w-9 items-center justify-center rounded-md ${accent.icon}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <p className="mt-4 text-sm font-medium text-slate-600">{label}</p>
+        <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
+          {value}
+        </p>
+        <p className="mt-2 text-xs font-semibold text-slate-400">{helper}</p>
+      </div>
+    </article>
+  );
+}
+
+function BillingStep({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white/65 px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] opacity-60">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-black">{value}</p>
+    </div>
   );
 }
 
@@ -241,6 +322,77 @@ function BillingFact({ label, value }: { label: string; value: string }) {
       <p className="text-lg font-black text-slate-900">{value}</p>
     </div>
   );
+}
+
+function BillingRisk({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "amber" | "red" | "slate";
+}) {
+  const className =
+    tone === "red"
+      ? "border-red-100 bg-red-50 text-red-800"
+      : tone === "amber"
+        ? "border-amber-100 bg-amber-50 text-amber-800"
+        : "border-slate-100 bg-slate-50 text-slate-600";
+
+  return (
+    <div className={`rounded-md border px-4 py-3 ${className}`}>
+      <p className="text-xs font-black uppercase tracking-[0.12em] opacity-75">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-black">{value}</p>
+    </div>
+  );
+}
+
+function Guardrail({
+  icon: Icon,
+  title,
+  text,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  title: string;
+  text: string;
+}) {
+  return (
+    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-50 text-amber-600">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-sm font-black text-slate-800">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{text}</p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function isPastDue(dueDate?: string | null) {
+  if (!dueDate) return false;
+  const parsed = new Date(dueDate);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  parsed.setHours(0, 0, 0, 0);
+  return parsed < today;
+}
+
+function isDueSoon(dueDate?: string | null) {
+  if (!dueDate || isPastDue(dueDate)) return false;
+  const parsed = new Date(dueDate);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  parsed.setHours(0, 0, 0, 0);
+  const diffDays = (parsed.getTime() - today.getTime()) / 86_400_000;
+  return diffDays <= 7;
 }
 
 function Th({ children }: { children: ReactNode }) {

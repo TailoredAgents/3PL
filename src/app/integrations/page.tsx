@@ -14,7 +14,7 @@ export default async function IntegrationsPage() {
       active="Integrations"
       eyebrow="Admin"
       title="Integrations"
-      description="Monitor external provider connectivity, credentials, sync health, and logs for DAT, Truckstop, Twilio, Resend, xAI, FMCSA, and others."
+      description="Monitor external provider connectivity, credentials, last success/failure, and logs. Use Test health buttons to run safe pings (xAI + others). xAI agent/document calls now write logs automatically."
       action={{ label: "Settings", href: "/settings" }}
     >
       {/* Overview metrics */}
@@ -80,12 +80,22 @@ export default async function IntegrationsPage() {
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-1">
                 <Link href="/loads" className="text-xs font-semibold text-emerald-700 hover:underline">View in loads</Link>
-                {provider.name === "DAT" || provider.name === "TRUCKSTOP" ? (
+                {provider.key === "DAT" || provider.key === "TRUCKSTOP" ? (
                   <Link href="/quote-requests" className="text-xs font-semibold text-emerald-700 hover:underline">Test rates</Link>
                 ) : null}
-                <span className="text-xs text-slate-400">(Test actions via load/marketplace flows or provider consoles)</span>
+                <form action="/api/integrations/test" method="post" className="inline">
+                  <input type="hidden" name="provider" value={provider.key || provider.name} />
+                  <button
+                    type="submit"
+                    className="text-xs font-semibold text-emerald-700 hover:underline"
+                    title={'Run a minimal health check / ping for this provider (result logged)'}
+                  >
+                    Test health
+                  </button>
+                </form>
+                <span className="text-xs text-slate-400">(Test via flows or the button above)</span>
               </div>
             </div>
           </article>
@@ -139,8 +149,8 @@ export default async function IntegrationsPage() {
       {/* Global logs note */}
       <aside className="mt-6 rounded-lg border border-slate-100 bg-white p-5 text-sm text-slate-600">
         <p className="font-semibold">Integration logs</p>
-        <p className="mt-1">DAT and TRUCKSTOP marketplace activity (capacity search + load posting) writes here via the marketplace workflow. Per-load logs also appear on individual load pages. Other providers (Twilio, Resend, xAI, FMCSA, etc.) surface health via credential checks today; expand logging in later sub-phases for full audit.</p>
-        <p className="mt-2 text-xs">Webhook endpoints (Twilio voice/SMS, Resend) are active at /api/twilio/... and /api/resend/... when secrets configured. Use provider consoles or exercise flows (/loads, /quote-requests) to generate test activity.</p>
+        <p className="mt-1">DAT and TRUCKSTOP marketplace activity writes here via the marketplace workflow. xAI (Grok) agent and document extraction calls are now logged automatically. Use the Test health button on cards to trigger a logged HEALTH_CHECK for supported providers. Per-load logs also appear on individual load pages.</p>
+        <p className="mt-2 text-xs">Webhook endpoints (Twilio voice/SMS, Resend) are active at /api/twilio/... and /api/resend/... when secrets configured. More providers will log inbound events in later sub-phases.</p>
       </aside>
     </InternalShell>
   );

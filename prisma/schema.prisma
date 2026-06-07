@@ -254,6 +254,13 @@ enum CarrierSourcingStatus {
 enum IntegrationProvider {
   DAT
   TRUCKSTOP
+  TWILIO
+  RESEND
+  XAI
+  FMCSA
+  HERE
+  EIA
+  CARRIEROK
   OTHER
 }
 
@@ -262,6 +269,10 @@ enum IntegrationAction {
   CAPACITY_SEARCH
   LOAD_POST
   CARRIER_RESPONSE_SYNC
+  AGENT_RUN
+  DOCUMENT_EXTRACTION
+  HEALTH_CHECK
+  WEBHOOK_RECEIVED
 }
 
 enum IntegrationStatus {

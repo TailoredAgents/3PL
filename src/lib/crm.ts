@@ -100,7 +100,8 @@ export type IntegrationLogView = {
 };
 
 export type ProviderStatus = {
-  name: string;
+  name: string; // display label e.g. "xAI (Grok)"
+  key?: string; // enum key e.g. "XAI"
   envKey?: string;
   configured: boolean;
   description: string;
@@ -3641,21 +3642,24 @@ export async function getIntegrationsOverview(): Promise<{
   recentGlobalLogs: IntegrationLogView[];
 }> {
   const providersList = [
-    { name: "DAT", envKey: "DAT_API_KEY", description: "Marketplace rates, capacity, load posting" },
-    { name: "TRUCKSTOP", envKey: "TRUCKSTOP_CLIENT_ID", description: "Rates, carrier risk, ELD" },
-    { name: "Twilio", envKey: "TWILIO_ACCOUNT_SID", description: "Voice/SMS automation and callbacks" },
-    { name: "Resend", envKey: "RESEND_API_KEY", description: "Transactional email and webhooks" },
-    { name: "xAI (Grok)", envKey: "XAI_API_KEY", description: "AI agents and reasoning" },
-    { name: "FMCSA", envKey: "FMCSA_WEB_KEY", description: "Carrier authority and safety data" },
-    { name: "HERE", envKey: "HERE_API_KEY", description: "Truck routing and mileage" },
-    { name: "EIA", envKey: "EIA_API_KEY", description: "Diesel price benchmarks" },
-    { name: "CarrierOk", envKey: "CARRIEROK_API_KEY", description: "Carrier risk and vetting" },
+    { key: "DAT", label: "DAT", envKey: "DAT_API_KEY", description: "Marketplace rates, capacity, load posting" },
+    { key: "TRUCKSTOP", label: "TRUCKSTOP", envKey: "TRUCKSTOP_CLIENT_ID", description: "Rates, carrier risk, ELD" },
+    { key: "TWILIO", label: "Twilio", envKey: "TWILIO_ACCOUNT_SID", description: "Voice/SMS automation and callbacks" },
+    { key: "RESEND", label: "Resend", envKey: "RESEND_API_KEY", description: "Transactional email and webhooks" },
+    { key: "XAI", label: "xAI (Grok)", envKey: "XAI_API_KEY", description: "AI agents and reasoning" },
+    { key: "FMCSA", label: "FMCSA", envKey: "FMCSA_WEB_KEY", description: "Carrier authority and safety data" },
+    { key: "HERE", label: "HERE", envKey: "HERE_API_KEY", description: "Truck routing and mileage" },
+    { key: "EIA", label: "EIA", envKey: "EIA_API_KEY", description: "Diesel price benchmarks" },
+    { key: "CARRIEROK", label: "CarrierOk", envKey: "CARRIEROK_API_KEY", description: "Carrier risk and vetting" },
   ];
 
   if (!hasDatabaseUrl() || !prisma) {
     return {
       providers: providersList.map((p) => ({
-        ...p,
+        name: p.label,
+        key: p.key,
+        envKey: p.envKey,
+        description: p.description,
         configured: !!process.env[p.envKey],
         lastSuccess: null,
         lastFailure: null,
@@ -3680,11 +3684,14 @@ export async function getIntegrationsOverview(): Promise<{
   });
 
   const providers = providersList.map((p) => {
-    const pLogs = (byProvider[p.name] as unknown[]) || [];
+    const pLogs = (byProvider[p.key] as unknown[]) || [];
     const lastSuccess = (pLogs.find((l: unknown) => (l as Record<string, unknown>).status === "SUCCESS") as Record<string, unknown> | undefined)?.createdAt as Date | undefined;
     const lastFailure = (pLogs.find((l: unknown) => (l as Record<string, unknown>).status === "FAILED") as Record<string, unknown> | undefined)?.createdAt as Date | undefined;
     return {
-      ...p,
+      name: p.label,
+      key: p.key,
+      envKey: p.envKey,
+      description: p.description,
       configured: !!process.env[p.envKey],
       lastSuccess: lastSuccess ? formatFollowUp(lastSuccess) : null,
       lastFailure: lastFailure ? formatFollowUp(lastFailure) : null,

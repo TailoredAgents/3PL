@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import type { BrokerageAgentName } from "@/lib/agent-config";
 import { getAgentPromptTemplate } from "@/lib/settings";
 import type { FreightAuditInput, QuoteRequestInput } from "@/lib/validation";
+import { logIntegration } from "@/lib/integrations/logging";
 
 type AgentResult = {
   summary: string;
@@ -25,6 +26,30 @@ const client = xaiApiKey
     })
   : null;
 
+async function withLoggedXai<T>(action: string, fn: () => Promise<T>, extra?: { loadId?: string; message?: string }): Promise<T> {
+  try {
+    const result = await fn();
+    await logIntegration({
+      provider: "XAI",
+      action,
+      status: "SUCCESS",
+      loadId: extra?.loadId ?? null,
+      message: extra?.message ?? "xAI completion succeeded",
+    });
+    return result;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    await logIntegration({
+      provider: "XAI",
+      action,
+      status: "FAILED",
+      loadId: extra?.loadId ?? null,
+      error: message,
+    });
+    throw err;
+  }
+}
+
 export async function runSavingsAuditAgent(
   input: FreightAuditInput,
 ): Promise<AgentResult> {
@@ -37,26 +62,31 @@ export async function runSavingsAuditAgent(
     };
   }
 
-  const response = await client.chat.completions.create({
-    model: xaiModel,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a senior freight brokerage analyst. Return concise JSON with summary, confidence, and nextAction. Do not invent exact savings when documents have not been OCR processed.",
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          task: "Create an initial freight savings audit intake summary.",
-          input,
-        }),
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
-
-  return parseAgentResponse(response.choices[0]?.message?.content);
+  return withLoggedXai(
+    "AGENT_RUN",
+    async () => {
+      const response = await client.chat.completions.create({
+        model: xaiModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a senior freight brokerage analyst. Return concise JSON with summary, confidence, and nextAction. Do not invent exact savings when documents have not been OCR processed.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              task: "Create an initial freight savings audit intake summary.",
+              input,
+            }),
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+      return parseAgentResponse(response.choices[0]?.message?.content);
+    },
+    { message: `Savings audit for ${input.companyName}` },
+  );
 }
 
 export async function runQuoteStructuringAgent(
@@ -71,26 +101,31 @@ export async function runQuoteStructuringAgent(
     };
   }
 
-  const response = await client.chat.completions.create({
-    model: xaiModel,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a freight brokerage quote intake agent. Return concise JSON with summary, confidence, and nextAction.",
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          task: "Structure this shipper quote request for pricing.",
-          input,
-        }),
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
-
-  return parseAgentResponse(response.choices[0]?.message?.content);
+  return withLoggedXai(
+    "AGENT_RUN",
+    async () => {
+      const response = await client.chat.completions.create({
+        model: xaiModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a freight brokerage quote intake agent. Return concise JSON with summary, confidence, and nextAction.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              task: "Structure this shipper quote request for pricing.",
+              input,
+            }),
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+      return parseAgentResponse(response.choices[0]?.message?.content);
+    },
+    { message: `Quote structuring ${input.origin} → ${input.destination}` },
+  );
 }
 
 export async function runBrokerageAgent(input: {
@@ -108,26 +143,31 @@ export async function runBrokerageAgent(input: {
     };
   }
 
-  const response = await client.chat.completions.create({
-    model: xaiModel,
-    messages: [
-      {
-        role: "system",
-        content: `${instructions.systemPrompt} Return concise JSON with summary, confidence, and nextAction. Keep recommendations operational and do not claim that any customer, carrier, or marketplace action has already been performed.`,
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          task: instructions.task,
-          relatedEntityType: input.relatedEntityType,
-          context: input.context,
-        }),
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
-
-  return parseAgentResponse(response.choices[0]?.message?.content);
+  return withLoggedXai(
+    "AGENT_RUN",
+    async () => {
+      const response = await client.chat.completions.create({
+        model: xaiModel,
+        messages: [
+          {
+            role: "system",
+            content: `${instructions.systemPrompt} Return concise JSON with summary, confidence, and nextAction. Keep recommendations operational and do not claim that any customer, carrier, or marketplace action has already been performed.`,
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              task: instructions.task,
+              relatedEntityType: input.relatedEntityType,
+              context: input.context,
+            }),
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+      return parseAgentResponse(response.choices[0]?.message?.content);
+    },
+    { message: `Brokerage agent ${input.agentName} for ${input.relatedEntityType}` },
+  );
 }
 
 export async function runCallIntakeAgent(input: {
@@ -158,27 +198,32 @@ export async function runCallIntakeAgent(input: {
     };
   }
 
-  const response = await client.chat.completions.create({
-    model: xaiModel,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a freight brokerage phone intake agent. Extract only facts supported by the transcript or CRM context. Return concise JSON with summary, confidence, nextAction, quoteRequest, and missingQuestions. quoteRequest should use field names from the internal quote request form: companyName, contactName, email, phone, originCity, originState, originAddress, destinationCity, destinationState, destinationAddress, pickupDate, pickupWindow, deliveryDate, deliveryWindow, equipmentType, commodity, weight, palletCount, pieceCount, dimensions, hazmat, temperatureRequirement, appointmentRequired, accessorials, customerReference, urgency, targetMarginPercent, pricingNotes, specialRequirements, intakeChannel, quotedByPhone.",
-      },
-      {
-        role: "user",
-        content: JSON.stringify({
-          task: "Extract a quote request draft from this call transcript.",
-          transcriptText: input.transcriptText,
-          context: input.context,
-        }),
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
-
-  return parseCallIntakeResponse(response.choices[0]?.message?.content);
+  return withLoggedXai(
+    "AGENT_RUN",
+    async () => {
+      const response = await client.chat.completions.create({
+        model: xaiModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a freight brokerage phone intake agent. Extract only facts supported by the transcript or CRM context. Return concise JSON with summary, confidence, nextAction, quoteRequest, and missingQuestions. quoteRequest should use field names from the internal quote request form: companyName, contactName, email, phone, originCity, originState, originAddress, destinationCity, destinationState, destinationAddress, pickupDate, pickupWindow, deliveryDate, deliveryWindow, equipmentType, commodity, weight, palletCount, pieceCount, dimensions, hazmat, temperatureRequirement, appointmentRequired, accessorials, customerReference, urgency, targetMarginPercent, pricingNotes, specialRequirements, intakeChannel, quotedByPhone.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              task: "Extract a quote request draft from this call transcript.",
+              transcriptText: input.transcriptText,
+              context: input.context,
+            }),
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+      return parseCallIntakeResponse(response.choices[0]?.message?.content);
+    },
+    { message: "Call intake transcript processing" },
+  );
 }
 
 function parseAgentResponse(content: string | null | undefined): AgentResult {
@@ -345,12 +390,25 @@ ${input.extractedText || "(no prior text extraction)"}`;
     const raw = response.choices[0]?.message?.content;
     const parsed = raw ? JSON.parse(raw) : {};
 
+    await logIntegration({
+      provider: "XAI",
+      action: "DOCUMENT_EXTRACTION",
+      status: "SUCCESS",
+      message: `Document structured extraction (${input.documentType})`,
+    });
+
     return {
       fields: parsed.fields || {},
       confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.6,
       summary: parsed.summary || "Structured fields extracted from document.",
     };
   } catch (err) {
+    await logIntegration({
+      provider: "XAI",
+      action: "DOCUMENT_EXTRACTION",
+      status: "FAILED",
+      error: err instanceof Error ? err.message : "unknown",
+    });
     return {
       fields: {},
       confidence: 0.2,

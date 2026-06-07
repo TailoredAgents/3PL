@@ -598,10 +598,22 @@ Completion criteria:
 
 Goal: automate repetitive work only after the data and workflows are stable.
 
-Status: not started.
+Status: 10.1 complete. AI control layer, prompt version history, run-level
+approval metadata, and rejection controls are in place. Feature-specific
+automation remains for later sub-phases.
 
 Build:
 
+- Complete 10.1: add AI control layer before deeper automation:
+  - Prompt version history records each saved prompt with version, change
+    reason, changed-by user when available, and timestamp.
+  - Agent runs now store prompt snapshot, prompt version, automation mode, risk
+    level, gated actions, and approval requirement at run time.
+  - High-risk/sensitive agents stay approval-gated even if a future mode is set
+    to autonomous.
+  - AI Command Center now shows guardrails, approval/rejection controls, review
+    notes, prompt history, and run control metadata.
+  - Lead AI activity creation now waits for approval when a run is review-gated.
 - Add scheduled Daily Brief Agent delivery.
 - Add autonomous document extraction jobs with human review for exceptions.
 - Add AI draft suggestions inside communications composer.
@@ -663,8 +675,7 @@ Completion criteria:
 
 ## Current Known Technical Debt
 
-- `npm run lint` currently fails on existing explicit `any` usage in carrier
-  invoice APIs and CRM helpers, plus a few unused imports/variables.
+- `npm run lint` currently passes as of Phase 10.1 validation.
 - Document storage + extraction foundation complete (Phase 1 + 2.1). Full OCR
   provider integration, structured BOL/POD/invoice parsing, and autonomous
   extraction jobs remain for later phases.

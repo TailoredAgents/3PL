@@ -7,6 +7,10 @@ import {
   type BrokerageAgentName,
 } from "@/lib/agent-config";
 import {
+  getAgentAutomationPolicy,
+  getEffectiveAgentRunStatus,
+} from "@/lib/agent-control";
+import {
   getCarrierDetailView,
   getLeadDetailView,
   getLoadDetailView,
@@ -15,7 +19,8 @@ import {
 import { enrichAgentContext } from "@/lib/agent-enrichment";
 import { runBrokerageAgent } from "@/lib/grok";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import { getAgentMode } from "@/lib/settings";
+import { getCurrentInternalUser } from "@/lib/current-user";
+import { getAgentMode, getAgentPromptTemplate } from "@/lib/settings";
 
 export type AgentEntityType = "Lead" | "QuoteRequest" | "Load" | "Carrier";
 
@@ -42,13 +47,16 @@ export async function runAndLogBrokerageAgent(input: {
 
   const startedAt = new Date();
   const mode = await getAgentMode(input.agentName);
-  const runStatus = mode === "autonomous" ? "COMPLETED" : "NEEDS_HUMAN_APPROVAL";
+  const policy = getAgentAutomationPolicy(input.agentName);
+  const runStatus = getEffectiveAgentRunStatus({ mode, policy });
+  const instructions = await getAgentPromptTemplate(input.agentName);
 
   try {
     const agentResult = await runBrokerageAgent({
       agentName: input.agentName,
       relatedEntityType: input.relatedEntityType,
       context,
+      instructions,
     });
     let runId: string | undefined;
 
@@ -59,23 +67,48 @@ export async function runAndLogBrokerageAgent(input: {
           relatedEntityType: input.relatedEntityType,
           relatedEntityId: input.relatedEntityId,
           status: runStatus,
-          prompt: `Template: ${input.agentName}`,
+          prompt: `Template: ${input.agentName} v${instructions.version}`,
           inputJson: {
             requestedAt: startedAt.toISOString(),
+            automationMode: mode,
+            riskLevel: policy.riskLevel,
+            approvalRequired: policy.approvalRequired,
+            gatedActions: policy.gatedActions,
             context: context as Prisma.InputJsonValue,
           },
           outputJson: agentResult,
           confidence: agentResult.confidence,
+          automationMode: mode,
+          riskLevel: policy.riskLevel,
+          approvalRequired: policy.approvalRequired,
+          actionSummary: policy.actionSummary,
+          promptVersion: instructions.version,
+          promptSnapshot: {
+            agentName: instructions.agentName,
+            version: instructions.version,
+            systemPrompt: instructions.systemPrompt,
+            task: instructions.task,
+            placeholderNextAction: instructions.placeholderNextAction,
+          },
+          controlJson: {
+            gatedActions: policy.gatedActions,
+            approvalGate:
+              runStatus === "NEEDS_HUMAN_APPROVAL"
+                ? "Required before execution."
+                : "No external or sensitive action executed.",
+          },
         },
       });
       runId = run.id;
 
-      await maybeCreateActivity(input, agentResult);
+      if (runStatus === "COMPLETED") {
+        await maybeCreateActivity(input, agentResult);
+      }
     }
 
     revalidateAgentEntityPaths(input.relatedEntityType, input.relatedEntityId);
 
-    return { agentResult, runId };
+    return { agentResult, runId, status: runStatus };
   } catch (error) {
     if (hasDatabaseUrl() && prisma) {
       await prisma.aiAgentRun.create({
@@ -84,10 +117,30 @@ export async function runAndLogBrokerageAgent(input: {
           relatedEntityType: input.relatedEntityType,
           relatedEntityId: input.relatedEntityId,
           status: "FAILED",
-          prompt: `Template: ${input.agentName}`,
+          prompt: `Template: ${input.agentName} v${instructions.version}`,
           inputJson: {
             requestedAt: startedAt.toISOString(),
+            automationMode: mode,
+            riskLevel: policy.riskLevel,
+            approvalRequired: policy.approvalRequired,
+            gatedActions: policy.gatedActions,
             context: context as Prisma.InputJsonValue,
+          },
+          automationMode: mode,
+          riskLevel: policy.riskLevel,
+          approvalRequired: policy.approvalRequired,
+          actionSummary: policy.actionSummary,
+          promptVersion: instructions.version,
+          promptSnapshot: {
+            agentName: instructions.agentName,
+            version: instructions.version,
+            systemPrompt: instructions.systemPrompt,
+            task: instructions.task,
+            placeholderNextAction: instructions.placeholderNextAction,
+          },
+          controlJson: {
+            gatedActions: policy.gatedActions,
+            failure: "Agent run failed before producing usable output.",
           },
           errorMessage:
             error instanceof Error ? error.message : "Unknown AI agent error.",
@@ -135,7 +188,7 @@ function isBrokerageAgentName(agentName: string): agentName is BrokerageAgentNam
   return brokerageAgentNames.includes(agentName as BrokerageAgentName);
 }
 
-export async function approveAgentRun(runId: string) {
+export async function approveAgentRun(runId: string, reviewNotes?: string) {
   if (!hasDatabaseUrl() || !prisma) {
     throw new Error("Database is not configured.");
   }
@@ -152,9 +205,65 @@ export async function approveAgentRun(runId: string) {
     throw new Error("Only agent runs awaiting approval can be approved.");
   }
 
+  const user = await getCurrentInternalUser();
   const run = await prisma.aiAgentRun.update({
     where: { id: runId },
-    data: { status: "COMPLETED" },
+    data: {
+      status: "COMPLETED",
+      approvedAt: new Date(),
+      approvedByUserId: user?.id ?? null,
+      reviewNotes: reviewNotes?.trim() || existing.reviewNotes,
+    },
+  });
+
+  await maybeCreateActivity(
+    {
+      relatedEntityType: run.relatedEntityType ?? "",
+      relatedEntityId: run.relatedEntityId ?? "",
+      agentName: run.agentName,
+    },
+    getAgentResultFromOutput(run.outputJson),
+  );
+
+  if (run.relatedEntityType && run.relatedEntityId) {
+    revalidateAgentEntityPaths(
+      run.relatedEntityType as AgentEntityType,
+      run.relatedEntityId,
+    );
+  }
+
+  revalidatePath("/agents");
+  revalidatePath("/dashboard");
+
+  return run;
+}
+
+export async function rejectAgentRun(runId: string, reviewNotes?: string) {
+  if (!hasDatabaseUrl() || !prisma) {
+    throw new Error("Database is not configured.");
+  }
+
+  const existing = await prisma.aiAgentRun.findUnique({
+    where: { id: runId },
+  });
+
+  if (!existing) {
+    throw new Error("Agent run not found.");
+  }
+
+  if (existing.status !== "NEEDS_HUMAN_APPROVAL") {
+    throw new Error("Only agent runs awaiting approval can be rejected.");
+  }
+
+  const user = await getCurrentInternalUser();
+  const run = await prisma.aiAgentRun.update({
+    where: { id: runId },
+    data: {
+      status: "REJECTED",
+      rejectedAt: new Date(),
+      rejectedByUserId: user?.id ?? null,
+      reviewNotes: reviewNotes?.trim() || existing.reviewNotes,
+    },
   });
 
   if (run.relatedEntityType && run.relatedEntityId) {
@@ -252,4 +361,26 @@ async function maybeCreateActivity(
       outcome: agentResult.nextAction,
     },
   });
+}
+
+function getAgentResultFromOutput(outputJson: unknown) {
+  if (!outputJson || typeof outputJson !== "object") {
+    return {
+      summary: "AI recommendation approved.",
+      nextAction: "Review approved AI output and take the next step.",
+    };
+  }
+
+  const output = outputJson as { summary?: unknown; nextAction?: unknown };
+
+  return {
+    summary:
+      typeof output.summary === "string"
+        ? output.summary
+        : "AI recommendation approved.",
+    nextAction:
+      typeof output.nextAction === "string"
+        ? output.nextAction
+        : "Review approved AI output and take the next step.",
+  };
 }

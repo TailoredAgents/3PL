@@ -168,6 +168,7 @@ enum AiAgentStatus {
   COMPLETED
   FAILED
   NEEDS_HUMAN_APPROVAL
+  REJECTED
 }
 
 enum CustomerUpdateStatus {
@@ -298,6 +299,9 @@ model User {
   quotes      CustomerQuote[]
   documents   Document[]      @relation("DocumentUploader")
   loadExceptions LoadException[] @relation("LoadExceptionOwner")
+  approvedAiAgentRuns AiAgentRun[] @relation("AiAgentRunApprovedBy")
+  rejectedAiAgentRuns AiAgentRun[] @relation("AiAgentRunRejectedBy")
+  promptVersions AgentPromptVersion[] @relation("AgentPromptVersionChangedBy")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -927,10 +931,46 @@ model AiAgentRun {
   outputJson        Json?
   confidence        Decimal?      @db.Decimal(5, 2)
   errorMessage      String?
+  automationMode    String?
+  riskLevel         String?
+  approvalRequired  Boolean       @default(true)
+  actionSummary     String?
+  promptVersion     Int?
+  promptSnapshot    Json?
+  controlJson       Json?
+  approvedAt        DateTime?
+  approvedByUserId  String?
+  approvedBy        User?         @relation("AiAgentRunApprovedBy", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  rejectedAt        DateTime?
+  rejectedByUserId  String?
+  rejectedBy        User?         @relation("AiAgentRunRejectedBy", fields: [rejectedByUserId], references: [id], onDelete: SetNull)
+  reviewNotes       String?
   createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([agentName])
   @@index([relatedEntityType, relatedEntityId])
+  @@index([status])
+  @@index([approvedByUserId])
+  @@index([rejectedByUserId])
+  @@index([createdAt])
+}
+
+model AgentPromptVersion {
+  id                    String   @id @default(cuid())
+  agentName             String
+  version               Int
+  systemPrompt          String
+  task                  String
+  placeholderNextAction String
+  changeReason          String?
+  changedByUserId       String?
+  changedBy             User?    @relation("AgentPromptVersionChangedBy", fields: [changedByUserId], references: [id], onDelete: SetNull)
+  createdAt             DateTime @default(now())
+
+  @@unique([agentName, version])
+  @@index([agentName])
+  @@index([changedByUserId])
   @@index([createdAt])
 }
 

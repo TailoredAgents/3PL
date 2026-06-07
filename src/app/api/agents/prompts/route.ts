@@ -7,8 +7,10 @@ import { saveAgentPromptTemplate } from "@/lib/settings";
 import { agentPromptTemplateSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request) {
+  let currentUser: Awaited<ReturnType<typeof requireInternalRole>>;
+
   try {
-    await requireInternalRole(["OWNER", "ADMIN"]);
+    currentUser = await requireInternalRole(["OWNER", "ADMIN"]);
   } catch (error) {
     return Response.json(
       {
@@ -37,6 +39,7 @@ export async function PATCH(request: Request) {
     systemPrompt: formValue(formData, "systemPrompt"),
     task: formValue(formData, "task"),
     placeholderNextAction: formValue(formData, "placeholderNextAction"),
+    changeReason: formValue(formData, "changeReason"),
   });
 
   if (!parsed.success) {
@@ -53,7 +56,10 @@ export async function PATCH(request: Request) {
     });
   }
 
-  await saveAgentPromptTemplate(parsed.data);
+  await saveAgentPromptTemplate(parsed.data, {
+    changedByUserId: currentUser?.id ?? null,
+    changeReason: parsed.data.changeReason,
+  });
 
   revalidatePath("/agents");
 

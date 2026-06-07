@@ -1,4 +1,4 @@
-import { approveAgentRun } from "@/lib/agent-workflow";
+import { rejectAgentRun } from "@/lib/agent-workflow";
 import { formValue } from "@/lib/server-utils";
 import { aiAgentReviewSchema } from "@/lib/validation";
 
@@ -17,14 +17,14 @@ export async function POST(
   }
 
   try {
-    await approveAgentRun(id, parsed.data.reviewNotes);
+    await rejectAgentRun(id, parsed.data.reviewNotes);
 
-    return Response.json({ message: "Agent run approved." });
+    return Response.json({ message: "Agent run rejected." });
   } catch (error) {
     return Response.json(
       {
         error:
-          error instanceof Error ? error.message : "Agent run approval failed.",
+          error instanceof Error ? error.message : "Agent run rejection failed.",
       },
       { status: 400 },
     );

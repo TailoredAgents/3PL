@@ -7,14 +7,17 @@ import {
   ClipboardCheck,
   ExternalLink,
   FileWarning,
+  History,
   ListChecks,
   RefreshCcw,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
 import {
   AgentRunApproveForm,
   AgentPromptTemplateForm,
+  AgentRunRejectForm,
   AgentRunRetryForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
@@ -140,6 +143,31 @@ export default async function AgentsPage() {
         </article>
       </section>
 
+      {/* Automation guardrails */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <p className="text-sm font-semibold text-slate-700">Automation guardrails</p>
+          </div>
+          <span className="text-xs text-slate-400">Phase 10.1</span>
+        </div>
+        <div className="grid gap-3 p-4 md:grid-cols-3">
+          <Guardrail
+            title="Approval gates"
+            detail="Money, compliance, marketplace, booking, and outbound contact actions stay review-first."
+          />
+          <Guardrail
+            title="Prompt snapshots"
+            detail="Each run stores the prompt version and control policy used when the recommendation was created."
+          />
+          <Guardrail
+            title="Auditable decisions"
+            detail="Approvals and rejections capture reviewer notes, timestamps, and reviewer identity when auth is configured."
+          />
+        </div>
+      </article>
+
       {/* Approval queue + Retry queue */}
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
@@ -155,7 +183,16 @@ export default async function AgentsPage() {
           <div className="grid gap-3 p-4">
             {commandCenter.approvalQueue.length ? (
               commandCenter.approvalQueue.map((run) => (
-                <RunReviewCard key={run.id} run={run} action={<AgentRunApproveForm runId={run.id} />} />
+                <RunReviewCard
+                  key={run.id}
+                  run={run}
+                  action={
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <AgentRunApproveForm runId={run.id} />
+                      <AgentRunRejectForm runId={run.id} />
+                    </div>
+                  }
+                />
               ))
             ) : (
               <EmptyState message="No AI recommendations are waiting for approval." />
@@ -221,6 +258,9 @@ export default async function AgentsPage() {
                   <span className="mt-1.5 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                     {run.status}
                   </span>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {run.riskLevel} risk · v{run.promptVersion ?? "n/a"}
+                  </p>
                 </div>
                 <Link
                   href={getAgentRunHref(run.relatedEntityType, run.relatedEntityId)}
@@ -267,6 +307,16 @@ export default async function AgentsPage() {
                   </span>
                 </summary>
                 <div className="border-t border-slate-100 p-4">
+                  <div className="mb-3 rounded-md border border-slate-100 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                    <p className="font-semibold text-slate-800">
+                      Version {template.version} · {template.updated}
+                    </p>
+                    <p>
+                      {template.changedBy
+                        ? `Changed by ${template.changedBy}`
+                        : "No saved prompt history yet."}
+                    </p>
+                  </div>
                   <AgentPromptTemplateForm
                     agentName={template.agentName}
                     systemPrompt={template.systemPrompt}
@@ -283,6 +333,43 @@ export default async function AgentsPage() {
           </p>
         )}
       </article>
+
+      {/* Prompt history */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Prompt version history</p>
+          </div>
+          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+            {commandCenter.promptHistory.length}
+          </span>
+        </div>
+        {commandCenter.promptHistory.length ? (
+          <div className="divide-y divide-slate-100">
+            {commandCenter.promptHistory.map((version) => (
+              <div
+                key={version.id}
+                className="grid gap-3 px-5 py-4 lg:grid-cols-[220px_1fr_180px]"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{version.agentName}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">Version {version.version}</p>
+                </div>
+                <p className="text-sm leading-6 text-slate-600">
+                  {version.changeReason ?? "Prompt saved without a change reason."}
+                </p>
+                <div className="text-xs leading-5 text-slate-500">
+                  <p>{version.created}</p>
+                  <p>{version.changedBy ?? "System or local mode"}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState message="Prompt history will appear after the next prompt save." />
+        )}
+      </article>
     </InternalShell>
   );
 }
@@ -297,6 +384,15 @@ function getSeverityClass(severity: "High" | "Medium" | "Low") {
   if (severity === "High") return "bg-red-50 text-red-700";
   if (severity === "Medium") return "bg-amber-50 text-amber-700";
   return "bg-slate-100 text-slate-700";
+}
+
+function Guardrail({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
+      <p className="text-sm font-semibold text-slate-900">{title}</p>
+      <p className="mt-2 text-xs leading-5 text-slate-600">{detail}</p>
+    </div>
+  );
 }
 
 function RunReviewCard({
@@ -333,12 +429,36 @@ function RunReviewCard({
         </Link>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-700">{run.summary}</p>
+      <div className="mt-3 grid gap-2 rounded-md border border-slate-100 bg-white p-3 text-xs leading-5 text-slate-600 md:grid-cols-2">
+        <div>
+          <p className="font-semibold text-slate-900">Control policy</p>
+          <p>{run.riskLevel} risk · {run.automationMode}</p>
+          <p>{run.approvalRequired ? "Approval required" : "No approval required"}</p>
+          <p>Prompt version {run.promptVersion ?? "n/a"}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-900">Gated actions</p>
+          <p>
+            {run.gatedActions.length
+              ? run.gatedActions.join(", ")
+              : "No gated actions stored."}
+          </p>
+        </div>
+      </div>
       {run.errorMessage && (
         <p className="mt-2 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
           {run.errorMessage}
         </p>
       )}
       <p className="mt-2 text-xs font-semibold text-emerald-700">Next: {run.nextAction}</p>
+      {run.reviewNotes || run.reviewedBy || run.reviewedAt ? (
+        <p className="mt-2 rounded-md border border-slate-100 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+          {run.reviewNotes ?? "Reviewed without notes."}
+          {run.reviewedBy || run.reviewedAt
+            ? ` Reviewed ${run.reviewedAt ?? ""}${run.reviewedBy ? ` by ${run.reviewedBy}` : ""}.`
+            : ""}
+        </p>
+      ) : null}
       <div className="mt-3">{action}</div>
     </div>
   );

@@ -7,10 +7,13 @@ export async function POST(
   const { id } = await context.params;
 
   try {
-    const { agentResult, runId } = await retryAgentRun(id);
+    const { agentResult, runId, status } = await retryAgentRun(id);
 
     return Response.json({
-      message: "Agent run retried and is ready for review.",
+      message:
+        status === "NEEDS_HUMAN_APPROVAL"
+          ? "Agent run retried and is waiting for approval."
+          : "Agent run retried and completed.",
       agentResult,
       runId,
     });

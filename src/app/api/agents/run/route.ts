@@ -20,14 +20,17 @@ export async function POST(request: Request) {
   const input = parsed.data;
 
   try {
-    const { agentResult, runId } = await runAndLogBrokerageAgent({
+    const { agentResult, runId, status } = await runAndLogBrokerageAgent({
       agentName: input.agentName,
       relatedEntityType: input.relatedEntityType,
       relatedEntityId: input.relatedEntityId,
     });
 
     return Response.json({
-      message: `${input.agentName} completed and is ready for review.`,
+      message:
+        status === "NEEDS_HUMAN_APPROVAL"
+          ? `${input.agentName} drafted a recommendation and is waiting for approval.`
+          : `${input.agentName} completed.`,
       agentResult,
       runId,
     });

@@ -69,6 +69,16 @@ export type QuoteEmailTemplateView = {
 };
 export type AgentPromptTemplateView = BrokerageAgentTemplate & {
   isCustomized: boolean;
+  version: number;
+  updated: string;
+  changedBy: string | null;
+};
+export type AgentPromptVersionView = BrokerageAgentTemplate & {
+  id: string;
+  version: number;
+  changeReason: string | null;
+  changedBy: string | null;
+  created: string;
 };
 
 export async function getAppSettings(): Promise<AppSettingsView> {
@@ -151,36 +161,60 @@ export async function getAgentPromptTemplates(): Promise<
     return defaultBrokerageAgentTemplates.map((template) => ({
       ...template,
       isCustomized: false,
+      version: 1,
+      updated: "Default",
+      changedBy: null,
     }));
   }
 
   try {
-    const settings = await prisma.appSetting.findMany({
-      where: { key: { startsWith: AGENT_PROMPT_TEMPLATE_KEY_PREFIX } },
-    });
+    const [settings, versions] = await Promise.all([
+      prisma.appSetting.findMany({
+        where: { key: { startsWith: AGENT_PROMPT_TEMPLATE_KEY_PREFIX } },
+      }),
+      prisma.agentPromptVersion.findMany({
+        orderBy: [{ agentName: "asc" }, { version: "desc" }],
+        include: { changedBy: true },
+      }),
+    ]);
     const settingsByAgent = new Map(
       settings.map((setting) => [
         setting.key.replace(AGENT_PROMPT_TEMPLATE_KEY_PREFIX, ""),
         setting.value,
       ]),
     );
+    const latestVersionByAgent = new Map<string, (typeof versions)[number]>();
+    for (const version of versions) {
+      if (!latestVersionByAgent.has(version.agentName)) {
+        latestVersionByAgent.set(version.agentName, version);
+      }
+    }
 
     return defaultBrokerageAgentTemplates.map((template) => {
       const customized = parsePromptTemplateSetting(
         settingsByAgent.get(template.agentName),
       );
+      const latestVersion = latestVersionByAgent.get(template.agentName);
 
       return {
         ...template,
         ...customized,
         agentName: template.agentName,
         isCustomized: Boolean(customized),
+        version: latestVersion?.version ?? 1,
+        updated: latestVersion
+          ? formatSettingsDate(latestVersion.createdAt)
+          : "Default",
+        changedBy: latestVersion?.changedBy?.name ?? null,
       };
     });
   } catch {
     return defaultBrokerageAgentTemplates.map((template) => ({
       ...template,
       isCustomized: false,
+      version: 1,
+      updated: "Default",
+      changedBy: null,
     }));
   }
 }
@@ -198,13 +232,23 @@ export async function getAgentPromptTemplate(
     return {
       ...defaultTemplate,
       isCustomized: false,
+      version: 1,
+      updated: "Default",
+      changedBy: null,
     };
   }
 
   try {
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: getAgentPromptTemplateKey(agentName) },
-    });
+    const [setting, latestVersion] = await Promise.all([
+      prisma.appSetting.findUnique({
+        where: { key: getAgentPromptTemplateKey(agentName) },
+      }),
+      prisma.agentPromptVersion.findFirst({
+        where: { agentName },
+        orderBy: { version: "desc" },
+        include: { changedBy: true },
+      }),
+    ]);
     const customized = parsePromptTemplateSetting(setting?.value);
 
     return {
@@ -212,40 +256,98 @@ export async function getAgentPromptTemplate(
       ...customized,
       agentName,
       isCustomized: Boolean(customized),
+      version: latestVersion?.version ?? 1,
+      updated: latestVersion
+        ? formatSettingsDate(latestVersion.createdAt)
+        : "Default",
+      changedBy: latestVersion?.changedBy?.name ?? null,
     };
   } catch {
     return {
       ...defaultTemplate,
       isCustomized: false,
+      version: 1,
+      updated: "Default",
+      changedBy: null,
     };
   }
 }
 
 export async function saveAgentPromptTemplate(
   template: BrokerageAgentTemplate,
+  options?: {
+    changedByUserId?: string | null;
+    changeReason?: string | null;
+  },
 ) {
   if (!hasDatabaseUrl() || !prisma) {
     return;
   }
 
-  await prisma.appSetting.upsert({
-    where: { key: getAgentPromptTemplateKey(template.agentName) },
-    create: {
-      key: getAgentPromptTemplateKey(template.agentName),
-      value: JSON.stringify({
-        systemPrompt: template.systemPrompt,
-        task: template.task,
-        placeholderNextAction: template.placeholderNextAction,
-      }),
-    },
-    update: {
-      value: JSON.stringify({
-        systemPrompt: template.systemPrompt,
-        task: template.task,
-        placeholderNextAction: template.placeholderNextAction,
-      }),
-    },
+  const latestVersion = await prisma.agentPromptVersion.findFirst({
+    where: { agentName: template.agentName },
+    orderBy: { version: "desc" },
+    select: { version: true },
   });
+  const value = JSON.stringify({
+    systemPrompt: template.systemPrompt,
+    task: template.task,
+    placeholderNextAction: template.placeholderNextAction,
+  });
+
+  await prisma.$transaction([
+    prisma.appSetting.upsert({
+      where: { key: getAgentPromptTemplateKey(template.agentName) },
+      create: {
+        key: getAgentPromptTemplateKey(template.agentName),
+        value,
+      },
+      update: {
+        value,
+      },
+    }),
+    prisma.agentPromptVersion.create({
+      data: {
+        agentName: template.agentName,
+        version: (latestVersion?.version ?? 0) + 1,
+        systemPrompt: template.systemPrompt,
+        task: template.task,
+        placeholderNextAction: template.placeholderNextAction,
+        changeReason: options?.changeReason?.trim() || null,
+        changedByUserId: options?.changedByUserId ?? null,
+      },
+    }),
+  ]);
+}
+
+export async function getAgentPromptVersionViews(
+  take = 12,
+): Promise<AgentPromptVersionView[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return [];
+  }
+
+  try {
+    const versions = await prisma.agentPromptVersion.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { changedBy: true },
+      take,
+    });
+
+    return versions.map((version) => ({
+      id: version.id,
+      agentName: version.agentName as BrokerageAgentName,
+      version: version.version,
+      systemPrompt: version.systemPrompt,
+      task: version.task,
+      placeholderNextAction: version.placeholderNextAction,
+      changeReason: version.changeReason,
+      changedBy: version.changedBy?.name ?? null,
+      created: formatSettingsDate(version.createdAt),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 function getAgentPromptTemplateKey(agentName: BrokerageAgentName) {
@@ -381,4 +483,13 @@ function parseQuoteEmailTemplateSetting(
   } catch {
     return null;
   }
+}
+
+function formatSettingsDate(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }

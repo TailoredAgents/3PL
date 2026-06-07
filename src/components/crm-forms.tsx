@@ -1592,8 +1592,30 @@ export function AgentRunApproveForm({ runId }: { runId: string }) {
   const { state, onSubmit } = useCrmSubmit(`/api/agents/${runId}/approve`);
 
   return (
-    <form onSubmit={onSubmit}>
+    <form className="grid gap-2" onSubmit={onSubmit}>
+      <Textarea
+        name="reviewNotes"
+        label="Review notes"
+        rows={2}
+        placeholder="Optional approval notes"
+      />
       <FormFooter state={state} buttonLabel="Approve run" />
+    </form>
+  );
+}
+
+export function AgentRunRejectForm({ runId }: { runId: string }) {
+  const { state, onSubmit } = useCrmSubmit(`/api/agents/${runId}/reject`);
+
+  return (
+    <form className="grid gap-2" onSubmit={onSubmit}>
+      <Textarea
+        name="reviewNotes"
+        label="Reject reason"
+        rows={2}
+        placeholder="Optional reason for rejecting this recommendation"
+      />
+      <FormFooter state={state} buttonLabel="Reject run" />
     </form>
   );
 }
@@ -1670,6 +1692,11 @@ export function AgentPromptTemplateForm({
         label="Fallback next action"
         defaultValue={placeholderNextAction}
         rows={3}
+      />
+      <Field
+        name="changeReason"
+        label="Change reason"
+        placeholder="Optional reason for this prompt version"
       />
       <FormFooter state={state} buttonLabel="Save prompt" />
     </form>

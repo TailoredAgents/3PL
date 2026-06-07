@@ -420,6 +420,11 @@ export const agentPromptTemplateSchema = z.object({
   systemPrompt: requiredString,
   task: requiredString,
   placeholderNextAction: requiredString,
+  changeReason: z.string().trim().optional(),
+});
+
+export const aiAgentReviewSchema = z.object({
+  reviewNotes: z.string().trim().optional(),
 });
 
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
@@ -464,6 +469,7 @@ export type AiAgentRunRequestInput = z.infer<typeof aiAgentRunRequestSchema>;
 export type AgentPromptTemplateInput = z.infer<
   typeof agentPromptTemplateSchema
 >;
+export type AiAgentReviewInput = z.infer<typeof aiAgentReviewSchema>;
 export type AppSettingsInput = z.infer<typeof appSettingsSchema>;
 export type QuoteEmailTemplateSettingsInput = z.infer<
   typeof quoteEmailTemplateSettingsSchema

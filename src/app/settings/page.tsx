@@ -6,6 +6,7 @@ import {
   SettingsForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
+import { getAgentAutomationPolicy } from "@/lib/agent-control";
 import { isClerkAuthConfigured } from "@/lib/auth";
 import { defaultBrokerageAgentTemplates } from "@/lib/agent-config";
 import { getCurrentInternalUser } from "@/lib/current-user";
@@ -157,29 +158,12 @@ export default async function SettingsPage() {
         </div>
         <div className="divide-y divide-slate-100">
           {defaultBrokerageAgentTemplates.map((template) => (
-            <div
+            <AgentModeRow
               key={template.agentName}
-              className="grid gap-3 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
-            >
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{template.agentName}</p>
-                <p className="mt-0.5 text-xs leading-5 text-slate-500">{template.task}</p>
-              </div>
-              {isAlwaysAutonomousAgent(template.agentName) ? (
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
-                  Always autonomous
-                </span>
-              ) : canManageSettings ? (
-                <AgentModeToggleForm
-                  agentName={template.agentName}
-                  currentMode={agentModes[template.agentName]}
-                />
-              ) : (
-                <span className="text-xs font-semibold capitalize text-slate-500">
-                  {agentModes[template.agentName].replace("_", " ")}
-                </span>
-              )}
-            </div>
+              template={template}
+              currentMode={agentModes[template.agentName]}
+              canManageSettings={canManageSettings}
+            />
           ))}
         </div>
       </article>
@@ -244,5 +228,43 @@ export default async function SettingsPage() {
         </ul>
       </article>
     </InternalShell>
+  );
+}
+
+function AgentModeRow({
+  template,
+  currentMode,
+  canManageSettings,
+}: {
+  template: (typeof defaultBrokerageAgentTemplates)[number];
+  currentMode: string;
+  canManageSettings: boolean;
+}) {
+  const policy = getAgentAutomationPolicy(template.agentName);
+
+  return (
+    <div className="grid gap-3 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div>
+        <p className="text-sm font-semibold text-slate-900">{template.agentName}</p>
+        <p className="mt-0.5 text-xs leading-5 text-slate-500">{template.task}</p>
+        <p className="mt-2 text-xs font-semibold text-slate-600">
+          {policy.riskLevel} risk · {policy.approvalRequired ? "approval enforced" : "notes-only automation allowed"}
+        </p>
+      </div>
+      {isAlwaysAutonomousAgent(template.agentName) ? (
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
+          Always autonomous
+        </span>
+      ) : canManageSettings ? (
+        <AgentModeToggleForm
+          agentName={template.agentName}
+          currentMode={currentMode}
+        />
+      ) : (
+        <span className="text-xs font-semibold capitalize text-slate-500">
+          {currentMode.replace("_", " ")}
+        </span>
+      )}
+    </div>
   );
 }

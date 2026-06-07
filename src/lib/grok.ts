@@ -2,6 +2,7 @@ import OpenAI from "openai";
 
 import type { BrokerageAgentName } from "@/lib/agent-config";
 import { getAgentPromptTemplate } from "@/lib/settings";
+import type { AgentPromptTemplateView } from "@/lib/settings";
 import type { FreightAuditInput, QuoteRequestInput } from "@/lib/validation";
 import { logIntegration } from "@/lib/integrations/logging";
 
@@ -132,8 +133,10 @@ export async function runBrokerageAgent(input: {
   agentName: BrokerageAgentName;
   relatedEntityType: string;
   context: unknown;
+  instructions?: AgentPromptTemplateView;
 }): Promise<AgentResult> {
-  const instructions = await getAgentPromptTemplate(input.agentName);
+  const instructions =
+    input.instructions ?? (await getAgentPromptTemplate(input.agentName));
 
   if (!client) {
     return {

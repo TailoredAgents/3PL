@@ -19,6 +19,10 @@ import {
   getDocumentDownloadHref,
 } from "@/lib/documents";
 import { getMarketRateProviderReadiness } from "@/lib/rating/rate-intelligence";
+import {
+  getAgentPromptVersionViews,
+  type AgentPromptVersionView,
+} from "@/lib/settings";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -275,6 +279,15 @@ export type AiAgentRunView = {
   summary: string;
   nextAction: string;
   errorMessage?: string | null;
+  automationMode: string;
+  riskLevel: string;
+  approvalRequired: boolean;
+  actionSummary: string;
+  promptVersion: number | null;
+  gatedActions: string[];
+  reviewNotes: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
   created: string;
 };
 export type AiCommandCenterView = {
@@ -290,6 +303,7 @@ export type AiCommandCenterView = {
   approvalQueue: AiAgentRunView[];
   failedRuns: AiAgentRunView[];
   recentRuns: AiAgentRunView[];
+  promptHistory: AgentPromptVersionView[];
 };
 export type DailyBriefItemView = {
   label: string;
@@ -2633,6 +2647,7 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
       approvalQueue: sampleRuns,
       failedRuns: [],
       recentRuns: sampleRuns,
+      promptHistory: [],
     };
   }
 
@@ -2654,6 +2669,7 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
     ] = await Promise.all([
       prisma.aiAgentRun.findMany({
         orderBy: { createdAt: "desc" },
+        include: { approvedBy: true, rejectedBy: true },
         take: 100,
       }),
       prisma.lead.count({
@@ -2723,6 +2739,7 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
         take: 5,
       }),
     ]);
+    const promptHistory = await getAgentPromptVersionViews(12);
     const views = runs.map(mapAiAgentRun);
     const confidenceValues = runs
       .map((run) => (run.confidence === null ? null : Number(run.confidence)))
@@ -2853,6 +2870,7 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
       ),
       failedRuns: views.filter((run) => run.status === "Failed"),
       recentRuns: views.slice(0, 25),
+      promptHistory,
     };
   } catch {
     return {
@@ -2868,6 +2886,7 @@ export async function getAiCommandCenterView(): Promise<AiCommandCenterView> {
       approvalQueue: [],
       failedRuns: [],
       recentRuns: [],
+      promptHistory: [],
     };
   }
 }
@@ -2884,13 +2903,30 @@ function getSampleAiAgentRunViews(): AiAgentRunView[] {
       summary:
         "Sample agent run. Connect XAI_API_KEY and DATABASE_URL to log real agent output.",
       nextAction: "Call the lead, confirm lane details, and log the result.",
+      automationMode: "Approve first",
+      riskLevel: "Medium",
+      approvalRequired: true,
+      actionSummary: "Drafts sales follow-up recommendations for human review.",
+      promptVersion: 1,
+      gatedActions: ["Customer emails", "Customer SMS", "Outbound calls"],
+      reviewNotes: null,
+      reviewedBy: null,
+      reviewedAt: null,
       created: "Demo",
     },
   ];
 }
 
-function mapAiAgentRun(run: AiAgentRun): AiAgentRunView {
+type AiAgentRunWithReviewer = AiAgentRun & {
+  approvedBy?: { name: string } | null;
+  rejectedBy?: { name: string } | null;
+};
+
+function mapAiAgentRun(run: AiAgentRunWithReviewer): AiAgentRunView {
   const output = parseAgentOutput(run.outputJson);
+  const gatedActions = parseGatedActions(run.controlJson);
+  const reviewedBy = run.approvedBy?.name ?? run.rejectedBy?.name ?? null;
+  const reviewedAt = run.approvedAt ?? run.rejectedAt;
 
   return {
     id: run.id,
@@ -2903,6 +2939,15 @@ function mapAiAgentRun(run: AiAgentRun): AiAgentRunView {
       output.summary ?? run.errorMessage ?? "Agent run did not return a summary.",
     nextAction: output.nextAction ?? "Review manually.",
     errorMessage: run.errorMessage,
+    automationMode: titleCaseEnum(run.automationMode ?? "approve_first"),
+    riskLevel: titleCaseEnum(run.riskLevel ?? "medium"),
+    approvalRequired: run.approvalRequired,
+    actionSummary: run.actionSummary ?? "Review AI output before taking action.",
+    promptVersion: run.promptVersion,
+    gatedActions,
+    reviewNotes: run.reviewNotes,
+    reviewedBy,
+    reviewedAt: reviewedAt ? formatFollowUp(reviewedAt) : null,
     created: formatFollowUp(run.createdAt),
   };
 }
@@ -3709,6 +3754,22 @@ function parseAgentOutput(outputJson: unknown) {
     nextAction:
       typeof output.nextAction === "string" ? output.nextAction : undefined,
   };
+}
+
+function parseGatedActions(controlJson: unknown) {
+  if (!controlJson || typeof controlJson !== "object") {
+    return [];
+  }
+
+  const control = controlJson as { gatedActions?: unknown };
+
+  if (!Array.isArray(control.gatedActions)) {
+    return [];
+  }
+
+  return control.gatedActions.filter(
+    (action): action is string => typeof action === "string",
+  );
 }
 
 export type ContactListItem = {

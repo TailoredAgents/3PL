@@ -419,6 +419,7 @@ DAT/Truckstop final payload mappings and any ultra-final surfaces remain for whe
 - Phase 7.3 completed: Active loads, tracking, documents in customer portal. Populated sections in /portal using getShipperDetailView for customer's loads/docs with status, links, public track. Scoped. Validation + push passed. Followed rules.
 - Phase 7.4 completed: Saved preferences, fuller invoices, basic load details in customer portal. Added preferences section with lanes/contacts forms, expanded invoices list, enhanced loads display. Reused forms and views. Validation + push passed. Followed rules.
 - Phase 8.1 completed: Carrier portal foundation + document submission. Carrier login (email to contact/additional), /carrier-portal with loads list + upload form for POD/BOL/invoices/W9 etc (flows to Document Center via existing logic). Symmetric to customer portal. Validation + push passed. Followed rules.
+- Phase 8.2 completed: Carrier tenders accept/decline, check-calls, payments in portal. Added tenders list with Accept (reuse route) / Decline (new route), check-call form (reuse), payments list. Scoped. Validation + push passed. Followed rules.
 
 ## Phase 7: Customer Portal (next)
 
@@ -541,7 +542,23 @@ Completion criteria progress:
 - Carriers can submit (onboarding and operational) documents via portal; they flow to Document Center.
 - Basic carrier portal foundation and login live (symmetric to customer).
 
-Next for Phase 8: 8.2+ for tender accept/decline, check-call updates, viewing payment status. Phase 8 foundation + doc submission complete.
+Build (Phase 8.2 completed):
+
+- Enhanced /carrier-portal with "Your Tenders / Quotes" section: lists pending CarrierQuotes (REQUESTED/RECEIVED) with load info, quoted rate, Accept (reuses existing /api/loads/[id]/carrier-quotes/[quoteId]/accept route with compliance gate), Decline (new scoped /api/carrier-portal/tenders/[id]/decline that sets status REJECTED).
+- Added "Send Check-Call / Tracking Update" using existing ShipmentEventCreateForm for one of the carrier's loads (creates event, appears in load history/tracking).
+- Added "My Payments" section: lists recent CarrierInvoices for the carrier's loads (amount, status, paid date, load ref).
+- Reuses CarrierQuote, ShipmentEvent, CarrierInvoice models and forms/APIs, carrier cookie scoping from 8.1, existing revalidate patterns. No duplication of internal tender/payment logic.
+- Updated loads list note and UI to reflect new self-service actions.
+- Full validation + commit + push + roadmap update.
+- Followed all handoff rules.
+
+Completion criteria progress:
+- Carriers can accept/decline their tenders directly.
+- Send check-call updates.
+- View payment status for their loads.
+- All without broker manual intervention for these workflows.
+
+Next for Phase 8: 8.3+ for any remaining (e.g. deeper tender details, payment disputes). Phase 8 core (docs, tenders, updates, payments) now complete.
 
 ## Phase 9: Lane Intelligence And Revenue Growth
 

@@ -24,6 +24,8 @@ import {
   type AgentPromptVersionView,
 } from "@/lib/settings";
 
+export { getDailyBriefView } from "@/lib/daily-brief";
+
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
 export type ShipperView = (typeof shippers)[number];

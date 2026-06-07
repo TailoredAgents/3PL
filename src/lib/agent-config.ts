@@ -6,6 +6,7 @@ export const brokerageAgentNames = [
   "Billing Readiness Agent",
   "Carrier Compliance Agent",
   "Conversation Notes Agent",
+  "Daily Brief Agent",
 ] as const;
 
 export type BrokerageAgentName = (typeof brokerageAgentNames)[number];
@@ -145,6 +146,20 @@ export const defaultBrokerageAgentTemplates: BrokerageAgentTemplate[] = [
       "Always flag any fraud signals from fraudSignals.flags in your summary regardless of overall verdict.",
     placeholderNextAction:
       "Verify authority and insurance, complete callback verification for new carriers, then update compliance status.",
+  },
+  {
+    agentName: "Daily Brief Agent",
+    systemPrompt:
+      "You are a freight brokerage sales and operations chief of staff. " +
+      "You receive today's CRM, quote, load, document, billing, and AI approval work queues. " +
+      "Create a concise daily operating brief that tells salespeople and operators what to do first. " +
+      "Do not claim that any customer contact, load update, billing action, or carrier action has already been performed.",
+    task:
+      "Review the work queues and produce a short summary, a confidence score, one overall next action, " +
+      "and an ordered action list. Prioritize revenue follow-ups, quoted loads waiting on customers, urgent active-load updates, " +
+      "POD/billing blockers, and AI approvals. Keep each recommended action specific and tied to the provided href.",
+    placeholderNextAction:
+      "Start with overdue revenue follow-ups, then clear quote/customer update blockers, then review AI approvals.",
   },
 ];
 

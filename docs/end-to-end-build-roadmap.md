@@ -598,10 +598,10 @@ Completion criteria:
 
 Goal: automate repetitive work only after the data and workflows are stable.
 
-Status: 10.1-10.2 complete. AI control layer, prompt version history,
-run-level approval metadata, rejection controls, and Communications AI draft
-suggestions are in place. Feature-specific automation remains for later
-sub-phases.
+Status: 10.1-10.3 complete. AI control layer, prompt version history,
+run-level approval metadata, rejection controls, Communications AI draft
+suggestions, and generated Daily Brief workflow are in place. Feature-specific
+automation remains for later sub-phases.
 
 Build:
 
@@ -627,7 +627,21 @@ Build:
     detail.
   - Communications threads show the latest saved AI draft/audit status for that
     conversation.
-- Add scheduled Daily Brief Agent delivery.
+- Complete 10.3: add Daily Brief / Sales Follow-Up Agent workflow:
+  - Added `Daily Brief Agent` to shared prompt settings, mode controls, and
+    automation policy.
+  - Daily brief generation derives today's highest-priority work from overdue
+    lead follow-ups, stale customer contacts, open quotes, quoted/no-response
+    lanes, customer updates due, missing PODs, billing blockers, and AI approval
+    backlog.
+  - Dashboard and AI Command Center show the latest generated brief, confidence,
+    status, ordered action list, and Generate Daily Brief action.
+  - Every generated brief is logged as `AiAgentRun` with prompt snapshot,
+    prompt version, automation mode, risk level, approval requirement, and
+    gated-action audit metadata.
+  - No outreach, load update, billing action, carrier action, or approval is
+    executed automatically; the brief points users back to existing workspaces
+    and Phase 10.2 draft tools.
 - Add autonomous document extraction jobs with human review for exceptions.
 - Add AI carrier shortlist generation based on compliance, lane history, and
   pricing.

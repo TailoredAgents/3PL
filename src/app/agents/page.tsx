@@ -19,10 +19,15 @@ import {
   AgentPromptTemplateForm,
   AgentRunRejectForm,
   AgentRunRetryForm,
+  DailyBriefGenerateForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { isClerkAuthConfigured } from "@/lib/auth";
-import { getAiCommandCenterView, type AiAgentRunView } from "@/lib/crm";
+import {
+  getAiCommandCenterView,
+  getDailyBriefView,
+  type AiAgentRunView,
+} from "@/lib/crm";
 import { getCurrentInternalUser } from "@/lib/current-user";
 import { getAgentPromptTemplates } from "@/lib/settings";
 
@@ -36,10 +41,11 @@ const CARD_ACCENTS = [
 ] as const;
 
 export default async function AgentsPage() {
-  const [commandCenter, promptTemplates, currentUser] = await Promise.all([
+  const [commandCenter, promptTemplates, currentUser, dailyBrief] = await Promise.all([
     getAiCommandCenterView(),
     getAgentPromptTemplates(),
     getCurrentInternalUser(),
+    getDailyBriefView(),
   ]);
   const clerkEnabled = isClerkAuthConfigured();
   const canManagePrompts =
@@ -81,6 +87,57 @@ export default async function AgentsPage() {
           </article>
         ))}
       </section>
+
+      {/* Generated daily brief */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-emerald-600" />
+              <p className="text-sm font-semibold text-slate-700">Generated daily brief</p>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{dailyBrief.summary}</p>
+            <p className="mt-2 text-xs font-semibold text-slate-500">
+              {dailyBrief.status} · {dailyBrief.generatedAt}
+              {dailyBrief.confidence === null
+                ? ""
+                : ` · ${Math.round(dailyBrief.confidence * 100)}% confidence`}
+            </p>
+          </div>
+          <div className="min-w-[180px]">
+            <DailyBriefGenerateForm />
+          </div>
+        </div>
+        <div className="grid gap-3 p-4 xl:grid-cols-2">
+          {dailyBrief.actions.length ? (
+            dailyBrief.actions.slice(0, 6).map((action, index) => (
+              <Link
+                key={`${action.href}-${action.title}-${index}`}
+                href={action.href}
+                className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                      {index + 1}. {action.category}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{action.title}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${dailyBriefPriorityClass(action.priority)}`}>
+                    {action.priority}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{action.detail}</p>
+                <p className="mt-2 text-xs font-semibold text-emerald-700">
+                  {action.nextAction}
+                </p>
+              </Link>
+            ))
+          ) : (
+            <EmptyState message="No daily brief actions are currently flagged." />
+          )}
+        </div>
+      </article>
 
       {/* Management snapshot + Exception dashboard */}
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
@@ -384,6 +441,12 @@ function getSeverityClass(severity: "High" | "Medium" | "Low") {
   if (severity === "High") return "bg-red-50 text-red-700";
   if (severity === "Medium") return "bg-amber-50 text-amber-700";
   return "bg-slate-100 text-slate-700";
+}
+
+function dailyBriefPriorityClass(priority: "High" | "Medium" | "Low") {
+  if (priority === "High") return "bg-red-50 text-red-700";
+  if (priority === "Medium") return "bg-amber-50 text-amber-700";
+  return "bg-slate-100 text-slate-600";
 }
 
 function Guardrail({ title, detail }: { title: string; detail: string }) {

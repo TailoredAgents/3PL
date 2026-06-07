@@ -1630,6 +1630,16 @@ export function AgentRunRetryForm({ runId }: { runId: string }) {
   );
 }
 
+export function DailyBriefGenerateForm() {
+  const { state, onSubmit } = useCrmSubmit("/api/agents/daily-brief/generate");
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Generate daily brief" />
+    </form>
+  );
+}
+
 export function AgentModeToggleForm({
   agentName,
   currentMode,

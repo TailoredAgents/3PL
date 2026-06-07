@@ -15,15 +15,18 @@ import {
   Truck,
 } from "lucide-react";
 
+import { DailyBriefGenerateForm } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import {
+  getDailyBriefView,
   getDashboardMetrics,
   getRecentAiAgentRunViews,
   getSalesOpportunityInsights,
   getStaleLoadAlerts,
   getTodayScheduleView,
+  type TodayScheduleItem,
 } from "@/lib/crm";
-import { agentBriefs } from "@/lib/data";
+import type { DailyBriefActionResult } from "@/lib/grok";
 
 export const dynamic = "force-dynamic";
 
@@ -47,13 +50,14 @@ const CARD_ACCENTS = [
 ] as const;
 
 export default async function DashboardPage() {
-  const [metrics, recentAgentRuns, todaySchedule, staleAlerts, salesOpportunities] =
+  const [metrics, recentAgentRuns, todaySchedule, staleAlerts, salesOpportunities, dailyBrief] =
     await Promise.all([
       getDashboardMetrics(),
       getRecentAiAgentRunViews(),
       getTodayScheduleView(),
       getStaleLoadAlerts(),
       getSalesOpportunityInsights(),
+      getDailyBriefView(),
     ]);
   const pickups = todaySchedule.filter((item) => item.eventType === "Pickup");
   const deliveries = todaySchedule.filter(
@@ -395,29 +399,52 @@ export default async function DashboardPage() {
           id="ai"
           className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5"
         >
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-            Operator brief
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                Daily brief
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+                AI-ordered work plan
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {dailyBrief.summary}
+              </p>
+            </div>
+            <div className="min-w-[180px]">
+              <DailyBriefGenerateForm />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {dailyBrief.status}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {dailyBrief.generatedAt}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {dailyBrief.confidence === null
+                ? "Confidence n/a"
+                : `${Math.round(dailyBrief.confidence * 100)}% confidence`}
+            </span>
+          </div>
+          <p className="mt-3 text-sm font-semibold text-emerald-800">
+            Next: {dailyBrief.nextAction}
           </p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-            AI-assisted next moves
-          </h2>
           <div className="mt-6 grid gap-3">
-            {agentBriefs.map((brief) => (
-              <div
-                key={brief.title}
-                className="rounded-md border border-slate-100 bg-slate-50 p-4"
-              >
-                <div className="flex gap-3">
-                  <brief.icon className="mt-0.5 h-4 w-4 flex-none text-emerald-600" />
-                  <div>
-                    <p className="text-sm font-semibold">{brief.title}</p>
-                    <p className="mt-0.5 text-sm leading-6 text-slate-600">
-                      {brief.body}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {dailyBrief.actions.length ? (
+              dailyBrief.actions.map((action, index) => (
+                <DailyBriefActionCard
+                  key={`${action.href}-${action.title}-${index}`}
+                  action={action}
+                  index={index}
+                />
+              ))
+            ) : (
+              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                No daily brief actions are currently flagged.
+              </p>
+            )}
           </div>
         </article>
       </section>
@@ -564,7 +591,51 @@ export default async function DashboardPage() {
   );
 }
 
-import type { TodayScheduleItem } from "@/lib/crm";
+function DailyBriefActionCard({
+  action,
+  index,
+}: {
+  action: DailyBriefActionResult;
+  index: number;
+}) {
+  return (
+    <Link
+      href={action.href}
+      className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+          {index + 1}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-slate-900">
+              {action.title}
+            </p>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${dailyBriefPriorityClass(action.priority)}`}>
+              {action.priority}
+            </span>
+          </div>
+          <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+            {action.category}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            {action.detail}
+          </p>
+          <p className="mt-2 text-sm font-semibold text-emerald-800">
+            {action.nextAction}
+          </p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function dailyBriefPriorityClass(priority: "High" | "Medium" | "Low") {
+  if (priority === "High") return "bg-red-50 text-red-700";
+  if (priority === "Medium") return "bg-amber-50 text-amber-700";
+  return "bg-slate-100 text-slate-600";
+}
 
 function ScheduleRow({ item }: { item: TodayScheduleItem }) {
   return (

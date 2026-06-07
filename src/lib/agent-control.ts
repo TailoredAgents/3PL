@@ -86,6 +86,18 @@ const policies: Record<BrokerageAgentName, AgentAutomationPolicy> = {
       "Load creation",
     ],
   },
+  "Daily Brief Agent": {
+    riskLevel: "medium",
+    approvalRequired: true,
+    actionSummary: "Prioritizes daily sales and operations work for human execution.",
+    gatedActions: [
+      "Customer outreach",
+      "Carrier outreach",
+      "Billing actions",
+      "Compliance changes",
+      "Load status updates",
+    ],
+  },
 };
 
 export function getAgentAutomationPolicy(

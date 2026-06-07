@@ -16,6 +16,17 @@ export type CommunicationDraftResult = AgentResult & {
   subject: string;
   body: string;
 };
+export type DailyBriefActionResult = {
+  title: string;
+  detail: string;
+  nextAction: string;
+  href: string;
+  category: string;
+  priority: "High" | "Medium" | "Low";
+};
+export type DailyBriefAgentResult = AgentResult & {
+  orderedActions: DailyBriefActionResult[];
+};
 
 export type CallIntakeAgentResult = AgentResult & {
   quoteRequest: Record<string, string | number | boolean>;
@@ -247,6 +258,62 @@ export async function runCommunicationDraftAgent(input: {
   );
 }
 
+export async function runDailyBriefAgent(input: {
+  context: {
+    generatedAt: string;
+    recommendedActions: DailyBriefActionResult[];
+    metrics: Record<string, number>;
+  };
+  instructions: AgentPromptTemplateView;
+}): Promise<DailyBriefAgentResult> {
+  if (!client) {
+    const topActions = input.context.recommendedActions.slice(0, 8);
+
+    return {
+      summary: topActions.length
+        ? `Daily brief prepared locally with ${topActions.length} prioritized action${topActions.length === 1 ? "" : "s"}.`
+        : "Daily brief prepared locally. No urgent work queues are currently flagged.",
+      confidence: topActions.length ? 0.55 : 0.7,
+      nextAction:
+        topActions[0]?.nextAction ??
+        "Review Dashboard and Communications for any newly created work.",
+      orderedActions: topActions,
+    };
+  }
+
+  return withLoggedXai(
+    "AGENT_RUN",
+    async () => {
+      const response = await client.chat.completions.create({
+        model: xaiModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              `${input.instructions.systemPrompt} Return JSON with summary, confidence, nextAction, and orderedActions. ` +
+              "orderedActions must be an array of objects with title, detail, nextAction, href, category, and priority. " +
+              "Use only the provided recommendedActions and href values. Do not invent actions.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              task: input.instructions.task,
+              context: input.context,
+            }),
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+
+      return parseDailyBriefResponse(
+        response.choices[0]?.message?.content,
+        input.context.recommendedActions,
+      );
+    },
+    { message: "Daily brief generation" },
+  );
+}
+
 export async function runCallIntakeAgent(input: {
   transcriptText: string;
   context: unknown;
@@ -373,6 +440,81 @@ function parseCommunicationDraftResponse(
       nextAction: "Review, edit, and send manually.",
     };
   }
+}
+
+function parseDailyBriefResponse(
+  content: string | null | undefined,
+  fallbackActions: DailyBriefActionResult[],
+): DailyBriefAgentResult {
+  if (!content) {
+    return {
+      summary: "Daily brief completed without a usable summary.",
+      confidence: 0.25,
+      nextAction: fallbackActions[0]?.nextAction ?? "Review manually.",
+      orderedActions: fallbackActions.slice(0, 8),
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(content) as Partial<DailyBriefAgentResult>;
+    const orderedActions = Array.isArray(parsed.orderedActions)
+      ? parsed.orderedActions
+          .map((action) => normalizeDailyBriefAction(action))
+          .filter((action): action is DailyBriefActionResult => Boolean(action))
+      : [];
+
+    return {
+      summary:
+        typeof parsed.summary === "string"
+          ? parsed.summary
+          : "Daily brief created.",
+      confidence:
+        typeof parsed.confidence === "number" ? parsed.confidence : 0.5,
+      nextAction:
+        typeof parsed.nextAction === "string"
+          ? parsed.nextAction
+          : fallbackActions[0]?.nextAction ?? "Review manually.",
+      orderedActions: orderedActions.length
+        ? orderedActions.slice(0, 8)
+        : fallbackActions.slice(0, 8),
+    };
+  } catch {
+    return {
+      summary: content,
+      confidence: 0.45,
+      nextAction: fallbackActions[0]?.nextAction ?? "Review manually.",
+      orderedActions: fallbackActions.slice(0, 8),
+    };
+  }
+}
+
+function normalizeDailyBriefAction(
+  value: unknown,
+): DailyBriefActionResult | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const action = value as Record<string, unknown>;
+  const priority =
+    action.priority === "High" ||
+    action.priority === "Medium" ||
+    action.priority === "Low"
+      ? action.priority
+      : "Medium";
+
+  return {
+    title: stringFromUnknown(action.title, "Daily action"),
+    detail: stringFromUnknown(action.detail, "Review this work queue."),
+    nextAction: stringFromUnknown(action.nextAction, "Review manually."),
+    href: stringFromUnknown(action.href, "/dashboard"),
+    category: stringFromUnknown(action.category, "Daily Brief"),
+    priority,
+  };
+}
+
+function stringFromUnknown(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
 function extractDraftContact(context: unknown) {

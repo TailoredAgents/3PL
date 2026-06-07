@@ -5,6 +5,7 @@ import {
   Clock,
   DollarSign,
   Plus,
+  ReceiptText,
   Truck,
 } from "lucide-react";
 
@@ -16,6 +17,8 @@ import {
 import {
   getCarrierInvoiceViews,
   getLoadsNeedingPayable,
+  type CarrierInvoiceView,
+  type LoadNeedingPayableView,
 } from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
 
@@ -28,27 +31,86 @@ const CARD_ACCENTS = [
   { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
 ] as const;
 
+function getPaymentCommand({
+  awaitingInvoices,
+  needsApproval,
+  overdue,
+  approvedUnbatched,
+}: {
+  awaitingInvoices: LoadNeedingPayableView[];
+  needsApproval: CarrierInvoiceView[];
+  overdue: CarrierInvoiceView[];
+  approvedUnbatched: CarrierInvoiceView[];
+}) {
+  if (overdue.length) {
+    return {
+      label: "Resolve overdue carrier invoices",
+      detail: `${overdue.length} carrier invoice${overdue.length === 1 ? "" : "s"} are past due. Review disputes, approvals, and payment status first.`,
+      icon: AlertTriangle,
+      className: "border-red-100 bg-red-50 text-red-900",
+    };
+  }
+
+  if (needsApproval.length) {
+    return {
+      label: "Approve matched invoices",
+      detail: `${needsApproval.length} invoice${needsApproval.length === 1 ? "" : "s"} need approval before payment can be released.`,
+      icon: Clock,
+      className: "border-amber-100 bg-amber-50 text-amber-900",
+    };
+  }
+
+  if (approvedUnbatched.length) {
+    return {
+      label: "Create payment batch",
+      detail: `${approvedUnbatched.length} approved invoice${approvedUnbatched.length === 1 ? "" : "s"} are ready to stage for payment review.`,
+      icon: DollarSign,
+      className: "border-emerald-100 bg-emerald-50 text-emerald-900",
+    };
+  }
+
+  if (awaitingInvoices.length) {
+    return {
+      label: "Collect missing carrier invoices",
+      detail: `${awaitingInvoices.length} delivered load${awaitingInvoices.length === 1 ? "" : "s"} have carrier cost history but no carrier invoice logged yet.`,
+      icon: ReceiptText,
+      className: "border-sky-100 bg-sky-50 text-sky-900",
+    };
+  }
+
+  return {
+    label: "Payables queue is clear",
+    detail: "No carrier invoices currently need collection, approval, batching, or payment.",
+    icon: CheckCircle2,
+    className: "border-emerald-100 bg-emerald-50 text-emerald-900",
+  };
+}
+
 export default async function PayablesPage() {
   const [invoices, loadsNeedingPayable] = await Promise.all([
     getCarrierInvoiceViews(),
     getLoadsNeedingPayable(),
   ]);
 
-  const now = new Date();
-  const weekFromNow = new Date(now);
-  weekFromNow.setDate(weekFromNow.getDate() + 7);
-
-  const outstanding = invoices.filter((i) => i.status !== "Paid" && i.status !== "Disputed");
-  const outstandingTotal = outstanding.reduce((sum, i) => sum + i.amount, 0);
-  const needsApproval = invoices.filter((i) => i.status === "Received" || i.status === "Matched").length;
-  const overdue = invoices.filter((i) => i.isOverdue).length;
-  const paidThisMonth = invoices.filter((i) => i.status === "Paid" && i.paidAt != null).length;
+  const outstanding = invoices.filter((invoice) => invoice.status !== "Paid" && invoice.status !== "Disputed");
+  const outstandingTotal = outstanding.reduce((sum, invoice) => sum + invoice.amount, 0);
+  const approvalQueue = invoices.filter((invoice) => invoice.status === "Received" || invoice.status === "Matched");
+  const overdueInvoices = invoices.filter((invoice) => invoice.isOverdue);
+  const approvedUnbatched = invoices.filter((invoice) => invoice.status === "Approved" && !invoice.paymentBatch);
+  const paidThisMonth = invoices.filter((invoice) => invoice.status === "Paid" && invoice.paidAt != null);
+  const paymentCommand = getPaymentCommand({
+    awaitingInvoices: loadsNeedingPayable,
+    needsApproval: approvalQueue,
+    overdue: overdueInvoices,
+    approvedUnbatched,
+  });
+  const CommandIcon = paymentCommand.icon;
 
   const metrics = [
-    { icon: DollarSign, label: "Outstanding", value: toCurrency(outstandingTotal) },
-    { icon: Clock, label: "Needs approval", value: needsApproval.toString() },
-    { icon: AlertTriangle, label: "Overdue", value: overdue.toString() },
-    { icon: CheckCircle2, label: "Paid this month", value: paidThisMonth.toString() },
+    { icon: DollarSign, label: "Outstanding", value: toCurrency(outstandingTotal), helper: `${outstanding.length} open invoice${outstanding.length === 1 ? "" : "s"}` },
+    { icon: Clock, label: "Needs approval", value: approvalQueue.length.toString(), helper: "Received or matched" },
+    { icon: AlertTriangle, label: "Overdue", value: overdueInvoices.length.toString(), helper: "Past due unpaid" },
+    { icon: CheckCircle2, label: "Paid this month", value: paidThisMonth.length.toString(), helper: "Marked paid" },
   ];
 
   return (
@@ -56,38 +118,76 @@ export default async function PayablesPage() {
       active="Payables"
       eyebrow="Finance"
       title="Payables"
-      description="Carrier invoices — receive, match against the rate confirmation, approve, and pay."
+      description="Carrier AP command center for invoice receipt, rate-con matching, approval, batching, and payment."
       action={{ label: "Open Load Board", href: "/loads" }}
     >
-      {/* Metrics */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((item, i) => (
+        {metrics.map((item, index) => (
           <article
             key={item.label}
-            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[index].border}`}
           >
             <div className="p-5">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[index].icon}`}>
                 <item.icon className="h-4 w-4" />
               </div>
               <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
               <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
                 {item.value}
               </p>
+              <p className="mt-2 text-xs font-semibold text-slate-400">{item.helper}</p>
             </div>
           </article>
         ))}
       </section>
 
-      {/* Loads awaiting carrier invoice */}
-      {loadsNeedingPayable.length > 0 && (
+      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <article className={`rounded-lg border p-5 shadow-sm ${paymentCommand.className}`}>
+          <div className="flex gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+              <CommandIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-75">
+                Payment priority
+              </p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight">{paymentCommand.label}</h2>
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 opacity-85">
+                {paymentCommand.detail}
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+            Payment batch
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Stage approved, unbatched invoices for payment review after rate-con matching is complete.
+          </p>
+          <form action="/api/carrier-invoices/batch-pay" method="POST" className="mt-4">
+            <button
+              type="submit"
+              className="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-800"
+            >
+              Create payment batch
+            </button>
+          </form>
+          <p className="mt-2 text-xs font-semibold text-slate-500">
+            {approvedUnbatched.length} approved invoice{approvedUnbatched.length === 1 ? "" : "s"} currently eligible.
+          </p>
+        </article>
+      </section>
+
+      {loadsNeedingPayable.length > 0 ? (
         <section className="overflow-hidden rounded-lg border border-amber-200 bg-amber-50 shadow-sm">
           <div className="flex items-center justify-between border-b border-amber-200 bg-amber-100/60 px-5 py-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <p className="text-sm font-semibold text-amber-900">Awaiting carrier invoice</p>
+              <p className="text-sm font-black text-amber-900">Awaiting carrier invoice</p>
             </div>
-            <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold text-amber-900">
+            <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-bold text-amber-900">
               {loadsNeedingPayable.length} load{loadsNeedingPayable.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -97,9 +197,8 @@ export default async function PayablesPage() {
             ))}
           </div>
         </section>
-      )}
+      ) : null}
 
-      {/* Add carrier invoice form */}
       <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
         <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
           <div className="flex items-center gap-3">
@@ -107,9 +206,9 @@ export default async function PayablesPage() {
               <Plus className="h-4 w-4 text-slate-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900">Log carrier invoice</p>
+              <p className="text-sm font-black text-slate-900">Log carrier invoice</p>
               <p className="text-xs text-slate-500">
-                Record an invoice received from a carrier for a delivered load
+                Record an invoice received from a carrier for a delivered load.
               </p>
             </div>
           </div>
@@ -121,11 +220,15 @@ export default async function PayablesPage() {
         </div>
       </details>
 
-      {/* Payables queue table */}
       <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
-          <p className="text-sm font-semibold text-slate-700">Payables queue</p>
-          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-slate-800">Payables queue</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-500">
+              Match to rate confirmation, approve clean invoices, dispute variances, then mark paid.
+            </p>
+          </div>
+          <span className="w-fit rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
             {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
           </span>
         </div>
@@ -133,15 +236,15 @@ export default async function PayablesPage() {
         {invoices.length === 0 ? (
           <div className="px-5 py-12 text-center">
             <Truck className="mx-auto h-8 w-8 text-slate-300" />
-            <p className="mt-3 text-sm font-semibold text-slate-600">No carrier invoices yet</p>
+            <p className="mt-3 text-sm font-black text-slate-700">No carrier invoices yet</p>
             <p className="mt-1 text-sm text-slate-400">
-              Log carrier invoices as they arrive from delivered loads.
+              Carrier invoices will appear here after delivered loads are logged into AP.
             </p>
           </div>
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">
-              <table className="min-w-[900px] text-left text-sm">
+              <table className="min-w-[980px] text-left text-sm">
                 <thead className="border-b border-slate-100 bg-slate-50/50 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
                   <tr>
                     <Th>Carrier</Th>
@@ -168,40 +271,22 @@ export default async function PayablesPage() {
         )}
       </section>
 
-      {/* AP rules sidebar note */}
-      <aside className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5 xl:max-w-lg">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <p className="text-sm font-semibold text-slate-700">Payables rules</p>
-        </div>
-        <div className="mt-3 grid gap-2 text-sm leading-6 text-slate-600">
-          <p>Match every carrier invoice to the agreed rate on the rate confirmation before approving.</p>
-          <p>Every payment must pass through approved status before it can be marked paid.</p>
-          <p>Dispute any invoice that exceeds the rate con unless an owner/admin accepts the variance.</p>
-          <p>QuickPay requests typically carry a 2–3% fee — confirm before processing.</p>
-          <p>The approver, payer, batch, and payment method are recorded for audit trail.</p>
-        </div>
-
-        {/* Batch pay action (Phase 4.2) */}
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          <form action="/api/carrier-invoices/batch-pay" method="POST">
-            <button
-              type="submit"
-              className="w-full rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
-            >
-              Create Payment Batch
-            </button>
-            <p className="mt-1 text-[10px] text-slate-500">
-              Assigns a batch reference to unbatched APPROVED invoices for payment review.
+      <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-500" />
+          <div>
+            <p className="text-sm font-black text-slate-800">Payables guardrails</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Match every carrier invoice to the agreed rate before approving, dispute variances unless an owner accepts them, and record approver, payer, batch, method, and QuickPay details for audit.
             </p>
-          </form>
+          </div>
         </div>
-      </aside>
+      </section>
     </InternalShell>
   );
 }
 
-function AwaitingPayableRow({ load }: { load: { id: string; loadNumber: string; carrierName: string; lane: string; delivery: string; agreedRate: number; status: string } }) {
+function AwaitingPayableRow({ load }: { load: LoadNeedingPayableView }) {
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-4 px-5 py-3 sm:grid-cols-[auto_1fr_auto_auto_auto]">
       <p className="text-xs font-bold text-amber-700">{load.loadNumber}</p>

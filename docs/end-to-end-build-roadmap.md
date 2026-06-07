@@ -53,6 +53,14 @@ libraries wherever practical.
   existing marketplace logging, per-load log surfaces, InternalShell, nav
   patterns. No new models or migrations. Full validation + push passed. Roadmap
   updated. Followed all handoff rules.
+- Phase 6.2 completed: Expanded logging + test actions. Added explicit
+  migration extending IntegrationProvider (TWILIO/RESEND/XAI/FMCSA/HERE/EIA/
+  CARRIEROK) and IntegrationAction (AGENT_RUN/DOCUMENT_EXTRACTION/HEALTH_CHECK/
+  WEBHOOK_RECEIVED). New central logIntegration helper. All major Grok calls
+  (agents + document extraction) now emit XAI logs automatically. New
+  /api/integrations/test + "Test health" buttons on /integrations cards (XAI
+  does real minimal ping). Updated views + page. No duplication of
+  marketplace. Validation + push passed. Followed all handoff rules.
 
 ## Multi-Agent Handoff Rules
 
@@ -302,27 +310,29 @@ Next: 5.4 for provider adapters when needed.
 
 Goal: make external provider connectivity manageable from inside the app.
 
-Status: 6.1 complete (admin visibility); remaining items (deeper logging for non-marketplace providers, retry actions, DAT/Truckstop payload details, webhook callback expansions) deferred to 6.2+.
+Status: 6.2 complete; remaining (full Twilio/Resend/FMCSA instrumentation + inbound reply surfaces, safe retry for failed marketplace actions, DAT/Truckstop payload mapping details, deeper per-provider dashboards) deferred to 6.3+.
 
-Build (Phase 6.1 completed):
+Build (Phase 6.1 completed): [see prior entry in Current State Log + previous roadmap update]
 
-- Added "Integrations" nav item (Admin / AI group) + dedicated /integrations page using InternalShell (force-dynamic, metrics + provider panels).
-- Provider overview cards for DAT, TRUCKSTOP, Twilio, Resend, xAI (Grok), FMCSA, HERE, EIA, CarrierOk: credential presence via representative env vars, last success/failure timestamps (from IntegrationLog where present), recent 5 logs per provider.
-- Cross-provider recent activity table (latest 12 entries) with time, provider, action, status badge (SUCCESS/FAILED color), message or error (trunc + title for full).
-- Top metrics: # providers, configured count, total recent logs, failure rate %.
-- Links from cards to exercise the integrations (e.g. /loads, /quote-requests for marketplace rate/post flows).
-- Notes on existing webhook endpoints and that per-load DAT/Truckstop logs continue to appear on load detail pages (no duplication).
-- Implementation reuses: existing IntegrationLog model + creates (from marketplace-workflow.ts for DAT/TRUCKSTOP capacity + post), Load.integrationLogs includes + views, formatters, nav data, InternalShell active highlighting. No schema change, no new migrations, no parallel logging system.
-- Graceful degradation when DB absent or no logs yet.
-- Full pre-commit validation (lint clean, tsc --noEmit, prisma:generate, npm run build with /integrations route) + commit + push + this roadmap update.
+Build (Phase 6.2 completed):
+
+- Extended IntegrationProvider enum (TWILIO, RESEND, XAI, FMCSA, HERE, EIA, CARRIEROK) and IntegrationAction enum (AGENT_RUN, DOCUMENT_EXTRACTION, HEALTH_CHECK, WEBHOOK_RECEIVED) with one explicit migration (20260607..._phase6_expand_integration_providers/migration.sql). "OTHER" preserved as escape hatch.
+- Added reusable logIntegration() helper in src/lib/integrations/logging.ts (central, safe, mirrors the exact data shape used by marketplace-workflow capacity/post log builders; accepts provider/action/status + optional json/message/error/loadId; never throws).
+- Instrumented src/lib/grok.ts comprehensively: runSavingsAuditAgent, runQuoteStructuringAgent, runBrokerageAgent, runCallIntakeAgent, and runDocumentStructuredExtraction now emit IntegrationLog entries (provider "XAI", appropriate action, SUCCESS/FAILED with minimal context). Used a small withLoggedXai wrapper for most; manual log calls in document extraction to preserve existing graceful error-return contracts for callers.
+- New server Route Handler POST /api/integrations/test: for XAI performs a minimal low-cost chat completion ping (HEALTH_CHECK); for others reports credential presence and logs a check. Always calls the central logger.
+- Enhanced the /integrations page (from 6.1): every provider card now renders a "Test health" form button that POSTs the provider key. Resulting log entry appears in the recent cross-provider activity table (revalidate on success). Updated header description, per-card links, and global notes to reflect automatic xAI logging + the new test capability.
+- Updated crm.ts: providersList now uses stable `key` (for enum matching and log grouping) + `label` (for display); ProviderStatus and the overview mapper adjusted; no-DB fallback kept in sync. The page continues to work with provider.name as the human label.
+- All changes extend existing patterns (grok client, IntegrationLog model + recentGlobalLogs surface, form posting + revalidate, InternalShell). Zero duplication of DAT/Truckstop adapters or the marketplace transaction logging. No customer-facing surfaces.
+- Full validation (lint clean, tsc --noEmit, prisma:generate after schema, npm run build including new test route) + commit + push + roadmap update.
 - Followed all Multi-Agent Handoff Rules exactly.
 
 Completion criteria progress:
-- Admins can now tell at a glance whether the listed providers are configured (env key) and see recent health/failures for those that write to IntegrationLog (primarily DAT/TRUCKSTOP marketplace today).
-- Integration failures for logged providers are visible in the UI without server logs or per-load drilldown.
-- 6.1 delivers the core "Integrations page" + "credential presence, last successful sync, last failure, and ... logs" items from the build list.
+- Admins can now see real-time xAI (Grok) health via automatic logs from every agent invocation and document extraction, plus on-demand "Test health" pings that appear instantly in the activity feed.
+- The /integrations page (core deliverable of Phase 6) is now meaningfully populated for the AI provider that powers the Command Center.
+- "Integration failures are visible without checking server logs" is true for xAI in addition to DAT/Truckstop.
+- 6.2 directly delivers on the roadmap's call for "expanded logging (Twilio/Resend/xAI/FMCSA calls)" and "safe retry/test actions".
 
-Next for Phase 6: 6.2+ for expanded logging (Twilio/Resend/xAI/FMCSA calls), safe retry/test actions, inbound reply surfaces, and any provider-specific payload details once account docs available.
+Next for Phase 6: 6.3+ for Twilio/Resend webhook + voice instrumentation (inbound replies, delivery callbacks), full FMCSA/HERE/EIA logging, safe retry buttons for failed marketplace posts, and any remaining provider-specific surfaces.
 
 ## Phase 7: Customer Portal
 

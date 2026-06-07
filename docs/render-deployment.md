@@ -34,7 +34,7 @@ Create a GitHub repo and push the project.
 Recommended first commit scope:
 
 ```txt
-Initial Atlanta Freight OS foundation
+Initial DAO Logistics OS foundation
 ```
 
 Include:

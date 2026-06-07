@@ -79,6 +79,15 @@ libraries wherever practical.
   comms, agents, pricing/loads, etc.) + payload note for DAT/Truckstop.
   Updated crm overview + page. Validation + push passed. Followed rules.
   Phase 6 substantially complete (dashboards + actions + logging for all).
+- Phase 12.1 completed: Added local-first QA test plan covering every major
+  workflow, local validation commands, realistic test data setup, role/security
+  checks, DAT/Truckstop external verification boundaries, AI approval gates,
+  portals, billing/payables/commission testing, and bug capture template.
+  Cleaned legacy product-name runtime defaults and README/docs wording while
+  leaving existing Render database resource names as a planned infrastructure
+  rename instead of a risky automatic change. Validation passed locally:
+  prisma generate, lint, TypeScript, production build, diff check, and branding
+  audit for app/docs/runtime files.
 
 ## Multi-Agent Handoff Rules
 
@@ -766,17 +775,22 @@ Completion criteria:
 
 Goal: stabilize the finished product after all major functionality exists.
 
-Status: not started.
+Status: 12.1 complete. Local QA script and initial hardening audit are complete.
+Manual workflow testing and bug fixing remain.
 
 Build:
 
-- Create a full manual test script for each workflow.
+- Complete: created a full manual test script for each workflow in
+  `docs/local-qa-test-plan.md`.
 - Add automated tests around high-risk APIs where practical.
-- Test Render deployment after each major phase.
-- Verify real environment variables and webhook URLs.
+- Locally preferred: run local validation after each major phase; Render checks
+  are deferred unless the team intentionally tests the live service.
+- Verify real environment variables and webhook URLs through local config review
+  and provider dashboards where local proof is not possible.
 - Fix all bugs found during workflow testing.
-- Remove stale sample copy where production data should appear.
-- Confirm no former-employer terminology exists anywhere.
+- In progress: remove stale sample copy where production data should appear.
+- In progress: confirm no prior-company or legacy product-name terminology
+  exists anywhere user-facing or in runtime defaults.
 
 Completion criteria:
 

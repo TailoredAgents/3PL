@@ -1,10 +1,10 @@
-# Atlanta Freight OS
+# DAO Logistics OS
 
-AI-native CRM and TMS foundation for a new Atlanta-based pure freight brokerage.
+AI-native CRM and TMS foundation for DAO Logistics, a pure freight brokerage.
 
 This repository is the first build milestone for a non-asset 3PL platform. The brokerage does not own trucks, trailers, or warehouse space. The product connects shippers with carriers, manages load execution, tracks profitability, and uses Grok agents to automate as much of the daily workflow as possible.
 
-`Atlanta Freight OS` is a working product name only. It can be replaced once final branding is chosen.
+`DAO Logistics OS` is the internal operating system for the brokerage.
 
 ## Current Status
 
@@ -1116,7 +1116,7 @@ Remaining:
 - Use structured data instead of free-form notes wherever possible.
 - Keep integrations behind clean internal service boundaries.
 - Keep manual override available for every AI-assisted workflow.
-- Avoid coupling the app to any former employer terminology or workflow naming.
+- Avoid coupling the app to any prior-company terminology or workflow naming.
 
 ## Current Scripts
 
@@ -1142,7 +1142,7 @@ Before considering a milestone complete:
 - `/api/health` reports app and database status
 - Grok wrapper returns placeholders without `XAI_API_KEY`
 - Grok wrapper returns agent output with `XAI_API_KEY`
-- No former-employer references exist in code, docs, UI, prompts, seed data, or schema
+- No prior-company references exist in code, docs, UI, prompts, seed data, or schema
 
 ## Immediate Next Steps
 

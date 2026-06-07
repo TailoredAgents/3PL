@@ -129,7 +129,7 @@ export async function POST(request: Request) {
       });
     }
   } else if (provider === "HERE") {
-    // Real ping: dummy mileage lookup
+    // Real ping: lightweight mileage lookup
     try {
       const ping = await getTruckMileage("Atlanta, GA", "Dallas, TX");
       const ok = !!ping.miles && !ping.error;

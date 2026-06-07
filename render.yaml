@@ -23,7 +23,7 @@ services:
       - key: INTERNAL_APP_PASSWORD
         sync: false
       - key: INTERNAL_AUTH_COOKIE
-        value: atlanta_freight_internal
+        value: dao_logistics_internal
       - key: XAI_API_KEY
         sync: false
       - key: XAI_MODEL

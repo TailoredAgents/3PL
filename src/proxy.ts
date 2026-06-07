@@ -66,7 +66,7 @@ function passwordProxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const cookieName = process.env.INTERNAL_AUTH_COOKIE ?? "atlanta_freight_internal";
+  const cookieName = process.env.INTERNAL_AUTH_COOKIE ?? "dao_logistics_internal";
   const token = request.cookies.get(cookieName)?.value;
   const expected = hash(
     `${process.env.INTERNAL_APP_PASSWORD}:${

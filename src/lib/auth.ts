@@ -1,5 +1,5 @@
 export const internalAuthCookie =
-  process.env.INTERNAL_AUTH_COOKIE ?? "atlanta_freight_internal";
+  process.env.INTERNAL_AUTH_COOKIE ?? "dao_logistics_internal";
 
 export const internalRoles = ["OWNER", "SALES", "OPS", "ADMIN"] as const;
 export type InternalRole = (typeof internalRoles)[number];
@@ -50,7 +50,7 @@ function hash(value: string) {
 }
 
 export const carrierAuthCookie =
-  process.env.CARRIER_AUTH_COOKIE ?? "atlanta_freight_carrier";
+  process.env.CARRIER_AUTH_COOKIE ?? "dao_logistics_carrier";
 
 export const customerAuthCookie =
-  process.env.CUSTOMER_AUTH_COOKIE ?? "atlanta_freight_customer";
+  process.env.CUSTOMER_AUTH_COOKIE ?? "dao_logistics_customer";

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
+import { ShipmentEventCreateForm } from "@/components/crm-forms";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 const CARRIER_COOKIE = "atlanta_freight_carrier";
@@ -53,6 +54,29 @@ export default async function CarrierPortalPage() {
     select: { id: true, type: true, fileName: true, createdAt: true },
   });
 
+  // Pending tenders (CarrierQuotes)
+  const tenders = await prisma.carrierQuote.findMany({
+    where: { carrierId, status: { in: ["REQUESTED", "RECEIVED"] } },
+    include: {
+      load: {
+        select: { id: true, loadNumber: true, originCity: true, destinationCity: true, customerRate: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Payments (CarrierInvoices for their loads)
+  const payments = await prisma.carrierInvoice.findMany({
+    where: { carrierId },
+    include: {
+      load: {
+        select: { loadNumber: true, originCity: true, destinationCity: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+
   return (
     <main className="min-h-screen bg-white p-8">
       <div className="mx-auto max-w-4xl">
@@ -94,26 +118,69 @@ export default async function CarrierPortalPage() {
             </form>
           </div>
 
-          {/* Your Loads / Tenders */}
+          {/* Your Tenders */}
           <div className="rounded-lg border p-6">
-            <h2 className="font-semibold">Your Recent Loads</h2>
-            {loads.length ? (
-              <ul className="mt-3 space-y-2 text-sm">
-                {loads.map((l) => (
-                  <li key={l.id} className="border-b pb-1">
-                    {l.loadNumber} • {l.originCity} → {l.destinationCity} • {l.status}
+            <h2 className="font-semibold">Your Tenders / Quotes</h2>
+            {tenders.length ? (
+              <ul className="mt-3 space-y-3 text-sm">
+                {tenders.map((t) => (
+                  <li key={t.id} className="border-b pb-2">
+                    <div>
+                      Load {t.load.loadNumber} • {t.load.originCity} → {t.load.destinationCity}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      Quoted: ${Number(t.quotedRate).toLocaleString()} (Customer rate: ${Number(t.load.customerRate || 0).toLocaleString()})
+                    </div>
+                    <div className="mt-1 flex gap-2">
+                      <form action={`/api/loads/${t.load.id}/carrier-quotes/${t.id}/accept`} method="post">
+                        <button type="submit" className="text-xs font-semibold text-emerald-700 hover:underline">Accept</button>
+                      </form>
+                      <form action={`/api/carrier-portal/tenders/${t.id}/decline`} method="post">
+                        <button type="submit" className="text-xs font-semibold text-red-700 hover:underline">Decline</button>
+                      </form>
+                    </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-slate-600">No loads yet.</p>
+              <p className="mt-2 text-sm text-slate-600">No pending tenders.</p>
             )}
-            <p className="mt-3 text-xs text-slate-500">Accept/decline tenders and send check-calls coming in future updates. Contact broker for now.</p>
+          </div>
+
+          {/* Send Check-Call / Update */}
+          <div className="rounded-lg border p-6">
+            <h2 className="font-semibold">Send Check-Call / Tracking Update</h2>
+            {loads.length > 0 ? (
+              <div className="mt-2">
+                <ShipmentEventCreateForm loadId={loads[0].id} />
+                <p className="mt-1 text-[10px] text-slate-500">Updates appear in load history and tracking.</p>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">No loads to update yet.</p>
+            )}
+          </div>
+
+          {/* My Payments */}
+          <div className="rounded-lg border p-6">
+            <h2 className="font-semibold">My Payments</h2>
+            {payments.length ? (
+              <ul className="mt-3 space-y-2 text-sm">
+                {payments.map((p) => (
+                  <li key={p.id} className="border-b pb-1">
+                    Load {p.load?.loadNumber || 'N/A'} • ${Number(p.amount).toLocaleString()} • {p.status}
+                    {p.paidAt ? ` (Paid ${new Date(p.paidAt).toLocaleDateString()})` : ''}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">No payments yet.</p>
+            )}
+            <p className="mt-2 text-xs text-slate-500">View full status and remittance via your broker.</p>
           </div>
 
           {/* Recent Documents */}
-          <div className="rounded-lg border p-6 md:col-span-2">
-            <h2 className="font-semibold">Your Recent Documents (submitted via portal or broker)</h2>
+          <div className="rounded-lg border p-6">
+            <h2 className="font-semibold">Your Recent Documents</h2>
             {documents.length ? (
               <ul className="mt-3 space-y-1 text-sm">
                 {documents.map((d) => (
@@ -121,9 +188,9 @@ export default async function CarrierPortalPage() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-slate-600">No documents on file yet. Upload above to get started.</p>
+              <p className="mt-2 text-sm text-slate-600">No documents on file yet. Upload above.</p>
             )}
-            <p className="mt-2 text-xs text-slate-500">All uploads appear in the central Document Center for your broker.</p>
+            <p className="mt-2 text-xs text-slate-500">Appear in Document Center.</p>
           </div>
         </div>
 

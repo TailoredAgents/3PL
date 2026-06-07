@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   ArrowRight,
   CheckCheck,
+  FileCheck2,
   Loader2,
   ReceiptText,
 } from "lucide-react";
@@ -47,11 +48,10 @@ export function BillingQueueTableRow({ load }: { load: BillingLoad }) {
   const [done, setDone] = useState(false);
 
   const canCreateInvoice =
-    (load.billingReadiness === "Ready to invoice" ||
-      load.billingReadiness === "Needs POD") &&
-    !load.invoice;
+    load.billingReadiness === "Ready to invoice" && !load.invoice;
   const canMarkPaid =
     load.invoice && load.invoice.status !== "Paid" && !load.invoice.paidAt;
+  const needsPod = load.billingReadiness === "Needs POD";
   const podDocument = load.documents.find((document) => document.type === "Pod");
 
   async function createInvoice() {
@@ -183,6 +183,14 @@ export function BillingQueueTableRow({ load }: { load: BillingLoad }) {
               )}
               Create invoice
             </button>
+          ) : needsPod ? (
+            <Link
+              href={`/loads/${load.id}?tab=documents`}
+              className="inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700"
+            >
+              <FileCheck2 className="h-3.5 w-3.5" />
+              Upload POD
+            </Link>
           ) : canMarkPaid ? (
             <button
               onClick={markPaid}
@@ -215,11 +223,10 @@ export function BillingQueueMobileRow({ load }: { load: BillingLoad }) {
   const [done, setDone] = useState(false);
 
   const canCreateInvoice =
-    (load.billingReadiness === "Ready to invoice" ||
-      load.billingReadiness === "Needs POD") &&
-    !load.invoice;
+    load.billingReadiness === "Ready to invoice" && !load.invoice;
   const canMarkPaid =
     load.invoice && load.invoice.status !== "Paid" && !load.invoice.paidAt;
+  const needsPod = load.billingReadiness === "Needs POD";
   const podDocument = load.documents.find((document) => document.type === "Pod");
 
   async function createInvoice() {
@@ -306,6 +313,14 @@ export function BillingQueueMobileRow({ load }: { load: BillingLoad }) {
             )}
             Create invoice
           </button>
+        ) : needsPod ? (
+          <Link
+            href={`/loads/${load.id}?tab=documents`}
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-amber-600 px-3 py-2 text-xs font-bold text-white"
+          >
+            <FileCheck2 className="h-3.5 w-3.5" />
+            Upload POD
+          </Link>
         ) : canMarkPaid ? (
           <button
             onClick={markPaid}

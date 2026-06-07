@@ -11,6 +11,7 @@ import {
   MapPinned,
   Package,
   ReceiptText,
+  Target,
   Truck,
 } from "lucide-react";
 
@@ -18,6 +19,7 @@ import { InternalShell } from "@/components/internal-shell";
 import {
   getDashboardMetrics,
   getRecentAiAgentRunViews,
+  getSalesOpportunityInsights,
   getStaleLoadAlerts,
   getTodayScheduleView,
 } from "@/lib/crm";
@@ -45,12 +47,13 @@ const CARD_ACCENTS = [
 ] as const;
 
 export default async function DashboardPage() {
-  const [metrics, recentAgentRuns, todaySchedule, staleAlerts] =
+  const [metrics, recentAgentRuns, todaySchedule, staleAlerts, salesOpportunities] =
     await Promise.all([
       getDashboardMetrics(),
       getRecentAiAgentRunViews(),
       getTodayScheduleView(),
       getStaleLoadAlerts(),
+      getSalesOpportunityInsights(),
     ]);
   const pickups = todaySchedule.filter((item) => item.eventType === "Pickup");
   const deliveries = todaySchedule.filter(
@@ -177,6 +180,56 @@ export default async function DashboardPage() {
             </Link>
           );
         })}
+      </section>
+
+      <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+              Revenue opportunities
+            </p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+              Sales actions worth doing next
+            </h2>
+          </div>
+          <Link
+            href="/analytics"
+            className="inline-flex items-center gap-1 text-sm font-bold text-emerald-700 hover:text-emerald-900"
+          >
+            Lane intelligence <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-3 xl:grid-cols-2">
+          {salesOpportunities.map((opportunity) => (
+            <Link
+              key={opportunity.id}
+              href={opportunity.href}
+              className={`rounded-lg border p-4 hover:-translate-y-0.5 hover:shadow-md ${salesOpportunityToneClass(opportunity.tone)}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em]">
+                    {opportunity.category}
+                  </p>
+                  <p className="mt-1 truncate text-base font-bold">
+                    {opportunity.title}
+                  </p>
+                  <p className="mt-0.5 text-xs opacity-80">
+                    {opportunity.entity}
+                  </p>
+                </div>
+                <div className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-white/70">
+                  <Target className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="mt-3 text-sm leading-6">{opportunity.detail}</p>
+              <p className="mt-2 text-sm font-semibold">
+                Next: {opportunity.nextAction}
+              </p>
+              <p className="mt-1 text-xs opacity-80">{opportunity.impact}</p>
+            </Link>
+          ))}
+        </div>
       </section>
 
       {/* Today's schedule */}
@@ -550,4 +603,18 @@ function getAgentRunHref(entityType: string, id: string) {
   if (entityType === "Load") return `/loads/${id}`;
   if (entityType === "Carrier") return `/carriers/${id}`;
   return "/dashboard";
+}
+
+function salesOpportunityToneClass(
+  tone: "amber" | "emerald" | "red" | "sky" | "violet",
+) {
+  const map = {
+    amber: "border-amber-100 bg-amber-50 text-amber-950",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950",
+    red: "border-red-100 bg-red-50 text-red-950",
+    sky: "border-sky-100 bg-sky-50 text-sky-950",
+    violet: "border-violet-100 bg-violet-50 text-violet-950",
+  };
+
+  return map[tone];
 }

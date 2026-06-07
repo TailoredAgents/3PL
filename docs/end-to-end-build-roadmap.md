@@ -544,7 +544,7 @@ Next for Phase 8: 8.3+ for any remaining (e.g. deeper tender details, payment di
 
 Goal: help salespeople quote better and build repeat lanes.
 
-Status: 9.1 + 9.2 complete; lane intelligence, saved quote templates, and explicit margin rules are in place. Deeper DAT/Truckstop benchmark automation and expanded sales insights remain for 9.3+.
+Status: 9.1 + 9.2 + 9.3 complete; lane intelligence, saved quote templates, explicit margin rules, and sales opportunity insights are in place. Deeper DAT/Truckstop benchmark automation remains for 9.4+.
 
 Build:
 
@@ -553,7 +553,7 @@ Build:
   seasonality, and quote confidence.
 - Complete 9.2: add saved quote templates for recurring lanes.
 - Complete 9.2: add target margin rules by customer, lane, equipment, and urgency.
-- Add sales opportunity insights: dormant shippers, repeat-lane opportunities,
+- Complete 9.3: add sales opportunity insights: dormant shippers, repeat-lane opportunities,
   underpriced lanes, and customers needing follow-up.
 
 Build (Phase 9.1 completed):
@@ -571,6 +571,13 @@ Build (Phase 9.2 completed):
 - Added internal APIs and Analytics management forms for creating templates and rules.
 - Updated Analytics to show active templates and margin rules beside the lane intelligence workspace.
 - Updated system pricing generation so explicit quote margin wins, then best matching margin rule, then matching quote template, then default margin. Matching templates can also provide fallback buy/sell inputs when live market/internal history is missing.
+
+Build (Phase 9.3 completed):
+
+- Added a reusable sales opportunity insight engine derived from leads, quote requests, lane intelligence, completed loads, and shipper activity.
+- Opportunities now identify overdue customer follow-ups, open/low-confidence quotes, underpriced lanes, repeat-lane candidates, benchmark gaps, carrier coverage gaps, and dormant shippers.
+- Added prioritized Revenue Opportunities section to Dashboard with category, customer/lane, reason, next action, impact, and direct links to the relevant workspace.
+- Kept insights derived rather than adding another task table; Phase 10 agents can use this as the action source for drafting follow-ups and pricing work.
 
 Completion criteria:
 

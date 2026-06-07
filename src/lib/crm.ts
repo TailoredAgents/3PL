@@ -774,6 +774,373 @@ function getSampleDashboardMetrics() {
   };
 }
 
+export type SalesOpportunityView = {
+  id: string;
+  category: string;
+  title: string;
+  entity: string;
+  detail: string;
+  nextAction: string;
+  impact: string;
+  href: string;
+  priority: number;
+  tone: "amber" | "emerald" | "red" | "sky" | "violet";
+};
+
+export async function getSalesOpportunityInsights(): Promise<SalesOpportunityView[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return getSampleSalesOpportunities();
+  }
+
+  try {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dormantCutoff = new Date(now);
+    dormantCutoff.setDate(dormantCutoff.getDate() - 30);
+
+    const [overdueLeads, quoteRequests, completedLoads, shippers] =
+      await Promise.all([
+        prisma.lead.findMany({
+          where: {
+            OR: [{ nextFollowUpAt: { lte: now } }, { nextFollowUpAt: null }],
+            stage: { notIn: ["WON", "LOST"] },
+          },
+          include: { shipper: true, contact: true },
+          orderBy: [{ priority: "asc" }, { nextFollowUpAt: "asc" }],
+          take: 6,
+        }),
+        prisma.quoteRequest.findMany({
+          where: { status: { in: ["NEW", "PRICING", "QUOTED"] } },
+          select: {
+            id: true,
+            originCity: true,
+            originState: true,
+            destinationCity: true,
+            destinationState: true,
+            equipmentType: true,
+            status: true,
+            pickupDate: true,
+            createdAt: true,
+            shipper: { select: { companyName: true } },
+            customerQuotes: {
+              select: { status: true, quotedRate: true },
+              orderBy: { createdAt: "desc" },
+            },
+            rateBenchmarks: {
+              select: { source: true, averageRate: true, confidence: true },
+              orderBy: { createdAt: "desc" },
+            },
+            pricingRecommendations: {
+              select: { id: true },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+          },
+          orderBy: [{ pickupDate: "asc" }, { createdAt: "asc" }],
+          take: 12,
+        }),
+        prisma.load.findMany({
+          select: {
+            customerRate: true,
+            carrierRate: true,
+            grossProfit: true,
+            originCity: true,
+            originState: true,
+            destinationCity: true,
+            destinationState: true,
+            equipmentType: true,
+            status: true,
+            createdAt: true,
+            shipper: { select: { companyName: true } },
+            carrier: { select: { companyName: true } },
+          },
+          where: { status: { in: ["INVOICED", "PAID", "POD_RECEIVED", "DELIVERED"] } },
+          take: 1000,
+        }),
+        prisma.shipper.findMany({
+          where: { status: { in: ["LEAD", "ACTIVE"] } },
+          select: {
+            id: true,
+            companyName: true,
+            status: true,
+            updatedAt: true,
+            activities: {
+              select: { createdAt: true },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+            leads: {
+              select: { updatedAt: true },
+              orderBy: { updatedAt: "desc" },
+              take: 1,
+            },
+            quoteRequests: {
+              select: { updatedAt: true },
+              orderBy: { updatedAt: "desc" },
+              take: 1,
+            },
+            loads: {
+              select: { updatedAt: true },
+              orderBy: { updatedAt: "desc" },
+              take: 1,
+            },
+          },
+          orderBy: { updatedAt: "asc" },
+          take: 200,
+        }),
+      ]);
+
+    const laneIntelligence = buildLaneIntelligence(completedLoads, quoteRequests);
+    const opportunities: SalesOpportunityView[] = [
+      ...overdueLeads.map((lead) => ({
+        id: `lead-follow-up-${lead.id}`,
+        category: "Customer follow-up",
+        title: lead.shipper.companyName,
+        entity: formatContactName(lead.contact),
+        detail: lead.nextFollowUpAt
+          ? `Follow-up was due ${formatFollowUp(lead.nextFollowUpAt)}.`
+          : "No follow-up date is set for this open lead.",
+        nextAction: "Call or email the contact and log the outcome.",
+        impact: "Keeps active prospects from going cold.",
+        href: `/leads/${lead.id}`,
+        priority: lead.priority <= 2 ? 95 : 82,
+        tone: lead.priority <= 2 ? "red" : "amber",
+      } satisfies SalesOpportunityView)),
+      ...quoteRequests
+        .map((quote) => buildQuoteSalesOpportunity(quote, tomorrow))
+        .filter((item): item is SalesOpportunityView => item !== null),
+      ...buildLaneSalesOpportunities(laneIntelligence.profiles),
+      ...shippers
+        .map((shipper) => buildDormantShipperOpportunity(shipper, dormantCutoff))
+        .filter((item): item is SalesOpportunityView => item !== null),
+    ];
+
+    if (!opportunities.length) {
+      return getSampleSalesOpportunities();
+    }
+
+    return opportunities
+      .sort((a, b) => b.priority - a.priority)
+      .slice(0, 8);
+  } catch {
+    return getSampleSalesOpportunities();
+  }
+}
+
+function buildQuoteSalesOpportunity(
+  quote: {
+    id: string;
+    originCity: string;
+    originState: string;
+    destinationCity: string;
+    destinationState: string;
+    equipmentType: string;
+    status: string;
+    pickupDate: Date | null;
+    shipper: { companyName: string };
+    rateBenchmarks: { source: string }[];
+    pricingRecommendations: { id: string }[];
+  },
+  tomorrow: Date,
+): SalesOpportunityView | null {
+  const hasMarketBenchmark = quote.rateBenchmarks.some((benchmark) =>
+    ["DAT", "TRUCKSTOP"].includes(benchmark.source),
+  );
+  const hasRecommendation = quote.pricingRecommendations.length > 0;
+  const pickupSoon = quote.pickupDate ? quote.pickupDate <= tomorrow : false;
+
+  if (hasMarketBenchmark && hasRecommendation && !pickupSoon) {
+    return null;
+  }
+
+  const lane = `${quote.originCity}, ${quote.originState} -> ${quote.destinationCity}, ${quote.destinationState}`;
+  const missing = [
+    hasMarketBenchmark ? null : "DAT/Truckstop benchmark",
+    hasRecommendation ? null : "pricing recommendation",
+    pickupSoon ? "pickup is soon" : null,
+  ].filter(Boolean);
+
+  return {
+    id: `quote-${quote.id}`,
+    category: "Quote action",
+    title: lane,
+    entity: quote.shipper.companyName,
+    detail: `${titleCaseEnum(quote.status)} quote needs ${missing.join(", ")}.`,
+    nextAction: "Open the quote, add market intelligence, and send the customer rate.",
+    impact: "Speeds quote turnaround while protecting margin.",
+    href: `/quote-requests/${quote.id}`,
+    priority: pickupSoon ? 94 : hasMarketBenchmark ? 76 : 88,
+    tone: pickupSoon ? "red" : "amber",
+  };
+}
+
+function buildLaneSalesOpportunities(
+  profiles: LaneIntelligenceProfile[],
+): SalesOpportunityView[] {
+  const opportunities: SalesOpportunityView[] = [];
+  const underpriced = profiles
+    .filter((profile) => profile.loadCount > 0 && profile.avgMarginPercent < 15)
+    .sort((a, b) => a.avgMarginPercent - b.avgMarginPercent)
+    .slice(0, 2);
+  const repeat = profiles
+    .filter((profile) => profile.loadCount >= 2 || profile.quoteRequestCount >= 3)
+    .sort((a, b) => b.avgGrossProfit - a.avgGrossProfit)
+    .slice(0, 2);
+  const lowConfidence = profiles
+    .filter((profile) => profile.quoteRequestCount > 0 && profile.quoteConfidence < 60)
+    .sort((a, b) => a.quoteConfidence - b.quoteConfidence)
+    .slice(0, 2);
+  const carrierGap = profiles
+    .filter((profile) => profile.loadCount > 0 && profile.carrierCount <= 1)
+    .sort((a, b) => b.loadCount - a.loadCount)
+    .slice(0, 2);
+
+  for (const lane of underpriced) {
+    opportunities.push({
+      id: `underpriced-${lane.key}`,
+      category: "Margin review",
+      title: `${lane.origin} -> ${lane.destination}`,
+      entity: lane.topCustomer,
+      detail: `Average margin is ${lane.avgMarginPercent}% on ${lane.loadCount} completed load${lane.loadCount === 1 ? "" : "s"}.`,
+      nextAction: "Create or adjust the lane margin rule before the next quote.",
+      impact: "Prevents repeat freight from eroding gross profit.",
+      href: "/analytics",
+      priority: 90,
+      tone: "red",
+    });
+  }
+
+  for (const lane of repeat) {
+    opportunities.push({
+      id: `repeat-${lane.key}`,
+      category: "Repeat lane",
+      title: `${lane.origin} -> ${lane.destination}`,
+      entity: lane.topCustomer,
+      detail: `${lane.loadCount} loads and ${lane.quoteRequestCount} quote requests show recurring activity.`,
+      nextAction: "Save a quote template and ask the customer about upcoming volume.",
+      impact: "Turns one-off spot freight into repeat business.",
+      href: "/analytics",
+      priority: 78,
+      tone: "emerald",
+    });
+  }
+
+  for (const lane of lowConfidence) {
+    opportunities.push({
+      id: `confidence-${lane.key}`,
+      category: "Benchmark gap",
+      title: `${lane.origin} -> ${lane.destination}`,
+      entity: lane.topCustomer,
+      detail: `Quote confidence is ${lane.quoteConfidence}% with limited benchmark or history support.`,
+      nextAction: "Add DAT/Truckstop or manual benchmark data before quoting.",
+      impact: "Reduces pricing risk on uncertain lanes.",
+      href: "/analytics",
+      priority: 74,
+      tone: "amber",
+    });
+  }
+
+  for (const lane of carrierGap) {
+    opportunities.push({
+      id: `carrier-gap-${lane.key}`,
+      category: "Carrier coverage",
+      title: `${lane.origin} -> ${lane.destination}`,
+      entity: lane.topCarrier,
+      detail: `Only ${lane.carrierCount} carrier in history for this lane.`,
+      nextAction: "Source more vetted carriers before the next tender.",
+      impact: "Protects service and buy-rate leverage.",
+      href: "/carriers",
+      priority: 70,
+      tone: "sky",
+    });
+  }
+
+  return opportunities;
+}
+
+function buildDormantShipperOpportunity(
+  shipper: {
+    id: string;
+    companyName: string;
+    status: string;
+    updatedAt: Date;
+    activities: { createdAt: Date }[];
+    leads: { updatedAt: Date }[];
+    quoteRequests: { updatedAt: Date }[];
+    loads: { updatedAt: Date }[];
+  },
+  dormantCutoff: Date,
+): SalesOpportunityView | null {
+  const lastTouch = [
+    shipper.updatedAt,
+    shipper.activities[0]?.createdAt,
+    shipper.leads[0]?.updatedAt,
+    shipper.quoteRequests[0]?.updatedAt,
+    shipper.loads[0]?.updatedAt,
+  ]
+    .filter((date): date is Date => date instanceof Date)
+    .sort((a, b) => b.getTime() - a.getTime())[0];
+
+  if (!lastTouch || lastTouch > dormantCutoff) {
+    return null;
+  }
+
+  return {
+    id: `dormant-shipper-${shipper.id}`,
+    category: "Dormant customer",
+    title: shipper.companyName,
+    entity: titleCaseEnum(shipper.status),
+    detail: `No visible activity since ${formatDate(lastTouch)}.`,
+    nextAction: "Call with lane history, current capacity, and a fresh quote offer.",
+    impact: "Reactivates customers before they disappear from the pipeline.",
+    href: `/shippers/${shipper.id}`,
+    priority: shipper.status === "ACTIVE" ? 72 : 62,
+    tone: "violet",
+  };
+}
+
+function getSampleSalesOpportunities(): SalesOpportunityView[] {
+  return [
+    {
+      id: "sample-follow-up",
+      category: "Customer follow-up",
+      title: "Northstar Building Supply",
+      entity: "Austin Carter",
+      detail: "Follow-up is due on a recurring Atlanta to Dallas dry van lane.",
+      nextAction: "Call and ask about next week volume.",
+      impact: "Keeps a qualified prospect moving.",
+      href: "/leads",
+      priority: 92,
+      tone: "amber",
+    },
+    {
+      id: "sample-margin",
+      category: "Margin review",
+      title: "Savannah, GA -> Atlanta, GA",
+      entity: "Cold Chain Foods",
+      detail: "Average lane margin is below the 15% floor.",
+      nextAction: "Adjust the margin rule before quoting again.",
+      impact: "Protects repeat reefer profitability.",
+      href: "/analytics",
+      priority: 88,
+      tone: "red",
+    },
+    {
+      id: "sample-repeat",
+      category: "Repeat lane",
+      title: "Atlanta, GA -> Nashville, TN",
+      entity: "Apex Manufacturing",
+      detail: "Recurring quote/load activity is strong enough for a saved template.",
+      nextAction: "Create a saved quote template and ask for upcoming volume.",
+      impact: "Turns spot freight into a repeat lane.",
+      href: "/analytics",
+      priority: 78,
+      tone: "emerald",
+    },
+  ];
+}
+
 export type SearchResultItem = {
   id: string;
   type: "Load" | "Lead" | "Shipper" | "Carrier";

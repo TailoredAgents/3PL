@@ -1,12 +1,13 @@
 # End-to-End Build Roadmap
 
-This is the active build roadmap for finishing the freight brokerage operating
-system. The README keeps historical context and completed milestones; this file
-is the forward-looking execution plan.
+This is the completed feature-build roadmap for the DAO Logistics freight
+brokerage operating system. The roadmap is now treated as functionally complete.
+Remaining work is final pre-launch QA, live credential verification, provider
+payload tuning, and bug fixing found during realistic usage.
 
 ## Current Build Position
 
-The app already has the main internal brokerage spine:
+The app has the main internal brokerage spine:
 
 ```txt
 Communications
@@ -20,10 +21,22 @@ Communications
 -> AI Command Center
 ```
 
-The next work should deepen the operating system around documents, compliance,
-accounting, integrations, portals, and AI automation. Do not restart the project
-or duplicate existing flows. Extend the current pages, APIs, models, and helper
-libraries wherever practical.
+Do not restart the project or duplicate existing flows. Future work should
+extend the current pages, APIs, models, and helper libraries.
+
+## Final Pre-Launch Position
+
+The main phases are complete enough to treat the product as built for internal
+QA. The remaining work is intentionally pushed to the final launch step:
+
+- Run `docs/local-qa-test-plan.md` with realistic records.
+- Fix bugs discovered during full workflow usage.
+- Verify Clerk, Twilio, Resend, xAI/Grok, storage/OCR, DAT, Truckstop,
+  FMCSA/HERE/EIA, and carrier compliance credentials.
+- Finalize DAT/Truckstop account-specific payload mapping.
+- Verify provider webhook URLs in their dashboards.
+- Remove stale sample copy where production data should appear.
+- Decide whether payments/accounting sync are launch requirements.
 
 ## Current State Log
 
@@ -799,23 +812,24 @@ Completion criteria:
 
 Goal: stabilize the finished product after all major functionality exists.
 
-Status: 12.3 complete. Local QA script, local seeded database, initial hardening
-audit, and first high-risk API protection batch are complete. Deeper
-record-based manual workflow testing and bug fixing remain.
+Status: deferred to final pre-launch. Phase 12.1-12.3 established the QA plan,
+local seeded database, initial hardening audit, and first high-risk API
+protection batch. Deeper record-based manual workflow testing, provider
+verification, and bug fixing are the final launch step.
 
 Build:
 
 - Complete: created a full manual test script for each workflow in
   `docs/local-qa-test-plan.md`.
-- Add automated tests around high-risk APIs where practical.
+- Deferred: add automated tests around high-risk APIs where practical.
 - Locally preferred: run local validation after each major phase; Render checks
   are deferred unless the team intentionally tests the live service.
-- Verify real environment variables and webhook URLs through local config review
-  and provider dashboards where local proof is not possible.
-- In progress: fix all bugs found during workflow testing.
-- In progress: remove stale sample copy where production data should appear.
-- In progress: confirm no prior-company or legacy product-name terminology
-  exists anywhere user-facing or in runtime defaults.
+- Deferred: verify real environment variables and webhook URLs through local
+  config review and provider dashboards where local proof is not possible.
+- Deferred: fix all bugs found during full workflow testing.
+- Deferred: remove stale sample copy where production data should appear.
+- Deferred: confirm no prior-company or legacy product-name terminology exists
+  anywhere user-facing or in runtime defaults.
 
 Completion criteria:
 

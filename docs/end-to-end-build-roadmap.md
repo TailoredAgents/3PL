@@ -598,9 +598,10 @@ Completion criteria:
 
 Goal: automate repetitive work only after the data and workflows are stable.
 
-Status: 10.1 complete. AI control layer, prompt version history, run-level
-approval metadata, and rejection controls are in place. Feature-specific
-automation remains for later sub-phases.
+Status: 10.1-10.2 complete. AI control layer, prompt version history,
+run-level approval metadata, rejection controls, and Communications AI draft
+suggestions are in place. Feature-specific automation remains for later
+sub-phases.
 
 Build:
 
@@ -614,9 +615,20 @@ Build:
   - AI Command Center now shows guardrails, approval/rejection controls, review
     notes, prompt history, and run control metadata.
   - Lead AI activity creation now waits for approval when a run is review-gated.
+- Complete 10.2: add AI draft suggestions inside the Communications composer:
+  - Salespeople can generate follow-up email, follow-up SMS, quote follow-up,
+    and no-response check-in drafts from the selected conversation.
+  - Drafts use customer/contact context, recent activities, lead notes, shipper
+    notes, recent quote requests, and latest customer quote data.
+  - Drafts fill the existing email/SMS composer only; no customer message is
+    sent automatically.
+  - Every draft creates an `AiAgentRun` with prompt snapshot, prompt version,
+    channel/purpose metadata, risk/approval controls, and gated-action audit
+    detail.
+  - Communications threads show the latest saved AI draft/audit status for that
+    conversation.
 - Add scheduled Daily Brief Agent delivery.
 - Add autonomous document extraction jobs with human review for exceptions.
-- Add AI draft suggestions inside communications composer.
 - Add AI carrier shortlist generation based on compliance, lane history, and
   pricing.
 - Add AI tracking exception triage.

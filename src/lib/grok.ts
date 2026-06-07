@@ -12,6 +12,11 @@ type AgentResult = {
   nextAction: string;
 };
 
+export type CommunicationDraftResult = AgentResult & {
+  subject: string;
+  body: string;
+};
+
 export type CallIntakeAgentResult = AgentResult & {
   quoteRequest: Record<string, string | number | boolean>;
   missingQuestions: string[];
@@ -173,6 +178,75 @@ export async function runBrokerageAgent(input: {
   );
 }
 
+export async function runCommunicationDraftAgent(input: {
+  channel: "email" | "sms";
+  purpose: string;
+  context: unknown;
+  instructions: AgentPromptTemplateView;
+}): Promise<CommunicationDraftResult> {
+  if (!client) {
+    const contact = extractDraftContact(input.context);
+    const subject =
+      input.channel === "email"
+        ? `Following up with ${contact.company}`
+        : "SMS follow-up";
+    const body =
+      input.channel === "email"
+        ? [
+            `Hi ${contact.contactName},`,
+            "",
+            "I wanted to follow up on your freight needs and see what lanes or shipments you would like us to help price next.",
+            "",
+            "Thanks,",
+          ].join("\n")
+        : `Hi ${contact.contactName}, this is DAO Logistics following up on your freight needs. Do you have any lanes or shipments we can help price today?`;
+
+    return {
+      subject,
+      body,
+      summary:
+        "Draft created locally because Grok is not configured. Review before sending.",
+      confidence: 0.45,
+      nextAction: "Review the draft, edit as needed, then send manually.",
+    };
+  }
+
+  return withLoggedXai(
+    "AGENT_RUN",
+    async () => {
+      const response = await client.chat.completions.create({
+        model: xaiModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              `${input.instructions.systemPrompt} Draft customer-facing ${input.channel.toUpperCase()} copy only. ` +
+              "Return JSON with subject, body, summary, confidence, and nextAction. " +
+              "Do not claim a rate, truck, booking, dispatch, or customer action has already happened. " +
+              "Use only facts present in the provided context. Keep SMS under 320 characters.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              task: input.instructions.task,
+              draftPurpose: input.purpose,
+              channel: input.channel,
+              context: input.context,
+            }),
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
+
+      return parseCommunicationDraftResponse(
+        response.choices[0]?.message?.content,
+        input.channel,
+      );
+    },
+    { message: `Communication ${input.channel} draft (${input.purpose})` },
+  );
+}
+
 export async function runCallIntakeAgent(input: {
   transcriptText: string;
   context: unknown;
@@ -253,6 +327,75 @@ function parseAgentResponse(content: string | null | undefined): AgentResult {
       nextAction: "Review manually.",
     };
   }
+}
+
+function parseCommunicationDraftResponse(
+  content: string | null | undefined,
+  channel: "email" | "sms",
+): CommunicationDraftResult {
+  if (!content) {
+    return {
+      subject: channel === "email" ? "Freight follow-up" : "SMS follow-up",
+      body: "",
+      summary: "Draft agent completed without usable copy.",
+      confidence: 0.25,
+      nextAction: "Write the message manually before sending.",
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(content) as Partial<CommunicationDraftResult>;
+    return {
+      subject:
+        typeof parsed.subject === "string" && parsed.subject.trim()
+          ? parsed.subject.trim()
+          : channel === "email"
+            ? "Freight follow-up"
+            : "SMS follow-up",
+      body: typeof parsed.body === "string" ? parsed.body.trim() : "",
+      summary:
+        typeof parsed.summary === "string"
+          ? parsed.summary
+          : "Communication draft created.",
+      confidence:
+        typeof parsed.confidence === "number" ? parsed.confidence : 0.5,
+      nextAction:
+        typeof parsed.nextAction === "string"
+          ? parsed.nextAction
+          : "Review, edit, and send manually.",
+    };
+  } catch {
+    return {
+      subject: channel === "email" ? "Freight follow-up" : "SMS follow-up",
+      body: content,
+      summary: "Communication draft created from unstructured model output.",
+      confidence: 0.45,
+      nextAction: "Review, edit, and send manually.",
+    };
+  }
+}
+
+function extractDraftContact(context: unknown) {
+  if (!context || typeof context !== "object") {
+    return { company: "this customer", contactName: "there" };
+  }
+
+  const maybeContext = context as {
+    company?: unknown;
+    contactName?: unknown;
+  };
+
+  return {
+    company:
+      typeof maybeContext.company === "string"
+        ? maybeContext.company
+        : "this customer",
+    contactName:
+      typeof maybeContext.contactName === "string" &&
+      maybeContext.contactName !== "No contact"
+        ? maybeContext.contactName
+        : "there",
+  };
 }
 
 function parseCallIntakeResponse(

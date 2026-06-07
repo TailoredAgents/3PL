@@ -453,6 +453,18 @@ export type CommunicationMessageView = {
   outcome: string;
   time: string;
 };
+export type CommunicationDraftAuditView = {
+  runId: string;
+  channel: string;
+  purpose: string;
+  subject: string;
+  body: string;
+  summary: string;
+  confidence: number | null;
+  nextAction: string;
+  status: string;
+  created: string;
+};
 export type CommunicationThreadView = {
   id: string;
   leadId: string;
@@ -472,6 +484,7 @@ export type CommunicationThreadView = {
   lastMessage: string;
   lastMessageTime: string;
   messages: CommunicationMessageView[];
+  latestAiDraft: CommunicationDraftAuditView | null;
 };
 export type CommunicationWorkspaceView = {
   threads: CommunicationThreadView[];
@@ -609,6 +622,23 @@ export async function getCommunicationWorkspaceView(): Promise<CommunicationWork
       return getSampleCommunicationWorkspaceView();
     }
 
+    const latestDraftRuns = await prisma.aiAgentRun.findMany({
+      where: {
+        relatedEntityType: "Lead",
+        relatedEntityId: { in: records.map((lead) => lead.id) },
+        actionSummary: { startsWith: "Drafted" },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    const draftByLeadId = new Map<string, AiAgentRun>();
+
+    for (const run of latestDraftRuns) {
+      if (run.relatedEntityId && !draftByLeadId.has(run.relatedEntityId)) {
+        draftByLeadId.set(run.relatedEntityId, run);
+      }
+    }
+
     return {
       threads: records.map((lead) => {
         const notes = `${lead.shipper.notes ?? ""}\n${lead.notes ?? ""}`;
@@ -646,6 +676,7 @@ export async function getCommunicationWorkspaceView(): Promise<CommunicationWork
           lastMessage: latest?.body ?? "No communication logged yet.",
           lastMessageTime: latest?.time ?? "No activity",
           messages,
+          latestAiDraft: mapCommunicationDraftRun(draftByLeadId.get(lead.id)),
         };
       }),
     };
@@ -3056,6 +3087,7 @@ function getSampleCommunicationWorkspaceView(): CommunicationWorkspaceView {
         lastMessage: latest?.body ?? "No communication logged yet.",
         lastMessageTime: latest?.time ?? "No activity",
         messages,
+        latestAiDraft: null,
       };
     }),
   };
@@ -3770,6 +3802,40 @@ function parseGatedActions(controlJson: unknown) {
   return control.gatedActions.filter(
     (action): action is string => typeof action === "string",
   );
+}
+
+function mapCommunicationDraftRun(
+  run: AiAgentRun | undefined,
+): CommunicationDraftAuditView | null {
+  if (!run) {
+    return null;
+  }
+
+  const output =
+    run.outputJson && typeof run.outputJson === "object"
+      ? (run.outputJson as Record<string, unknown>)
+      : {};
+
+  return {
+    runId: run.id,
+    channel:
+      typeof output.channel === "string" ? titleCaseEnum(output.channel) : "Draft",
+    purpose:
+      typeof output.purpose === "string" ? titleCaseEnum(output.purpose) : "Draft",
+    subject: typeof output.subject === "string" ? output.subject : "AI draft",
+    body: typeof output.body === "string" ? output.body : "",
+    summary:
+      typeof output.summary === "string"
+        ? output.summary
+        : "AI communication draft created.",
+    confidence: run.confidence === null ? null : Number(run.confidence),
+    nextAction:
+      typeof output.nextAction === "string"
+        ? output.nextAction
+        : "Review and send manually.",
+    status: titleCaseEnum(run.status),
+    created: formatFollowUp(run.createdAt),
+  };
 }
 
 export type ContactListItem = {

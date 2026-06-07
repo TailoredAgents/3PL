@@ -25,6 +25,22 @@ import type { CommunicationWorkspaceView } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 
 type ComposerMode = "sms" | "email" | "call" | "note" | "quote";
+type DraftChannel = "email" | "sms";
+type DraftPurpose = "sales_follow_up" | "quote_follow_up" | "no_response_check_in";
+type CommunicationDraft = {
+  channel: DraftChannel;
+  purpose: DraftPurpose;
+  subject: string;
+  body: string;
+  summary: string;
+  confidence: number;
+  nextAction: string;
+  runId?: string;
+};
+type DraftState = {
+  status: "idle" | "loading" | "success" | "error";
+  message?: string;
+};
 
 const composerTabs: { id: ComposerMode; label: string; icon: typeof Send }[] = [
   { id: "sms", label: "SMS", icon: Send },
@@ -49,12 +65,64 @@ export function CommunicationsWorkspace({
     workspace.threads[0]?.id ?? "",
   );
   const [composerMode, setComposerMode] = useState<ComposerMode>("sms");
+  const [drafts, setDrafts] = useState<Record<string, CommunicationDraft>>({});
+  const [draftState, setDraftState] = useState<DraftState>({ status: "idle" });
   const selectedThread = useMemo(
     () =>
       workspace.threads.find((thread) => thread.id === selectedThreadId) ??
       workspace.threads[0],
     [selectedThreadId, workspace.threads],
   );
+  const activeDraft =
+    composerMode === "email" || composerMode === "sms"
+      ? drafts[getDraftKey(selectedThread?.leadId ?? "", composerMode)]
+      : undefined;
+
+  async function requestDraft(channel: DraftChannel, purpose: DraftPurpose) {
+    if (!selectedThread) {
+      return;
+    }
+
+    setDraftState({ status: "loading", message: "Drafting..." });
+
+    try {
+      const formData = new FormData();
+      formData.set("channel", channel);
+      formData.set("purpose", purpose);
+      const response = await fetch(
+        `/api/leads/${selectedThread.leadId}/communication-draft`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+      const payload = (await response.json()) as {
+        message?: string;
+        error?: string;
+        draft?: CommunicationDraft;
+      };
+
+      if (!response.ok || !payload.draft) {
+        throw new Error(payload.error ?? "Unable to create AI draft.");
+      }
+
+      setDrafts((current) => ({
+        ...current,
+        [getDraftKey(selectedThread.leadId, channel)]: payload.draft as CommunicationDraft,
+      }));
+      setDraftState({
+        status: "success",
+        message: payload.message ?? "AI draft created.",
+      });
+      setComposerMode(channel);
+    } catch (error) {
+      setDraftState({
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to create AI draft.",
+      });
+    }
+  }
 
   if (!workspace.threads.length || !selectedThread) {
     return (
@@ -199,17 +267,31 @@ export function CommunicationsWorkspace({
 
           {composerMode === "sms" && (
             <LeadSmsForm
+              key={`sms-${selectedThread.leadId}-${activeDraft?.runId ?? "base"}`}
               leadId={selectedThread.leadId}
               defaultPhone={cleanValue(selectedThread.phone)}
-              defaultMessage={`Hi ${selectedThread.contact}, this is DAO Logistics following up on your freight lanes. Is now a good time to confirm what you need moved next?`}
+              defaultMessage={
+                activeDraft?.channel === "sms"
+                  ? activeDraft.body
+                  : `Hi ${selectedThread.contact}, this is DAO Logistics following up on your freight lanes. Is now a good time to confirm what you need moved next?`
+              }
             />
           )}
           {composerMode === "email" && (
             <LeadEmailForm
+              key={`email-${selectedThread.leadId}-${activeDraft?.runId ?? "base"}`}
               leadId={selectedThread.leadId}
               defaultEmail={cleanValue(selectedThread.email)}
-              defaultSubject={`Following up with ${selectedThread.company}`}
-              defaultBody={`Hi ${selectedThread.contact},\n\nI wanted to follow up on your freight lanes and see what shipments you need help with next.\n\nThanks,`}
+              defaultSubject={
+                activeDraft?.channel === "email"
+                  ? activeDraft.subject
+                  : `Following up with ${selectedThread.company}`
+              }
+              defaultBody={
+                activeDraft?.channel === "email"
+                  ? activeDraft.body
+                  : `Hi ${selectedThread.contact},\n\nI wanted to follow up on your freight lanes and see what shipments you need help with next.\n\nThanks,`
+              }
             />
           )}
           {composerMode === "call" && (
@@ -276,6 +358,75 @@ export function CommunicationsWorkspace({
           </div>
         </div>
 
+        {/* AI draft assistant */}
+        <div className="border-b border-slate-200 p-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex items-center gap-2">
+              <Bot className="h-4 w-4 text-slate-500" />
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                AI draft assistant
+              </p>
+            </div>
+            <div className="mt-3 grid gap-2">
+              <DraftButton
+                label="Follow-up email"
+                loading={draftState.status === "loading"}
+                onClick={() => requestDraft("email", "sales_follow_up")}
+              />
+              <DraftButton
+                label="Follow-up SMS"
+                loading={draftState.status === "loading"}
+                onClick={() => requestDraft("sms", "sales_follow_up")}
+              />
+              <DraftButton
+                label="Quote follow-up"
+                loading={draftState.status === "loading"}
+                onClick={() => requestDraft("email", "quote_follow_up")}
+              />
+              <DraftButton
+                label="No-response check-in"
+                loading={draftState.status === "loading"}
+                onClick={() => requestDraft("email", "no_response_check_in")}
+              />
+            </div>
+            {draftState.message ? (
+              <p className={cn(
+                "mt-3 rounded-md px-3 py-2 text-xs leading-5",
+                draftState.status === "error"
+                  ? "bg-red-50 text-red-700"
+                  : "bg-emerald-50 text-emerald-800",
+              )}>
+                {draftState.message}
+              </p>
+            ) : null}
+            {activeDraft ? (
+              <div className="mt-3 rounded-md border border-emerald-100 bg-emerald-50 p-3 text-xs leading-5 text-emerald-950">
+                <p className="font-semibold">Latest draft</p>
+                <p className="mt-1">{activeDraft.summary}</p>
+                <p className="mt-1 font-semibold">
+                  Confidence {Math.round(activeDraft.confidence * 100)}%
+                </p>
+                <p className="mt-1">{activeDraft.nextAction}</p>
+              </div>
+            ) : null}
+            {selectedThread.latestAiDraft ? (
+              <div className="mt-3 rounded-md border border-slate-100 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+                <p className="font-semibold text-slate-900">Saved AI draft</p>
+                <p className="mt-1">
+                  {selectedThread.latestAiDraft.channel} · {selectedThread.latestAiDraft.purpose} · {selectedThread.latestAiDraft.status}
+                </p>
+                <p className="mt-1">{selectedThread.latestAiDraft.summary}</p>
+                <p className="mt-1 font-semibold text-slate-700">
+                  {selectedThread.latestAiDraft.created}
+                  {selectedThread.latestAiDraft.confidence === null
+                    ? ""
+                    : ` · ${Math.round(selectedThread.latestAiDraft.confidence * 100)}% confidence`}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
         {/* AI agents */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -296,6 +447,32 @@ export function CommunicationsWorkspace({
       </aside>
     </section>
   );
+}
+
+function DraftButton({
+  label,
+  loading,
+  onClick,
+}: {
+  label: string;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={loading}
+      onClick={onClick}
+      className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <Bot className="h-3.5 w-3.5" />
+      {loading ? "Drafting..." : label}
+    </button>
+  );
+}
+
+function getDraftKey(leadId: string, channel: DraftChannel) {
+  return `${leadId}:${channel}`;
 }
 
 function ContextFact({ label, value }: { label: string; value: string }) {

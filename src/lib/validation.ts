@@ -130,6 +130,15 @@ export const outboundSmsCreateSchema = z.object({
   message: requiredString,
 });
 
+export const communicationDraftSchema = z.object({
+  channel: z.enum(["email", "sms"]),
+  purpose: z.enum([
+    "sales_follow_up",
+    "quote_follow_up",
+    "no_response_check_in",
+  ]),
+});
+
 export const carrierCreateSchema = z.object({
   companyName: requiredString,
   mcNumber: z.string().trim().optional(),
@@ -437,6 +446,9 @@ export type LeadUpdateInput = z.infer<typeof leadUpdateSchema>;
 export type ActivityCreateInput = z.infer<typeof activityCreateSchema>;
 export type OutboundCallCreateInput = z.infer<typeof outboundCallCreateSchema>;
 export type OutboundSmsCreateInput = z.infer<typeof outboundSmsCreateSchema>;
+export type CommunicationDraftInput = z.infer<
+  typeof communicationDraftSchema
+>;
 export type CarrierCreateInput = z.infer<typeof carrierCreateSchema>;
 export type CarrierComplianceUpdateInput = z.infer<typeof carrierComplianceUpdateSchema>;
 export type LoadCreateInput = z.infer<typeof loadCreateSchema>;

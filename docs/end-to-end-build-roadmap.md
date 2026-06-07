@@ -415,6 +415,7 @@ Completion criteria progress:
 DAT/Truckstop final payload mappings and any ultra-final surfaces remain for when account docs are available or future phases. Phase 6 core (admin visibility, logging, test/retry actions, deeper dashboards) is now complete. 
 
 - Phase 7.1 completed: Customer portal account model + basic login. Added portalEnabled + CustomerAccount model, toggle in internal UI, customer login API/page, /portal home. Reused public tracking. Validation + push passed. Followed rules.
+- Phase 7.2 completed: Customer quote request/view in portal. Added scoped getCustomerQuoteRequestViews, /api/portal/quote-requests create, list + submit form in /portal. Scoped to shipper. Validation + push passed. Followed rules.
 
 ## Phase 7: Customer Portal (next)
 
@@ -441,7 +442,21 @@ Completion criteria progress:
 - Internal users can control portal access per shipper.
 - Basic customer login + portal home page live (reduces need for broker to manually share status/docs via email).
 
-Next for Phase 7: 7.2+ for quote request/approval flows, active load views with documents/invoices, saved preferences, deeper auth (Clerk customer support).
+Build (Phase 7.2 completed):
+
+- Added getCustomerQuoteRequestViews(shipperId) in crm.ts for scoped customer quote list.
+- New /api/portal/quote-requests POST: creates QuoteRequest for the logged-in customer's shipper (from cookie), basic fields (origin/dest/equip).
+- Updated /portal page: replaced placeholder with "Your Quotes & Requests" section showing list of their recent quote requests (status, lane, equip) + inline form to submit new request.
+- Reuses QuoteRequest model, existing map, revalidates, customer session from 7.1. Customers only see/act on their shipper's data.
+- Full validation + commit + push + roadmap update.
+- Followed rules.
+
+Completion criteria progress:
+- Customers can request quotes via portal.
+- View their quote requests/history (scoped list).
+- (Approve/reject for quoted ones and full load views in 7.3+)
+
+Next for Phase 7: 7.3+ for active load views (with docs/invoices/tracking), saved preferences, deeper auth.
 
 Build:
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  ArrowRight,
   ClipboardList,
   Mail,
   MessageSquareText,
@@ -47,24 +48,6 @@ export default async function CommunicationsPage() {
     { icon: Mail, label: "Email issues", value: emailDashboard.exceptionCount.toString(), href: "/email" },
   ];
 
-  const channels = [
-    {
-      title: "Calls",
-      body: "Click-to-call starts a Twilio call, creates a call record, and logs the result to the customer timeline.",
-      href: "/calls",
-    },
-    {
-      title: "SMS",
-      body: "SMS sends through Twilio from the active customer thread and is logged as outbound activity.",
-      href: "/leads",
-    },
-    {
-      title: "Email",
-      body: "Customer emails send through Resend with suppression checks. Quote emails live on quote records.",
-      href: "/email",
-    },
-  ];
-
   return (
     <InternalShell
       active="Communications"
@@ -79,11 +62,14 @@ export default async function CommunicationsPage() {
           <Link
             key={item.label}
             href={item.href}
-            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/10 ${CARD_ACCENTS[i].border}`}
+            className={`group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/10 ${CARD_ACCENTS[i].border}`}
           >
             <div className="p-5">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
-                <item.icon className="h-4 w-4" />
+              <div className="flex items-start justify-between gap-4">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-600" />
               </div>
               <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
               <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
@@ -95,22 +81,6 @@ export default async function CommunicationsPage() {
       </section>
 
       <CommunicationsWorkspace workspace={workspace} />
-
-      {/* Channel cards */}
-      <section className="grid gap-4 lg:grid-cols-3">
-        {channels.map((item) => (
-          <Link
-            key={item.title}
-            href={item.href}
-            className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/10"
-          >
-            <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <p className="text-sm font-semibold text-slate-700">{item.title}</p>
-            </div>
-            <p className="p-5 text-sm leading-6 text-slate-600">{item.body}</p>
-          </Link>
-        ))}
-      </section>
     </InternalShell>
   );
 }

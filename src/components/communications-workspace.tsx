@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  ArrowRight,
   AtSign,
   Bot,
+  CheckCircle2,
+  Clock,
   FileText,
   Mail,
   MessageSquareText,
@@ -77,6 +80,7 @@ export function CommunicationsWorkspace({
     composerMode === "email" || composerMode === "sms"
       ? drafts[getDraftKey(selectedThread?.leadId ?? "", composerMode)]
       : undefined;
+  const latestMessage = selectedThread?.messages[0];
 
   async function requestDraft(channel: DraftChannel, purpose: DraftPurpose) {
     if (!selectedThread) {
@@ -137,26 +141,33 @@ export function CommunicationsWorkspace({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 xl:grid xl:min-h-[700px] xl:grid-cols-[300px_minmax(0,1fr)_300px]">
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 xl:grid xl:min-h-[760px] xl:grid-cols-[330px_minmax(0,1fr)_340px]">
       {/* Left — inbox */}
-      <aside className="border-b border-slate-200 bg-slate-50 xl:border-b-0 xl:border-r">
-        <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-3">
-          <MessageSquareText className="h-4 w-4 text-slate-400" />
-          <p className="text-sm font-semibold text-slate-700">Customer inbox</p>
-          <span className="ml-auto rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">
-            {workspace.threads.length}
-          </span>
+      <aside className="border-b border-slate-200 bg-slate-50/80 xl:border-b-0 xl:border-r">
+        <div className="border-b border-slate-200 bg-white px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <MessageSquareText className="h-4 w-4 text-emerald-600" />
+              <p className="text-sm font-bold text-slate-900">Customer inbox</p>
+            </div>
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">
+              {workspace.threads.length}
+            </span>
+          </div>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Prioritized conversations, follow-ups, and quote-ready sales work.
+          </p>
         </div>
-        <div className="max-h-[620px] overflow-y-auto p-3">
+        <div className="max-h-[690px] overflow-y-auto p-3">
           {workspace.threads.map((thread) => (
             <button
               key={thread.id}
               type="button"
               onClick={() => setSelectedThreadId(thread.id)}
               className={cn(
-                "mb-2 w-full rounded-md border p-3 text-left hover:border-emerald-200 hover:bg-white",
+                "mb-2 w-full rounded-lg border p-3 text-left hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md",
                 selectedThread.id === thread.id
-                  ? "border-slate-900 bg-white shadow-sm"
+                  ? "border-slate-900 bg-white shadow-md shadow-slate-950/10"
                   : "border-slate-100 bg-slate-50",
               )}
             >
@@ -174,20 +185,26 @@ export function CommunicationsWorkspace({
               <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
                 {thread.lastMessage}
               </p>
-              <p className="mt-2 text-xs font-semibold text-emerald-700">
-                {thread.lastMessageTime}
-              </p>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                  <Clock className="h-3 w-3" />
+                  {thread.lastMessageTime}
+                </span>
+                <span className="text-xs font-semibold text-slate-400">
+                  {thread.stage}
+                </span>
+              </div>
             </button>
           ))}
         </div>
       </aside>
 
       {/* Center — conversation */}
-      <article className="grid min-h-[700px] grid-rows-[auto_minmax(0,1fr)_auto]">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-3">
+      <article className="grid min-h-[760px] grid-rows-[auto_auto_minmax(0,1fr)_auto]">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-semibold text-slate-900">{selectedThread.company}</p>
+              <p className="text-lg font-bold text-slate-950">{selectedThread.company}</p>
               <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                 {selectedThread.stage}
               </span>
@@ -198,19 +215,40 @@ export function CommunicationsWorkspace({
           </div>
           <Link
             href={`/leads/${selectedThread.leadId}`}
-            className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+            className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-lg shadow-slate-950/15 hover:bg-slate-700"
           >
-            Open record
+            Open record <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
-        <div className="space-y-3 overflow-y-auto bg-slate-50/70 p-4">
+        <div className="border-b border-slate-200 bg-slate-50 px-5 py-3">
+          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Bot className="h-4 w-4 text-emerald-700" />
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-800">
+                  Next best action
+                </p>
+              </div>
+              <p className="mt-1 text-sm leading-6 text-emerald-950">
+                {selectedThread.aiNextAction}
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <ThreadStat label="Priority" value={selectedThread.priority} />
+              <ThreadStat label="Messages" value={selectedThread.messages.length.toString()} />
+              <ThreadStat label="Last touch" value={latestMessage?.time ?? "None"} />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f2_100%)] p-5">
           {selectedThread.messages.length ? (
             [...selectedThread.messages].reverse().map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  "max-w-[85%] rounded-lg border p-3 shadow-sm",
+                  "max-w-[86%] rounded-lg border p-4 shadow-sm",
                   message.direction === "Outbound"
                     ? "ml-auto border-emerald-100 bg-emerald-50"
                     : message.direction === "Inbound"
@@ -234,19 +272,35 @@ export function CommunicationsWorkspace({
                   {message.body}
                 </p>
                 {message.outcome && (
-                  <p className="mt-2 text-xs font-medium text-slate-500">{message.outcome}</p>
+                  <p className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-white/70 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {message.outcome}
+                  </p>
                 )}
               </div>
             ))
           ) : (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
-              No messages logged yet. Use the composer below.
+            <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+              <MessageSquareText className="mx-auto h-8 w-8 text-slate-300" />
+              <p className="mt-3 font-semibold text-slate-700">
+                No messages logged yet
+              </p>
+              <p className="mt-1">Use SMS, email, call, note, or quote below.</p>
             </div>
           )}
         </div>
 
-        <div className="border-t border-slate-200 bg-white p-4">
-          <div className="mb-3 flex flex-wrap gap-2">
+        <div className="border-t border-slate-200 bg-white p-4 shadow-[0_-12px_30px_rgba(15,23,42,0.04)]">
+          <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-900">
+                Compose next touch
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Sending to {selectedThread.contact} at {composerMode === "email" ? selectedThread.email : selectedThread.phone}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
             {composerTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -263,6 +317,7 @@ export function CommunicationsWorkspace({
                 {tab.label}
               </button>
             ))}
+            </div>
           </div>
 
           {composerMode === "sms" && (
@@ -317,9 +372,14 @@ export function CommunicationsWorkspace({
       <aside className="border-t border-slate-200 bg-slate-50 xl:border-l xl:border-t-0">
         {/* Customer context */}
         <div className="overflow-hidden rounded-none border-b border-slate-200 bg-white">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
-            <AtSign className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Customer context</p>
+          <div className="border-b border-slate-100 bg-slate-50 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <AtSign className="h-4 w-4 text-emerald-600" />
+              <p className="text-sm font-bold text-slate-900">Customer intelligence</p>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Current contact, relationship context, and follow-up timing.
+            </p>
           </div>
           <dl className="grid gap-3 p-4 text-sm">
             <ContextFact label="Contact" value={selectedThread.contact} />
@@ -332,24 +392,24 @@ export function CommunicationsWorkspace({
         {/* Sales notes */}
         <div className="overflow-hidden border-b border-slate-200 bg-white">
           <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
-            <MessageSquareText className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Sales notes</p>
+            <MessageSquareText className="h-4 w-4 text-slate-500" />
+            <p className="text-sm font-bold text-slate-900">Account facts</p>
           </div>
           <div className="grid gap-2 p-4 text-sm leading-6 text-slate-600">
-            <p><strong className="text-slate-900">Lane:</strong> {selectedThread.lanes}</p>
-            <p><strong className="text-slate-900">Equipment:</strong> {selectedThread.equipment}</p>
-            <p><strong className="text-slate-900">Volume:</strong> {selectedThread.volume}</p>
-            <p><strong className="text-slate-900">Pain:</strong> {selectedThread.pain}</p>
+            <SidebarFact label="Lane" value={selectedThread.lanes} />
+            <SidebarFact label="Equipment" value={selectedThread.equipment} />
+            <SidebarFact label="Volume" value={selectedThread.volume} />
+            <SidebarFact label="Pain" value={selectedThread.pain} />
           </div>
         </div>
 
         {/* AI next action */}
         <div className="border-b border-slate-200 p-4">
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-emerald-600" />
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">
-                AI next action
+                AI sales guidance
               </p>
             </div>
             <p className="mt-2 text-sm leading-6 text-emerald-900">
@@ -360,7 +420,7 @@ export function CommunicationsWorkspace({
 
         {/* AI draft assistant */}
         <div className="border-b border-slate-200 p-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-slate-500" />
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
@@ -429,11 +489,11 @@ export function CommunicationsWorkspace({
 
         {/* AI agents */}
         <div className="p-4">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3 flex items-center gap-2">
             <Bot className="h-4 w-4 text-slate-400" />
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Run agent</p>
           </div>
-          <p className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-500">
+          <p className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-500 shadow-sm">
             Conversation notes run automatically after logged calls, emails,
             SMS, and notes.
           </p>
@@ -482,6 +542,30 @@ function ContextFact({ label, value }: { label: string; value: string }) {
         {label}
       </dt>
       <dd className="mt-0.5 text-sm font-semibold text-slate-900">{value}</dd>
+    </div>
+  );
+}
+
+function ThreadStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 truncate text-xs font-bold text-slate-800">{value}</p>
+    </div>
+  );
+}
+
+function SidebarFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-semibold leading-5 text-slate-800">
+        {value}
+      </p>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import {
   Bot,
   Building2,
   CalendarDays,
-  ClipboardList,
   FileText,
   Headphones,
   MapPinned,
@@ -95,14 +94,6 @@ export default async function DashboardPage() {
     },
   ];
 
-  const operatingChecklist = [
-    "Confirm pickup",
-    "Update shipper",
-    "Check carrier status",
-    "Collect POD",
-    "Mark ready for invoice",
-  ];
-
   const workQueues = [
     {
       icon: Headphones,
@@ -146,6 +137,44 @@ export default async function DashboardPage() {
     1,
     ...metrics.leadPipeline.map((s) => s.count),
   );
+  const commandPriorities = [
+    {
+      label: "Tracking risk",
+      value: staleAlerts.length
+        ? `${staleAlerts.length} stale load${staleAlerts.length !== 1 ? "s" : ""}`
+        : "Clear",
+      detail: staleAlerts.length
+        ? "Open Load Board and force an update before the customer asks."
+        : "No stale tracking exceptions are currently flagged.",
+      href: "/loads",
+      tone: staleAlerts.length ? "red" : "emerald",
+      icon: AlertTriangle,
+    },
+    {
+      label: "Today schedule",
+      value: `${pickups.length} pickup${pickups.length !== 1 ? "s" : ""} / ${deliveries.length} delivery${deliveries.length !== 1 ? "ies" : "y"}`,
+      detail: "Confirm appointment windows, carrier status, and delivery proof.",
+      href: "/tracking",
+      tone: pickups.length || deliveries.length ? "sky" : "slate",
+      icon: CalendarDays,
+    },
+    {
+      label: "Quote desk",
+      value: `${metrics.openQuotes} open`,
+      detail: "Rate, margin-check, and send the quotes that can turn today.",
+      href: "/quote-requests",
+      tone: metrics.openQuotes ? "amber" : "slate",
+      icon: FileText,
+    },
+    {
+      label: "Sales follow-up",
+      value: `${metrics.leadsDue} due`,
+      detail: "Call qualified leads, recent audit submissions, and warm accounts.",
+      href: "/communications",
+      tone: metrics.leadsDue ? "emerald" : "slate",
+      icon: Headphones,
+    },
+  ] as const;
 
   return (
     <InternalShell
@@ -155,7 +184,6 @@ export default async function DashboardPage() {
       description="The first screen for sales and operations: follow-ups, open quotes, active load attention, AI notes, and the next work that matters."
       action={{ label: "Open Quotes & Pricing", href: "/quote-requests" }}
     >
-      {/* KPI metric cards */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardCards.map((card, i) => {
           const accent = CARD_ACCENTS[i];
@@ -163,13 +191,16 @@ export default async function DashboardPage() {
             <Link
               key={card.label}
               href={card.href}
-              className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/10 ${accent.border}`}
+              className={`group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/10 ${accent.border}`}
             >
               <div className="p-5">
-                <div
-                  className={`flex h-11 w-11 items-center justify-center rounded-lg ${accent.icon}`}
-                >
-                  <card.icon className="h-5 w-5" />
+                <div className="flex items-start justify-between gap-4">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-lg ${accent.icon}`}
+                  >
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-600" />
                 </div>
                 <p className="mt-4 text-sm font-medium text-slate-600">
                   {card.label}
@@ -185,6 +216,169 @@ export default async function DashboardPage() {
           );
         })}
       </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                Today&apos;s command briefing
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+                Start here
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Work the exceptions first, then quotes and sales follow-up. This
+                keeps revenue moving without losing load control.
+              </p>
+            </div>
+            <Link
+              href="/loads"
+              className="dao-secondary-action shrink-0 text-xs"
+            >
+              Open Load Board <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {commandPriorities.map((priority) => {
+              const Icon = priority.icon;
+
+              return (
+                <Link
+                  key={priority.label}
+                  href={priority.href}
+                  className={`group rounded-lg border p-4 hover:-translate-y-0.5 hover:shadow-md ${priorityToneClass(priority.tone)}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black uppercase tracking-[0.14em] opacity-75">
+                        {priority.label}
+                      </p>
+                      <p className="mt-1 text-xl font-black tracking-normal">
+                        {priority.value}
+                      </p>
+                    </div>
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-white/70 shadow-sm">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 opacity-85">
+                    {priority.detail}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        </article>
+
+        <article
+          id="ai"
+          className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                Daily brief
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+                AI-ordered work plan
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {dailyBrief.summary}
+              </p>
+            </div>
+            <div className="min-w-[180px]">
+              <DailyBriefGenerateForm />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {dailyBrief.status}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {dailyBrief.generatedAt}
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1">
+              {dailyBrief.confidence === null
+                ? "Confidence n/a"
+                : `${Math.round(dailyBrief.confidence * 100)}% confidence`}
+            </span>
+          </div>
+          <p className="mt-3 text-sm font-semibold text-emerald-800">
+            Next: {dailyBrief.nextAction}
+          </p>
+          <div className="mt-5 grid gap-3">
+            {dailyBrief.actions.length ? (
+              dailyBrief.actions.slice(0, 3).map((action, index) => (
+                <DailyBriefActionCard
+                  key={`${action.href}-${action.title}-${index}`}
+                  action={action}
+                  index={index}
+                />
+              ))
+            ) : (
+              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                No daily brief actions are currently flagged.
+              </p>
+            )}
+          </div>
+        </article>
+      </section>
+
+      {staleAlerts.length > 0 && (
+        <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-700">
+                  Attention required
+                </p>
+                <h2 className="mt-0.5 text-lg font-semibold text-red-950">
+                  {staleAlerts.length} load
+                  {staleAlerts.length !== 1 ? "s" : ""} with no update in 24h+
+                </h2>
+              </div>
+            </div>
+            <Link
+              href="/loads"
+              className="inline-flex items-center gap-1 text-sm font-bold text-red-700 hover:text-red-900"
+            >
+              Open load board <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid gap-2">
+            {staleAlerts.slice(0, 5).map((alert) => (
+              <Link
+                key={alert.id}
+                href={`/loads/${alert.id}`}
+                className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-md border border-red-200 bg-white px-4 py-3 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="grid gap-1 sm:grid-cols-[auto_1fr_1fr_1fr] sm:items-center sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900">
+                      {alert.loadNumber}
+                    </span>
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
+                      {alert.status}
+                    </span>
+                  </div>
+                  <p className="truncate text-sm text-slate-700">{alert.lane}</p>
+                  <p className="text-sm text-slate-600">{alert.shipper}</p>
+                  <p className="text-sm text-slate-500">{alert.carrier}</p>
+                </div>
+                <p className="text-right text-xs font-semibold text-red-700">
+                  {alert.lastEventAt
+                    ? `${alert.hoursStale}h ago`
+                    : "No tracking"}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -236,127 +430,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* Today's schedule */}
-      <section className="rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-              Today&apos;s schedule
-            </p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-              Pickups &amp; deliveries today
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className={`rounded-full px-3 py-1 text-sm font-semibold ${pickups.length > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
-              {pickups.length} pickups
-            </span>
-            <span className={`rounded-full px-3 py-1 text-sm font-semibold ${deliveries.length > 0 ? "bg-sky-50 text-sky-700" : "bg-slate-100 text-slate-600"}`}>
-              {deliveries.length} deliveries
-            </span>
-            <Link
-              href="/loads"
-              className="inline-flex items-center gap-1 text-sm font-bold text-emerald-700 hover:text-emerald-900"
-            >
-              All loads <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-        <div className="grid gap-0 lg:grid-cols-2 lg:divide-x lg:divide-slate-100">
-          <div className="p-6">
-            <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-              <Truck className="h-3.5 w-3.5 text-emerald-500" />
-              Pickups
-            </p>
-            {pickups.length ? (
-              <div className="grid gap-2">
-                {pickups.map((item) => (
-                  <ScheduleRow key={`${item.id}-pickup`} item={item} />
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                No pickups scheduled today.
-              </p>
-            )}
-          </div>
-          <div className="border-t border-slate-100 p-6 lg:border-t-0">
-            <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-              <Package className="h-3.5 w-3.5 text-emerald-500" />
-              Deliveries
-            </p>
-            {deliveries.length ? (
-              <div className="grid gap-2">
-                {deliveries.map((item) => (
-                  <ScheduleRow key={`${item.id}-delivery`} item={item} />
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                No deliveries scheduled today.
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Stale load alerts */}
-      {staleAlerts.length > 0 && (
-        <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-700">
-                  Attention required
-                </p>
-                <h2 className="mt-0.5 text-lg font-semibold text-red-950">
-                  {staleAlerts.length} load
-                  {staleAlerts.length !== 1 ? "s" : ""} with no update in 24h+
-                </h2>
-              </div>
-            </div>
-            <Link
-              href="/loads"
-              className="inline-flex items-center gap-1 text-sm font-bold text-red-700 hover:text-red-900"
-            >
-              Open load board <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="grid gap-2">
-            {staleAlerts.map((alert) => (
-              <Link
-                key={alert.id}
-                href={`/loads/${alert.id}`}
-                className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-md border border-red-200 bg-white px-4 py-3 hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div className="grid gap-1 sm:grid-cols-[auto_1fr_1fr_1fr] sm:items-center sm:gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-900">
-                      {alert.loadNumber}
-                    </span>
-                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">
-                      {alert.status}
-                    </span>
-                  </div>
-                  <p className="truncate text-sm text-slate-700">{alert.lane}</p>
-                  <p className="text-sm text-slate-600">{alert.shipper}</p>
-                  <p className="text-sm text-slate-500">{alert.carrier}</p>
-                </div>
-                <p className="text-right text-xs font-semibold text-red-700">
-                  {alert.lastEventAt
-                    ? `${alert.hoursStale}h ago`
-                    : "No tracking"}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Pipeline health + AI operator brief */}
+      {/* Pipeline health + schedule */}
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
           <div className="flex items-center justify-between gap-4">
@@ -395,56 +469,60 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <article
-          id="ai"
-          className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5"
-        >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <article className="rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-                Daily brief
+                Today&apos;s schedule
               </p>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-                AI-ordered work plan
+                Pickups &amp; deliveries
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {dailyBrief.summary}
-              </p>
             </div>
-            <div className="min-w-[180px]">
-              <DailyBriefGenerateForm />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-3 py-1 text-sm font-semibold ${pickups.length > 0 ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                {pickups.length} pickups
+              </span>
+              <span className={`rounded-full px-3 py-1 text-sm font-semibold ${deliveries.length > 0 ? "bg-sky-50 text-sky-700" : "bg-slate-100 text-slate-600"}`}>
+                {deliveries.length} deliveries
+              </span>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1">
-              {dailyBrief.status}
-            </span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1">
-              {dailyBrief.generatedAt}
-            </span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1">
-              {dailyBrief.confidence === null
-                ? "Confidence n/a"
-                : `${Math.round(dailyBrief.confidence * 100)}% confidence`}
-            </span>
-          </div>
-          <p className="mt-3 text-sm font-semibold text-emerald-800">
-            Next: {dailyBrief.nextAction}
-          </p>
-          <div className="mt-6 grid gap-3">
-            {dailyBrief.actions.length ? (
-              dailyBrief.actions.map((action, index) => (
-                <DailyBriefActionCard
-                  key={`${action.href}-${action.title}-${index}`}
-                  action={action}
-                  index={index}
-                />
-              ))
-            ) : (
-              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                No daily brief actions are currently flagged.
+          <div className="grid gap-0 lg:grid-cols-2 lg:divide-x lg:divide-slate-100">
+            <div className="p-6">
+              <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                <Truck className="h-3.5 w-3.5 text-emerald-500" />
+                Pickups
               </p>
-            )}
+              {pickups.length ? (
+                <div className="grid gap-2">
+                  {pickups.slice(0, 3).map((item) => (
+                    <ScheduleRow key={`${item.id}-pickup`} item={item} />
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                  No pickups scheduled today.
+                </p>
+              )}
+            </div>
+            <div className="border-t border-slate-100 p-6 lg:border-t-0">
+              <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                <Package className="h-3.5 w-3.5 text-emerald-500" />
+                Deliveries
+              </p>
+              {deliveries.length ? (
+                <div className="grid gap-2">
+                  {deliveries.slice(0, 3).map((item) => (
+                    <ScheduleRow key={`${item.id}-delivery`} item={item} />
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                  No deliveries scheduled today.
+                </p>
+              )}
+            </div>
           </div>
         </article>
       </section>
@@ -505,37 +583,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* Operating checklist + Work queues */}
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <article
-          id="loads"
-          className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
-              <ClipboardList className="h-4 w-4 text-emerald-600" />
-            </div>
-            <h2 className="text-xl font-semibold">Operating checklist</h2>
-          </div>
-          <p className="mt-3 text-sm leading-7 text-slate-500">
-            Keep every load moving through pickup, tracking, delivery, POD,
-            invoice, and customer follow-up without losing context.
-          </p>
-          <div className="mt-5 grid gap-2">
-            {operatingChecklist.map((item, i) => (
-              <div
-                key={item}
-                className="flex items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
-              >
-                <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
-                  {i + 1}
-                </span>
-                <span className="text-sm font-medium text-slate-700">{item}</span>
-              </div>
-            ))}
-          </div>
-        </article>
-
         <article
           id="queues"
           className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5"
@@ -584,6 +632,34 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+            Operating discipline
+          </p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+            Keep freight moving in order
+          </h2>
+          <div className="mt-5 grid gap-2">
+            {[
+              "Confirm pickup",
+              "Update shipper",
+              "Check carrier status",
+              "Collect POD",
+              "Mark ready for invoice",
+            ].map((item, i) => (
+              <div
+                key={item}
+                className="flex items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
+              >
+                <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                  {i + 1}
+                </span>
+                <span className="text-sm font-medium text-slate-700">{item}</span>
+              </div>
+            ))}
           </div>
         </article>
       </section>
@@ -635,6 +711,20 @@ function dailyBriefPriorityClass(priority: "High" | "Medium" | "Low") {
   if (priority === "High") return "bg-red-50 text-red-700";
   if (priority === "Medium") return "bg-amber-50 text-amber-700";
   return "bg-slate-100 text-slate-600";
+}
+
+function priorityToneClass(
+  tone: "amber" | "emerald" | "red" | "sky" | "slate",
+) {
+  const map = {
+    amber: "border-amber-100 bg-amber-50 text-amber-950",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950",
+    red: "border-red-100 bg-red-50 text-red-950",
+    sky: "border-sky-100 bg-sky-50 text-sky-950",
+    slate: "border-slate-100 bg-slate-50 text-slate-800",
+  };
+
+  return map[tone];
 }
 
 function ScheduleRow({ item }: { item: TodayScheduleItem }) {

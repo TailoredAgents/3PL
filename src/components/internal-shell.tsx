@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, CircleDot, ExternalLink } from "lucide-react";
+import { Activity, ExternalLink } from "lucide-react";
 
 import { InternalAccount } from "@/components/internal-account";
 import { isClerkAuthConfigured } from "@/lib/auth";
@@ -60,17 +60,6 @@ export async function InternalShell({
               </span>
             </span>
           </Link>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] font-semibold">
-            <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-2 text-emerald-100">
-              <span className="flex items-center gap-1.5">
-                <CircleDot className="h-3 w-3 fill-emerald-300 text-emerald-300" />
-                Live ops
-              </span>
-            </div>
-            <div className="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 text-slate-300">
-              AI ready
-            </div>
-          </div>
         </div>
         <nav
           aria-label="Internal navigation"

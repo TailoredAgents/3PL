@@ -141,10 +141,10 @@ export function CommunicationsWorkspace({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 xl:grid xl:h-[calc(100vh-18rem)] xl:min-h-[560px] xl:max-h-[760px] xl:grid-cols-[330px_minmax(0,1fr)_340px]">
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 xl:grid xl:h-[calc(100vh-16rem)] xl:min-h-[640px] xl:max-h-[820px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
       {/* Left — inbox */}
       <aside className="border-b border-slate-200 bg-slate-50/80 xl:grid xl:min-h-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:border-b-0 xl:border-r">
-        <div className="border-b border-slate-200 bg-white px-4 py-4">
+        <div className="border-b border-slate-200 bg-white px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <MessageSquareText className="h-4 w-4 text-emerald-600" />
@@ -158,16 +158,16 @@ export function CommunicationsWorkspace({
             Prioritized conversations, follow-ups, and quote-ready sales work.
           </p>
         </div>
-        <div className="min-h-0 overflow-y-auto p-3">
+        <div className="min-h-0 space-y-2 overflow-y-auto p-4">
           {workspace.threads.map((thread) => (
             <button
               key={thread.id}
               type="button"
               onClick={() => setSelectedThreadId(thread.id)}
               className={cn(
-                "mb-2 w-full rounded-lg border p-3 text-left hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md",
+                "w-full rounded-lg border p-3 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md",
                 selectedThread.id === thread.id
-                  ? "border-slate-900 bg-white shadow-md shadow-slate-950/10"
+                  ? "border-slate-900 bg-white shadow-md shadow-slate-950/10 ring-1 ring-slate-900/5"
                   : "border-slate-100 bg-slate-50",
               )}
             >
@@ -200,8 +200,8 @@ export function CommunicationsWorkspace({
       </aside>
 
       {/* Center — conversation */}
-      <article className="grid min-h-[620px] grid-rows-[auto_auto_minmax(140px,1fr)_auto] xl:min-h-0">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+      <article className="grid min-h-[620px] grid-rows-[auto_auto_minmax(220px,0.8fr)_auto] xl:min-h-0">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3">
           <div>
             <div className="flex items-center gap-2">
               <p className="text-lg font-bold text-slate-950">{selectedThread.company}</p>
@@ -222,7 +222,7 @@ export function CommunicationsWorkspace({
         </div>
 
         <div className="border-b border-slate-200 bg-slate-50 px-5 py-3">
-          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_270px] lg:items-stretch">
             <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3">
               <div className="flex items-center gap-2">
                 <Bot className="h-4 w-4 text-emerald-700" />
@@ -242,7 +242,7 @@ export function CommunicationsWorkspace({
           </div>
         </div>
 
-        <div className="space-y-3 overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f2_100%)] p-5">
+        <div className="min-h-0 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f2_100%)] p-5">
           {selectedThread.messages.length ? (
             [...selectedThread.messages].reverse().map((message) => (
               <div
@@ -391,23 +391,28 @@ export function CommunicationsWorkspace({
 
         {/* AI actions */}
         <div className="border-b border-slate-200 p-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid gap-3">
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-emerald-900 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                <p className="text-xs font-black uppercase tracking-[0.16em]">
+                  Auto notes
+                </p>
+              </div>
+              <p className="mt-2 text-xs leading-5">
+                Conversation notes update automatically after logged calls,
+                emails, SMS, and notes.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-slate-600" />
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                AI actions
-              </p>
-            </div>
-            <p className="mt-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800">
-              Conversation notes update automatically after logged calls,
-              emails, SMS, and notes.
-            </p>
-
-            <div className="mt-4">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Draft next message
               </p>
-              <div className="mt-2 grid gap-2">
+            </div>
+              <div className="mt-3 grid gap-2">
                 <DraftButton
                   label="Follow-up email"
                   loading={draftState.status === "loading"}
@@ -429,7 +434,6 @@ export function CommunicationsWorkspace({
                   onClick={() => requestDraft("email", "no_response_check_in")}
                 />
               </div>
-            </div>
 
             {draftState.message ? (
               <p className={cn(
@@ -466,8 +470,9 @@ export function CommunicationsWorkspace({
                 </p>
               </div>
             ) : null}
+            </div>
 
-            <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Run agent
               </p>

@@ -417,6 +417,7 @@ DAT/Truckstop final payload mappings and any ultra-final surfaces remain for whe
 - Phase 7.1 completed: Customer portal account model + basic login. Added portalEnabled + CustomerAccount model, toggle in internal UI, customer login API/page, /portal home. Reused public tracking. Validation + push passed. Followed rules.
 - Phase 7.2 completed: Customer quote request/view in portal. Added scoped getCustomerQuoteRequestViews, /api/portal/quote-requests create, list + submit form in /portal. Scoped to shipper. Validation + push passed. Followed rules.
 - Phase 7.3 completed: Active loads, tracking, documents in customer portal. Populated sections in /portal using getShipperDetailView for customer's loads/docs with status, links, public track. Scoped. Validation + push passed. Followed rules.
+- Phase 7.4 completed: Saved preferences, fuller invoices, basic load details in customer portal. Added preferences section with lanes/contacts forms, expanded invoices list, enhanced loads display. Reused forms and views. Validation + push passed. Followed rules.
 
 ## Phase 7: Customer Portal (next)
 
@@ -470,7 +471,21 @@ Completion criteria progress:
 - Customers can view active loads, tracking (via public links), documents, invoices (basic) in portal.
 - Data scoped to their account.
 
-Next for Phase 7: 7.4+ for saved preferences, full invoice views, deeper auth (Clerk), load details. Phase 7 foundation and core views (quotes, loads, docs) now in place. 
+Build (Phase 7.4 completed):
+
+- Added "Your Saved Preferences" section to /portal: displays current lanes and contacts from shipper detail, reuses ShipperLanesForm and ShipperContactCreateForm (with shipperId from customer session) for updates.
+- Expanded "Documents & Invoices" with separate "Recent Invoices" list (fetched for the shipper via prisma, showing load ref, amount, status).
+- Enhanced loads list display with additional details (lane, status, carrier, pickup, public track links).
+- Reuses existing shipper preference forms, getShipperDetailView, prisma for invoices, customer scoping. Customers can manage basic preferences and see fuller financial/operational data.
+- Full validation + commit + push + roadmap update.
+- Followed rules.
+
+Completion criteria progress:
+- Customers can manage saved preferences (lanes, contacts) in portal.
+- View fuller invoices and load details.
+- Continues to reduce routine interactions with broker.
+
+Next for Phase 7: 7.5+ for deeper auth (Clerk customer support), full load details/POD views, other preferences. Phase 7 core (accounts, quotes, loads/docs/invoices, preferences) now substantially complete. 
 
 ## Phase 8: Carrier Portal (next)
 

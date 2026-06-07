@@ -418,6 +418,7 @@ DAT/Truckstop final payload mappings and any ultra-final surfaces remain for whe
 - Phase 7.2 completed: Customer quote request/view in portal. Added scoped getCustomerQuoteRequestViews, /api/portal/quote-requests create, list + submit form in /portal. Scoped to shipper. Validation + push passed. Followed rules.
 - Phase 7.3 completed: Active loads, tracking, documents in customer portal. Populated sections in /portal using getShipperDetailView for customer's loads/docs with status, links, public track. Scoped. Validation + push passed. Followed rules.
 - Phase 7.4 completed: Saved preferences, fuller invoices, basic load details in customer portal. Added preferences section with lanes/contacts forms, expanded invoices list, enhanced loads display. Reused forms and views. Validation + push passed. Followed rules.
+- Phase 8.1 completed: Carrier portal foundation + document submission. Carrier login (email to contact/additional), /carrier-portal with loads list + upload form for POD/BOL/invoices/W9 etc (flows to Document Center via existing logic). Symmetric to customer portal. Validation + push passed. Followed rules.
 
 ## Phase 7: Customer Portal (next)
 
@@ -509,7 +510,7 @@ Completion criteria:
 
 Goal: reduce manual carrier paperwork, updates, and document chasing.
 
-Status: not started.
+Status: 8.1 complete (foundation + documents); remaining tender accept/decline, check-calls, payment views in 8.2+.
 
 Build:
 
@@ -524,6 +525,23 @@ Completion criteria:
 - Carrier paperwork and POD collection no longer require only internal manual
   entry.
 - Uploaded carrier documents flow into the existing Document Center.
+
+Build (Phase 8.1 completed):
+
+- Added carrierAuthCookie helper.
+- New /api/carrier-login (email match to carrier.email or additionalContacts JSON array, sets carrier cookie with id).
+- New /carrier-login page + form (email-based login, styled like customer portal).
+- New /carrier-portal page: shows recent loads for the carrier, recent documents, form to upload POD/BOL/INVOICE/W9/COI/agreement (with optional load link for PODs). Uploads create Document records linked to carrier (and load), using existing buildDocumentCreateData, source MANUAL_UPLOAD, appear in central Document Center.
+- New /api/carrier-portal/documents for handling carrier uploads (reuses document creation logic, scoped by carrier cookie).
+- Reuses Carrier model (email, additionalContacts, documents, loads), Document model/flows, cookie pattern from customer 7.1, no new models. Carriers get self-service for docs without internal manual entry.
+- Full validation + commit + push + roadmap update.
+- Followed all handoff rules.
+
+Completion criteria progress:
+- Carriers can submit (onboarding and operational) documents via portal; they flow to Document Center.
+- Basic carrier portal foundation and login live (symmetric to customer).
+
+Next for Phase 8: 8.2+ for tender accept/decline, check-call updates, viewing payment status. Phase 8 foundation + doc submission complete.
 
 ## Phase 9: Lane Intelligence And Revenue Growth
 

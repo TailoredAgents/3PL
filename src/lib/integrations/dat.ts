@@ -193,32 +193,43 @@ export async function postDatLoad(
 }
 
 function normalizeDatRates(payload: unknown): NormalizedMarketRate[] {
-  const rate = payload as {
-    lowRate?: unknown;
-    highRate?: unknown;
-    averageRate?: unknown;
-    rate?: unknown;
-    confidence?: unknown;
-    notes?: unknown;
-  };
-  const averageRate = numberValue(rate.averageRate) ?? numberValue(rate.rate);
+  const records = recordsFromPayload(payload);
+  const rateRecords = records.length
+    ? records
+    : payload && typeof payload === "object"
+      ? [payload as Record<string, unknown>]
+      : [];
 
-  if (!averageRate) {
-    return [];
-  }
+  return rateRecords.flatMap((rate) => {
+    const averageRate =
+      numberValue(rate.averageRate) ??
+      numberValue(rate.rate) ??
+      numberValue(rate.meanRate) ??
+      numberValue(rate.spotRate);
 
-  return [
-    {
-      provider: "DAT",
-      sourceLabel: "DAT market rate",
-      lowRate: numberValue(rate.lowRate),
-      highRate: numberValue(rate.highRate),
-      averageRate,
-      confidence: numberValue(rate.confidence),
-      notes: typeof rate.notes === "string" ? rate.notes : null,
-      raw: payload,
-    },
-  ];
+    if (!averageRate) {
+      return [];
+    }
+
+    return [
+      {
+        provider: "DAT" as const,
+        sourceLabel:
+          stringValue(rate.sourceLabel) ??
+          stringValue(rate.label) ??
+          "DAT market rate",
+        lowRate: numberValue(rate.lowRate) ?? numberValue(rate.low),
+        highRate: numberValue(rate.highRate) ?? numberValue(rate.high),
+        averageRate,
+        confidence: numberValue(rate.confidence),
+        notes:
+          stringValue(rate.notes) ??
+          stringValue(rate.message) ??
+          stringValue(rate.status),
+        raw: rate,
+      },
+    ];
+  });
 }
 
 function normalizeDatCapacity(payload: unknown): NormalizedCapacityMatch[] {
@@ -271,6 +282,7 @@ function recordsFromPayload(payload: unknown) {
   const records =
     objectPayload.carriers ??
     objectPayload.trucks ??
+    objectPayload.rates ??
     objectPayload.matches ??
     objectPayload.results ??
     objectPayload.data;

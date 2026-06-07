@@ -265,6 +265,17 @@ export default async function QuoteRequestDetailPage({
                   Fetch DAT/Truckstop benchmarks after confirming the lane,
                   equipment, timing, and requirements above.
                 </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {quote.marketRateProviders.map((provider) => (
+                    <div
+                      key={provider.provider}
+                      className={`rounded-md border px-3 py-2 text-xs ${marketProviderClass(provider.configured)}`}
+                    >
+                      <p className="font-bold">{provider.label}</p>
+                      <p className="mt-1 leading-5">{provider.message}</p>
+                    </div>
+                  ))}
+                </div>
                 <div className="mt-4">
                   <MarketRateFetchForm quoteId={quote.id} />
                 </div>
@@ -422,9 +433,14 @@ export default async function QuoteRequestDetailPage({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="font-semibold">{benchmark.sourceLabel}</p>
-                    <p className="text-sm font-semibold text-slate-600">
-                      {benchmark.source} | {benchmark.created}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${benchmarkSourceClass(benchmark.source)}`}>
+                        {benchmark.source}
+                      </span>
+                      <p className="text-sm font-semibold text-slate-600">
+                        {benchmark.created}
+                      </p>
+                    </div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-4">
                     <QuoteMetric
@@ -456,7 +472,7 @@ export default async function QuoteRequestDetailPage({
                       }
                     />
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                  <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">
                     {benchmark.notes}
                   </p>
                 </div>
@@ -515,6 +531,9 @@ export default async function QuoteRequestDetailPage({
                     {recommendation.validForHours === null
                       ? "Not set"
                       : `${recommendation.validForHours} hours`}
+                  </p>
+                  <p className="mt-2 whitespace-pre-line text-xs leading-5 text-slate-500">
+                    Source detail: {formatRecommendationNotes(recommendation.notes)}
                   </p>
                 </div>
               ))
@@ -634,6 +653,55 @@ function getStatusBadgeClass(status: string) {
   if (status === "REJECTED" || status === "Rejected" || status === "Lost") return "bg-red-100 text-red-800";
   if (status === "QUOTED" || status === "Quoted") return "bg-sky-100 text-sky-800";
   return "bg-amber-100 text-amber-800";
+}
+
+function marketProviderClass(configured: boolean) {
+  return configured
+    ? "border-emerald-100 bg-emerald-50 text-emerald-900"
+    : "border-amber-100 bg-amber-50 text-amber-900";
+}
+
+function benchmarkSourceClass(source: string) {
+  const map: Record<string, string> = {
+    Dat: "bg-sky-100 text-sky-800",
+    Truckstop: "bg-indigo-100 text-indigo-800",
+    Manual: "bg-slate-200 text-slate-700",
+    "Internal History": "bg-emerald-100 text-emerald-800",
+    "Carrier Quote": "bg-amber-100 text-amber-800",
+    "Customer History": "bg-violet-100 text-violet-800",
+  };
+
+  return map[source] ?? "bg-slate-200 text-slate-700";
+}
+
+function formatRecommendationNotes(notes: string) {
+  try {
+    const parsed = JSON.parse(notes) as Record<string, unknown>;
+    const lines = [
+      parsed.benchmarkAverage
+        ? `Benchmark average: $${Number(parsed.benchmarkAverage).toLocaleString()}`
+        : null,
+      parsed.internalBuyAverage
+        ? `Internal buy average: $${Number(parsed.internalBuyAverage).toLocaleString()}`
+        : null,
+      parsed.internalSellAverage
+        ? `Internal sell average: $${Number(parsed.internalSellAverage).toLocaleString()}`
+        : null,
+      parsed.latestCustomerQuote
+        ? `Latest customer quote: $${Number(parsed.latestCustomerQuote).toLocaleString()}`
+        : null,
+      parsed.appliedMarginRule
+        ? `Applied margin rule: ${String(parsed.appliedMarginRule)}`
+        : null,
+      parsed.appliedQuoteTemplate
+        ? `Applied quote template: ${String(parsed.appliedQuoteTemplate)}`
+        : null,
+    ].filter(Boolean);
+
+    return lines.length ? lines.join("\n") : notes;
+  } catch {
+    return notes;
+  }
 }
 
 function Metric({

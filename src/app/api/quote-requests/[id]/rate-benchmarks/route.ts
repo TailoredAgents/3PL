@@ -36,7 +36,15 @@ export async function POST(
 
   const quote = await prisma.quoteRequest.findUnique({
     where: { id },
-    select: { id: true },
+    select: {
+      id: true,
+      originCity: true,
+      originState: true,
+      destinationCity: true,
+      destinationState: true,
+      equipmentType: true,
+      pickupDate: true,
+    },
   });
 
   if (!quote) {
@@ -48,13 +56,26 @@ export async function POST(
     data: {
       quoteRequestId: id,
       source: input.source,
-      sourceLabel: nullableString(input.sourceLabel),
+      sourceLabel:
+        nullableString(input.sourceLabel) ?? `${input.source.replaceAll("_", " ")} benchmark`,
       lowRate: typeof input.lowRate === "number" ? input.lowRate : null,
       highRate: typeof input.highRate === "number" ? input.highRate : null,
       averageRate: input.averageRate,
       confidence:
         typeof input.confidence === "number" ? input.confidence : null,
-      notes: nullableString(input.notes),
+      notes:
+        nullableString(input.notes) ??
+        [
+          `Source: ${input.source}`,
+          `Lane: ${quote.originCity}, ${quote.originState} -> ${quote.destinationCity}, ${quote.destinationState}`,
+          `Equipment: ${quote.equipmentType}`,
+          quote.pickupDate
+            ? `Pickup: ${quote.pickupDate.toISOString().slice(0, 10)}`
+            : null,
+          `Average: $${input.averageRate.toLocaleString()}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
     },
   });
 

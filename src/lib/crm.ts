@@ -18,6 +18,7 @@ import {
   formatFileSize,
   getDocumentDownloadHref,
 } from "@/lib/documents";
+import { getMarketRateProviderReadiness } from "@/lib/rating/rate-intelligence";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -359,7 +360,17 @@ export type QuoteRequestDetailView = QuoteRequestView & {
   customerQuotes: CustomerQuoteView[];
   rateBenchmarks: RateBenchmarkView[];
   pricingRecommendations: PricingRecommendationView[];
+  marketRateProviders: MarketRateProviderReadinessView[];
   laneHistory: LaneHistoryView[];
+};
+
+export type MarketRateProviderReadinessView = {
+  provider: "DAT" | "TRUCKSTOP";
+  label: string;
+  configured: boolean;
+  requiredEnv: string[];
+  missingEnv: string[];
+  message: string;
 };
 
 export type CustomerQuoteView = {
@@ -2013,6 +2024,7 @@ export async function getQuoteRequestDetailView(
           created: formatFollowUp(recommendation.createdAt),
         }),
       ),
+      marketRateProviders: getMarketRateProviderReadiness(),
       laneHistory: laneHistory.map((load) => {
         const customerRate = Number(load.customerRate);
         const carrierRate =
@@ -3038,6 +3050,7 @@ function getSampleQuoteRequestDetailView(
         customerQuotes: [],
         rateBenchmarks: [],
         pricingRecommendations: [],
+        marketRateProviders: getMarketRateProviderReadiness(),
         laneHistory: [],
       }
     : null;

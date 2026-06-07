@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import {
   fetchAndStoreMarketRates,
+  formatProviderStatusForMessage,
   getProviderStatusSummary,
 } from "@/lib/rating/rate-intelligence";
 
@@ -27,7 +28,7 @@ export async function POST(
       return Response.json(
         {
           error:
-            "No DAT/Truckstop market rates were saved. Check provider credentials/endpoints or add a manual benchmark.",
+            `No DAT/Truckstop market rates were saved. ${formatProviderStatusForMessage(result.providerResults)}. Add credentials/endpoints or save a manual benchmark.`,
           providerStatus: status,
         },
         { status: 400 },
@@ -46,7 +47,7 @@ export async function POST(
     return Response.json({
       message: `${result.savedCount} market rate benchmark${
         result.savedCount === 1 ? "" : "s"
-      } saved.`,
+      } saved. ${formatProviderStatusForMessage(result.providerResults)}.`,
       providerStatus: status,
     });
   } catch (error) {

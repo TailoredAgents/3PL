@@ -544,7 +544,7 @@ Next for Phase 8: 8.3+ for any remaining (e.g. deeper tender details, payment di
 
 Goal: help salespeople quote better and build repeat lanes.
 
-Status: 9.1 + 9.2 + 9.3 complete; lane intelligence, saved quote templates, explicit margin rules, and sales opportunity insights are in place. Deeper DAT/Truckstop benchmark automation remains for 9.4+.
+Status: 9.1-9.4 complete; lane intelligence, saved quote templates, explicit margin rules, sales opportunity insights, and DAT/Truckstop benchmark hardening are in place.
 
 Build:
 
@@ -555,6 +555,7 @@ Build:
 - Complete 9.2: add target margin rules by customer, lane, equipment, and urgency.
 - Complete 9.3: add sales opportunity insights: dormant shippers, repeat-lane opportunities,
   underpriced lanes, and customers needing follow-up.
+- Complete 9.4: harden DAT/Truckstop benchmark visibility, provider readiness, and source metadata.
 
 Build (Phase 9.1 completed):
 
@@ -578,6 +579,14 @@ Build (Phase 9.3 completed):
 - Opportunities now identify overdue customer follow-ups, open/low-confidence quotes, underpriced lanes, repeat-lane candidates, benchmark gaps, carrier coverage gaps, and dormant shippers.
 - Added prioritized Revenue Opportunities section to Dashboard with category, customer/lane, reason, next action, impact, and direct links to the relevant workspace.
 - Kept insights derived rather than adding another task table; Phase 10 agents can use this as the action source for drafting follow-ups and pricing work.
+
+Build (Phase 9.4 completed):
+
+- Added DAT/Truckstop provider readiness details to quote pricing workspace so users can see missing env configuration before fetching rates.
+- Hardened DAT/Truckstop rate normalization to support single-object payloads and common array payloads such as rates/results/data.
+- Improved market-rate fetch success/error messages with per-provider status, missing env keys, and saved-rate counts.
+- Enriched stored RateBenchmark notes with provider, lane, equipment, pickup, rate range, and confidence metadata.
+- Improved benchmark and pricing recommendation display so users can see whether guidance came from DAT, Truckstop, manual benchmark, internal history, margin rules, or quote templates.
 
 Completion criteria:
 

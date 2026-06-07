@@ -1,17 +1,19 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
-import { ShipperContactCreateForm, ShipperLanesForm } from "@/components/crm-forms";
+import { customerAuthCookie } from "@/lib/auth";
+import { verifyPortalSessionToken } from "@/lib/auth-portal";
 import { getCustomerQuoteRequestViews, getShipperDetailView } from "@/lib/crm";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const CUSTOMER_COOKIE = "atlanta_freight_customer";
-
 export default async function CustomerPortalPage() {
   const cookieStore = await cookies();
-  const shipperId = cookieStore.get(CUSTOMER_COOKIE)?.value;
+  const shipperId = verifyPortalSessionToken(
+    "customer",
+    cookieStore.get(customerAuthCookie)?.value,
+  );
 
   if (!shipperId || !hasDatabaseUrl() || !prisma) {
     return (
@@ -34,6 +36,10 @@ export default async function CustomerPortalPage() {
   const detail = shipper?.portalEnabled ? await getShipperDetailView(shipperId) : null;
   const myLoads = detail?.loads || [];
   const myDocuments = detail?.documents || [];
+  const inactiveLoadStatuses = new Set(["Delivered", "Pod Received", "Invoiced", "Paid"]);
+  const activeLoads = (myLoads as any[]).filter(
+    (load) => !inactiveLoadStatuses.has(load.status),
+  );
   const myInvoices = shipper?.portalEnabled ? await prisma.invoice.findMany({
     where: { shipperId },
     orderBy: { createdAt: 'desc' },
@@ -105,9 +111,19 @@ export default async function CustomerPortalPage() {
               <div>
                 <p className="font-semibold text-slate-700">Lanes</p>
                 <p className="text-xs text-slate-600 mt-1">{detail?.lanes?.length ? detail.lanes.join('; ') : 'No lanes saved yet.'}</p>
-                <div className="mt-2">
-                  <ShipperLanesForm shipperId={shipperId} currentLanes={detail?.lanes?.join('; ') || ''} />
-                </div>
+                <form action="/api/portal/preferences" method="post" className="mt-2 grid gap-2">
+                  <input type="hidden" name="action" value="lanes" />
+                  <label className="grid gap-1 text-xs font-medium text-slate-700">
+                    Preferred lanes
+                    <input
+                      name="lanes"
+                      defaultValue={detail?.lanes?.join('; ') || ''}
+                      placeholder="Atlanta to Dallas; Savannah to Nashville"
+                      className="rounded border border-slate-300 p-2 text-sm font-normal"
+                    />
+                  </label>
+                  <button type="submit" className="rounded bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Save lanes</button>
+                </form>
               </div>
               <div>
                 <p className="font-semibold text-slate-700">Contacts</p>
@@ -118,31 +134,35 @@ export default async function CustomerPortalPage() {
                     ))}
                   </ul>
                 ) : <p className="text-xs text-slate-600 mt-1">No contacts saved.</p>}
-                <div className="mt-2">
-                  <ShipperContactCreateForm shipperId={shipperId} />
-                </div>
+                <form action="/api/portal/preferences" method="post" className="mt-2 grid gap-2">
+                  <input type="hidden" name="action" value="contact" />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input name="firstName" placeholder="First name" required className="rounded border border-slate-300 p-2 text-xs" />
+                    <input name="lastName" placeholder="Last name" className="rounded border border-slate-300 p-2 text-xs" />
+                  </div>
+                  <input name="email" type="email" placeholder="Email" className="rounded border border-slate-300 p-2 text-xs" />
+                  <input name="phone" placeholder="Phone" className="rounded border border-slate-300 p-2 text-xs" />
+                  <label className="flex items-center gap-2 text-xs text-slate-700">
+                    <input type="checkbox" name="isPrimary" value="true" className="rounded" />
+                    Primary contact
+                  </label>
+                  <button type="submit" className="rounded bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Add contact</button>
+                </form>
               </div>
             </div>
             <p className="mt-2 text-[10px] text-slate-500">Update your preferred lanes and contacts here. Changes are visible to your broker team.</p>
           </div>
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Active Loads &amp; Tracking</h2>
-            {myLoads.filter(l => !['DELIVERED','POD_RECEIVED','INVOICED','PAID'].includes(l.status)).length > 0 ? (
+            {activeLoads.length > 0 ? (
               <ul className="mt-3 space-y-2 text-sm">
-                {(() => {
-              const active = (myLoads as any[]).filter((l: any) => !['DELIVERED','POD_RECEIVED','INVOICED','PAID'].includes(l.status)).slice(0,3);
-              return active.length > 0 ? (
-                <ul className="mt-3 space-y-2 text-sm">
-                  {active.map((l: any) => (
-                    <li key={l.id} className="border-b pb-1">
-                      <div>{l.lane || `${l.originCity} → ${l.destinationCity}`} | {l.status}</div>
-                      <div className="text-xs text-slate-500">Pickup: {l.pickup || 'TBD'} | Carrier: {l.carrier?.companyName || 'TBD'}</div>
-                      {l.publicTrackingLinks?.length > 0 && <a href={`/track/${l.publicTrackingLinks[0].token}`} className="text-emerald-700 text-xs">Track →</a>}
-                    </li>
-                  ))}
-                </ul>
-              ) : <p className="mt-2 text-sm text-slate-600">No active loads.</p>;
-            })()}
+                {activeLoads.slice(0,3).map((l: any) => (
+                  <li key={l.id} className="border-b pb-1">
+                    <div>{l.lane || `${l.originCity} → ${l.destinationCity}`} | {l.status}</div>
+                    <div className="text-xs text-slate-500">Pickup: {l.pickup || 'TBD'} | Carrier: {l.carrier?.companyName || 'TBD'}</div>
+                    {l.publicTrackingLinks?.length > 0 && <a href={`/track/${l.publicTrackingLinks[0].token}`} className="text-emerald-700 text-xs">Track →</a>}
+                  </li>
+                ))}
               </ul>
             ) : (
               <p className="mt-2 text-sm text-slate-600">No active loads.</p>
@@ -154,7 +174,7 @@ export default async function CustomerPortalPage() {
             {myDocuments.length > 0 ? (
               <ul className="mt-3 space-y-1 text-sm">
                 {myDocuments.slice(0,4).map((d) => (
-                  <li key={(d as any).id} className="text-xs">• {(d as any).type} - {(d as any).fileName} <a href={(d as any).downloadUrl} className="text-emerald-700">download</a></li>
+                  <li key={(d as any).id} className="text-xs">• {(d as any).type} - {(d as any).fileName} {(d as any).downloadHref ? <a href={(d as any).downloadHref} className="text-emerald-700">download</a> : null}</li>
                 ))}
               </ul>
             ) : (

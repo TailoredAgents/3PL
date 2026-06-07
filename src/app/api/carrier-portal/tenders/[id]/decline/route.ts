@@ -1,9 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
+import { carrierAuthCookie } from "@/lib/auth";
+import { verifyPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-
-const CARRIER_COOKIE = "atlanta_freight_carrier";
 
 export async function POST(
   _request: Request,
@@ -11,10 +11,17 @@ export async function POST(
 ) {
   const { id: tenderId } = await context.params;
   const cookieStore = await cookies();
-  const carrierId = cookieStore.get(CARRIER_COOKIE)?.value;
+  const carrierId = verifyPortalSessionToken(
+    "carrier",
+    cookieStore.get(carrierAuthCookie)?.value,
+  );
 
-  if (!carrierId || !hasDatabaseUrl() || !prisma) {
-    return Response.json({ message: "Decline validated (no DB or not logged in)." });
+  if (!carrierId) {
+    return Response.json({ error: "Not logged in to carrier portal." }, { status: 401 });
+  }
+
+  if (!hasDatabaseUrl() || !prisma) {
+    return Response.json({ message: "Decline validated. Connect DATABASE_URL to persist." });
   }
 
   const tender = await prisma.carrierQuote.findUnique({

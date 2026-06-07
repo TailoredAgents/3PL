@@ -51,3 +51,6 @@ function hash(value: string) {
 
 export const carrierAuthCookie =
   process.env.CARRIER_AUTH_COOKIE ?? "atlanta_freight_carrier";
+
+export const customerAuthCookie =
+  process.env.CUSTOMER_AUTH_COOKIE ?? "atlanta_freight_customer";

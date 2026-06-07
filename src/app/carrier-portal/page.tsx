@@ -1,14 +1,16 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
-import { ShipmentEventCreateForm } from "@/components/crm-forms";
+import { carrierAuthCookie } from "@/lib/auth";
+import { verifyPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-
-const CARRIER_COOKIE = "atlanta_freight_carrier";
 
 export default async function CarrierPortalPage() {
   const cookieStore = await cookies();
-  const carrierId = cookieStore.get(CARRIER_COOKIE)?.value;
+  const carrierId = verifyPortalSessionToken(
+    "carrier",
+    cookieStore.get(carrierAuthCookie)?.value,
+  );
 
   if (!carrierId || !hasDatabaseUrl() || !prisma) {
     return (
@@ -59,7 +61,7 @@ export default async function CarrierPortalPage() {
     where: { carrierId, status: { in: ["REQUESTED", "RECEIVED"] } },
     include: {
       load: {
-        select: { id: true, loadNumber: true, originCity: true, destinationCity: true, customerRate: true },
+        select: { id: true, loadNumber: true, originCity: true, destinationCity: true },
       },
     },
     orderBy: { createdAt: "desc" },
@@ -129,10 +131,10 @@ export default async function CarrierPortalPage() {
                       Load {t.load.loadNumber} • {t.load.originCity} → {t.load.destinationCity}
                     </div>
                     <div className="text-xs text-slate-500">
-                      Quoted: ${Number(t.quotedRate).toLocaleString()} (Customer rate: ${Number(t.load.customerRate || 0).toLocaleString()})
+                      Your rate: ${Number(t.quotedRate).toLocaleString()}
                     </div>
                     <div className="mt-1 flex gap-2">
-                      <form action={`/api/loads/${t.load.id}/carrier-quotes/${t.id}/accept`} method="post">
+                      <form action={`/api/carrier-portal/tenders/${t.id}/accept`} method="post">
                         <button type="submit" className="text-xs font-semibold text-emerald-700 hover:underline">Accept</button>
                       </form>
                       <form action={`/api/carrier-portal/tenders/${t.id}/decline`} method="post">
@@ -152,7 +154,26 @@ export default async function CarrierPortalPage() {
             <h2 className="font-semibold">Send Check-Call / Tracking Update</h2>
             {loads.length > 0 ? (
               <div className="mt-2">
-                <ShipmentEventCreateForm loadId={loads[0].id} />
+                <form action="/api/carrier-portal/check-call" method="post" className="grid gap-3 text-sm">
+                  <select name="loadId" required className="rounded border p-2">
+                    {loads.map((load) => (
+                      <option key={load.id} value={load.id}>
+                        {load.loadNumber} - {load.originCity} → {load.destinationCity}
+                      </option>
+                    ))}
+                  </select>
+                  <select name="type" className="rounded border p-2">
+                    <option value="LOCATION_UPDATE">Location update</option>
+                    <option value="PICKUP_CONFIRMED">Pickup confirmed</option>
+                    <option value="DELAY">Delay</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="POD_UPLOADED">POD uploaded</option>
+                  </select>
+                  <input name="location" placeholder="Current city/state" className="rounded border p-2" />
+                  <textarea name="message" required placeholder="Update details" className="min-h-24 rounded border p-2" />
+                  <input name="occurredAt" type="datetime-local" className="rounded border p-2" />
+                  <button type="submit" className="rounded bg-emerald-600 py-2 font-semibold text-white">Send update</button>
+                </form>
                 <p className="mt-1 text-[10px] text-slate-500">Updates appear in load history and tracking.</p>
               </div>
             ) : (

@@ -283,7 +283,7 @@ Completion criteria:
 
 Goal: make active loads easy to monitor without opening each load.
 
-Status: 5.1 + 5.2 complete. Internal workspace with computed risks + persistent exception model with ownership/resolution. Public links and adapters deferred.
+Status: 5.1-5.3 complete. Internal workspace, persistent exceptions, check-call logging, and public tracking links are in place. Provider adapters/deeper tracking automation deferred.
 
 Build (Phase 5.1 completed): (see prior)
 
@@ -421,13 +421,11 @@ DAT/Truckstop final payload mappings and any ultra-final surfaces remain for whe
 - Phase 8.1 completed: Carrier portal foundation + document submission. Carrier login (email to contact/additional), /carrier-portal with loads list + upload form for POD/BOL/invoices/W9 etc (flows to Document Center via existing logic). Symmetric to customer portal. Validation + push passed. Followed rules.
 - Phase 8.2 completed: Carrier tenders accept/decline, check-calls, payments in portal. Added tenders list with Accept (reuse route) / Decline (new route), check-call form (reuse), payments list. Scoped. Validation + push passed. Followed rules.
 
-## Phase 7: Customer Portal (next)
-
 ## Phase 7: Customer Portal
 
 Goal: give shippers a professional self-service experience.
 
-Status: 7.1 complete (foundation); remaining quote viewing/approval, full load/tracking/docs/invoice views, saved preferences, etc. in 7.2+.
+Status: 7.1-7.4 complete; remaining work is deeper auth/magic links, quote approval, richer load/POD views, and any customer preferences beyond the current lanes/contacts foundation.
 
 Build (Phase 7.1 completed):
 
@@ -487,31 +485,13 @@ Completion criteria progress:
 - View fuller invoices and load details.
 - Continues to reduce routine interactions with broker.
 
-Next for Phase 7: 7.5+ for deeper auth (Clerk customer support), full load details/POD views, other preferences. Phase 7 core (accounts, quotes, loads/docs/invoices, preferences) now substantially complete. 
-
-## Phase 8: Carrier Portal (next)
-
-Build:
-
-- Add customer login/portal account model.
-- Let customers request quotes, view quotes, approve/reject quotes, and view
-  quote history.
-- Let customers view active loads, tracking, documents, invoices, and shipment
-  history.
-- Add saved addresses, contacts, facilities, lanes, and preferences.
-- Add customer-facing tracking links before exposing full portal login if useful.
-
-Completion criteria:
-
-- Customers can see their own records only.
-- Internal users can control which customers have portal access.
-- The portal reduces routine calls/emails for status, PODs, and invoices.
+Next for Phase 7: 7.5+ for deeper auth (Clerk customer support), quote approval, full load details/POD views, other preferences. Phase 7 core (accounts, quotes, loads/docs/invoices, preferences) now substantially complete.
 
 ## Phase 8: Carrier Portal
 
 Goal: reduce manual carrier paperwork, updates, and document chasing.
 
-Status: 8.1 complete (foundation + documents); remaining tender accept/decline, check-calls, payment views in 8.2+.
+Status: 8.1-8.2 complete; remaining work is deeper tender details, rate-confirmation signature flow, payment disputes, and stronger carrier auth/magic links.
 
 Build:
 
@@ -544,8 +524,8 @@ Completion criteria progress:
 
 Build (Phase 8.2 completed):
 
-- Enhanced /carrier-portal with "Your Tenders / Quotes" section: lists pending CarrierQuotes (REQUESTED/RECEIVED) with load info, quoted rate, Accept (reuses existing /api/loads/[id]/carrier-quotes/[quoteId]/accept route with compliance gate), Decline (new scoped /api/carrier-portal/tenders/[id]/decline that sets status REJECTED).
-- Added "Send Check-Call / Tracking Update" using existing ShipmentEventCreateForm for one of the carrier's loads (creates event, appears in load history/tracking).
+- Enhanced /carrier-portal with "Your Tenders / Quotes" section: lists pending CarrierQuotes (REQUESTED/RECEIVED) with load info and carrier rate, Accept via scoped carrier portal route with compliance gate, Decline via scoped carrier portal route that sets status REJECTED.
+- Added "Send Check-Call / Tracking Update" using a scoped carrier portal route for the carrier's loads (creates event, appears in load history/tracking).
 - Added "My Payments" section: lists recent CarrierInvoices for the carrier's loads (amount, status, paid date, load ref).
 - Reuses CarrierQuote, ShipmentEvent, CarrierInvoice models and forms/APIs, carrier cookie scoping from 8.1, existing revalidate patterns. No duplication of internal tender/payment logic.
 - Updated loads list note and UI to reflect new self-service actions.

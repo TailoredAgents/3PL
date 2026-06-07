@@ -6,14 +6,17 @@ import {
   buildDocumentCreateData,
   isFileLike,
 } from "@/lib/documents";
+import { carrierAuthCookie } from "@/lib/auth";
+import { verifyPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { formValue } from "@/lib/server-utils";
 
-const CARRIER_COOKIE = "atlanta_freight_carrier";
-
 export async function POST(request: Request) {
   const cookieStore = await cookies();
-  const carrierId = cookieStore.get(CARRIER_COOKIE)?.value;
+  const carrierId = verifyPortalSessionToken(
+    "carrier",
+    cookieStore.get(carrierAuthCookie)?.value,
+  );
 
   if (!carrierId) {
     return Response.json({ error: "Not logged in to carrier portal." }, { status: 401 });

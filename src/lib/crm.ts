@@ -1,3 +1,5 @@
+import { randomBytes } from "crypto";
+
 import {
   activities,
   carriers,
@@ -1915,8 +1917,8 @@ export async function getTrackingWorkspaceView(): Promise<{
 
   // Focus on in-flight loads that need monitoring
   const activeLoads = loads.filter((l) =>
-    ["TENDERED", "BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"].includes(l.status) ||
-    (l.status === "INVOICED" && !l.invoice?.paidAt)
+    ["TENDERED", "BOOKED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"].includes(enumKey(l.status)) ||
+    (enumKey(l.status) === "INVOICED" && !l.invoice?.paidAt)
   );
 
   const now = new Date();
@@ -1930,7 +1932,7 @@ export async function getTrackingWorkspaceView(): Promise<{
   const pickupToday = activeLoads.filter((l) => {
     if (!l.rawPickupDate) return false;
     const d = new Date(l.rawPickupDate);
-    return d >= todayStart && d < todayEnd && !["PICKED_UP", "IN_TRANSIT", "DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status);
+    return d >= todayStart && d < todayEnd && !["PICKED_UP", "IN_TRANSIT", "DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(enumKey(l.status));
   });
   if (pickupToday.length) {
     groups.push({
@@ -1944,7 +1946,7 @@ export async function getTrackingWorkspaceView(): Promise<{
   const deliveryToday = activeLoads.filter((l) => {
     if (!l.rawDeliveryDate) return false;
     const d = new Date(l.rawDeliveryDate);
-    return d >= todayStart && d < todayEnd && !["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status);
+    return d >= todayStart && d < todayEnd && !["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(enumKey(l.status));
   });
   if (deliveryToday.length) {
     groups.push({
@@ -1970,7 +1972,7 @@ export async function getTrackingWorkspaceView(): Promise<{
   }
 
   // Customer update due
-  const customerUpdateDue = activeLoads.filter((l) => l.customerUpdateStatus === "NEEDED");
+  const customerUpdateDue = activeLoads.filter((l) => enumKey(l.customerUpdateStatus ?? "") === "NEEDED");
   if (customerUpdateDue.length) {
     groups.push({
       title: "Customer update due",
@@ -1981,7 +1983,7 @@ export async function getTrackingWorkspaceView(): Promise<{
 
   // Delivered but missing POD
   const missingPod = activeLoads.filter((l) =>
-    ["DELIVERED", "INVOICED"].includes(l.status) && !l.hasPod
+    ["DELIVERED", "INVOICED"].includes(enumKey(l.status)) && !l.hasPod
   );
   if (missingPod.length) {
     groups.push({
@@ -1993,10 +1995,11 @@ export async function getTrackingWorkspaceView(): Promise<{
 
   // Late pickup / delivery risk
   const lateRisk = activeLoads.filter((l) => {
-    if (l.rawPickupDate && new Date(l.rawPickupDate) < now && !["PICKED_UP", "IN_TRANSIT", "DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status)) {
+    const status = enumKey(l.status);
+    if (l.rawPickupDate && new Date(l.rawPickupDate) < now && !["PICKED_UP", "IN_TRANSIT", "DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(status)) {
       return true;
     }
-    if (l.rawDeliveryDate && new Date(l.rawDeliveryDate) < now && !["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(l.status)) {
+    if (l.rawDeliveryDate && new Date(l.rawDeliveryDate) < now && !["DELIVERED", "POD_RECEIVED", "INVOICED", "PAID"].includes(status)) {
       return true;
     }
     return false;
@@ -2010,7 +2013,7 @@ export async function getTrackingWorkspaceView(): Promise<{
   }
 
   // Uncovered or not booked (still tendered without carrier)
-  const uncovered = activeLoads.filter((l) => l.status === "TENDERED" && l.carrier === "Carrier needed");
+  const uncovered = activeLoads.filter((l) => enumKey(l.status) === "TENDERED" && l.carrier === "Carrier needed");
   if (uncovered.length) {
     groups.push({
       title: "Uncovered / not booked",
@@ -2035,8 +2038,7 @@ export async function generatePublicTrackingLink(loadId: string): Promise<{ url:
     throw new Error("Load not found.");
   }
 
-  // Generate a secure random token (simple for foundation; in prod use crypto)
-  const token = `trk_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  const token = `trk_${randomBytes(32).toString("hex")}`;
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
   await prisma.publicTrackingLink.create({
@@ -2712,6 +2714,10 @@ function titleCaseEnum(value: string) {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function enumKey(value: string) {
+  return value.toUpperCase().replace(/\s+/g, "_");
 }
 
 function formatPriority(priority: number) {

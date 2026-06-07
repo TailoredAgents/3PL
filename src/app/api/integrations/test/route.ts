@@ -11,10 +11,20 @@ import { getEiaDieselPrice } from "@/lib/external/eia";
 
 const xaiApiKey = process.env.XAI_API_KEY;
 const xaiModel = process.env.XAI_MODEL ?? "grok-4.3";
+const providerEnvKeys: Record<string, string> = {
+  CARRIEROK: "CARRIEROK_API_KEY",
+  DAT: "DAT_API_KEY",
+  FMCSA: "FMCSA_WEB_KEY",
+  RESEND: "RESEND_API_KEY",
+  TRUCKSTOP: "TRUCKSTOP_CLIENT_ID",
+  TWILIO: "TWILIO_ACCOUNT_SID",
+  XAI: "XAI_API_KEY",
+};
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const provider = (formData.get("provider") as string) || "XAI";
+  const providerKey = provider.toUpperCase().replace(/[^A-Z]/g, "");
 
   let result: { ok: boolean; message: string; error?: string };
 
@@ -158,19 +168,16 @@ export async function POST(request: Request) {
   } else {
     // For other providers in 6.2 we just acknowledge configured state.
     // Real pings can be added per-provider when adapters are hardened.
-    const configured = !!process.env[
-      provider === "Twilio" ? "TWILIO_ACCOUNT_SID" :
-      provider === "Resend" ? "RESEND_API_KEY" :
-      provider === "FMCSA" ? "FMCSA_WEB_KEY" : "XAI_API_KEY"
-    ];
+    const envKey = providerEnvKeys[providerKey] ?? "XAI_API_KEY";
+    const configured = !!process.env[envKey];
     result = {
       ok: configured,
       message: configured
-        ? `${provider} appears configured (no deep ping implemented in this phase).`
-        : `${provider} missing representative env key.`,
+        ? `${provider} appears configured (checked ${envKey}; no deep ping implemented in this phase).`
+        : `${provider} missing representative env key (${envKey}).`,
     };
     await logIntegration({
-      provider: provider.toUpperCase().replace(/[^A-Z]/g, ""),
+      provider: providerKey,
       action: "HEALTH_CHECK",
       status: configured ? "SUCCESS" : "SKIPPED",
       message: result.message,

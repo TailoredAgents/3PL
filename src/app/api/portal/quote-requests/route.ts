@@ -1,13 +1,16 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
+import { customerAuthCookie } from "@/lib/auth";
+import { verifyPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-
-const CUSTOMER_COOKIE = "atlanta_freight_customer";
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
-  const shipperId = cookieStore.get(CUSTOMER_COOKIE)?.value;
+  const shipperId = verifyPortalSessionToken(
+    "customer",
+    cookieStore.get(customerAuthCookie)?.value,
+  );
 
   if (!shipperId) {
     return Response.json({ error: "Not logged in to portal." }, { status: 401 });

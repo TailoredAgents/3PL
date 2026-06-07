@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { carrierAuthCookie } from "@/lib/auth";
+import { createPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-
-const CARRIER_COOKIE = "atlanta_freight_carrier";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   }
 
   const res = NextResponse.json({ message: "Logged in to carrier portal.", redirectTo: "/carrier-portal" });
-  res.cookies.set(CARRIER_COOKIE, matching.id, {
+  res.cookies.set(carrierAuthCookie, createPortalSessionToken("carrier", matching.id), {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

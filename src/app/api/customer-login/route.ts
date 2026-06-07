@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { customerAuthCookie } from "@/lib/auth";
+import { createPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-
-const CUSTOMER_COOKIE = "atlanta_freight_customer";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   }
 
   const res = NextResponse.json({ message: "Logged in to portal.", redirectTo: "/portal" });
-  res.cookies.set(CUSTOMER_COOKIE, shipperId, {
+  res.cookies.set(customerAuthCookie, createPortalSessionToken("customer", shipperId), {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

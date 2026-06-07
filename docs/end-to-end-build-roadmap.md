@@ -414,13 +414,34 @@ Completion criteria progress:
 
 DAT/Truckstop final payload mappings and any ultra-final surfaces remain for when account docs are available or future phases. Phase 6 core (admin visibility, logging, test/retry actions, deeper dashboards) is now complete. 
 
+- Phase 7.1 completed: Customer portal account model + basic login. Added portalEnabled + CustomerAccount model, toggle in internal UI, customer login API/page, /portal home. Reused public tracking. Validation + push passed. Followed rules.
+
 ## Phase 7: Customer Portal (next)
 
 ## Phase 7: Customer Portal
 
 Goal: give shippers a professional self-service experience.
 
-Status: not started.
+Status: 7.1 complete (foundation); remaining quote viewing/approval, full load/tracking/docs/invoice views, saved preferences, etc. in 7.2+.
+
+Build (Phase 7.1 completed):
+
+- Added portalEnabled flag to Shipper model + new CustomerAccount model (email accounts linked to shipper) via explicit migration.
+- Updated shipper edit form/API/validation/detail views to allow internal users to enable/disable portal access for a shipper.
+- Added basic customer auth cookie support and /api/customer-login (matches email to CustomerAccount or Contact on portalEnabled shipper; sets session).
+- New /customer-login page (public-facing email form).
+- New /portal page (customer self-service landing with links to their quotes, loads, tracking, documents; falls back gracefully if not logged in or access disabled). Reuses public tracking foundation from Phase 5.3.
+- Internal control: shipper toggle enables customer login. Scoped to shipper records (data filtering in later sub-phases).
+- No duplication of internal auth or public track logic. Extends existing forms, prisma queries, cookie patterns.
+- Full validation + commit + push + roadmap update.
+- Followed all handoff rules.
+
+Completion criteria progress:
+- Customer portal account model exists.
+- Internal users can control portal access per shipper.
+- Basic customer login + portal home page live (reduces need for broker to manually share status/docs via email).
+
+Next for Phase 7: 7.2+ for quote request/approval flows, active load views with documents/invoices, saved preferences, deeper auth (Clerk customer support).
 
 Build:
 

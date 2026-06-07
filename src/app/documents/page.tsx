@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -103,7 +103,6 @@ export default async function DocumentsPage() {
     getDocumentCenterViews(),
     getDocumentAutomationView(),
   ]);
-  const downloadable = documents.filter((document) => document.downloadHref);
   const missingStorage = documents.filter(
     (document) => document.storageState === "Missing storage",
   );
@@ -111,14 +110,16 @@ export default async function DocumentsPage() {
     ["Pod", "Bol"].includes(document.type),
   );
   const needsReview = documents.filter(needsDocumentAttention);
+  const automationOpen =
+    automation.pendingCount + automation.reviewCount + automation.failedCount;
   const command = getDocumentCommand({ documents, automation });
   const CommandIcon = command.icon;
 
   const metrics = [
-    { icon: Files, label: "Documents", value: documents.length.toString(), helper: "Logged in control center" },
+    { icon: Files, label: "Controlled files", value: documents.length.toString(), helper: "Linked source of truth" },
     { icon: AlertTriangle, label: "Needs attention", value: needsReview.length.toString(), helper: "Review, storage, or extraction" },
-    { icon: Download, label: "Downloadable", value: downloadable.length.toString(), helper: "Stored and accessible" },
-    { icon: FileCheck2, label: "POD / BOL", value: podBol.length.toString(), helper: "Delivery paperwork" },
+    { icon: Bot, label: "AI work open", value: automationOpen.toString(), helper: "Pending, review, or failed" },
+    { icon: FileCheck2, label: "Delivery docs", value: podBol.length.toString(), helper: "PODs and BOLs" },
   ];
 
   return (
@@ -131,25 +132,18 @@ export default async function DocumentsPage() {
     >
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((item, index) => (
-          <article
+          <MetricCard
             key={item.label}
-            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[index].border}`}
-          >
-            <div className="p-5">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[index].icon}`}>
-                <item.icon className="h-4 w-4" />
-              </div>
-              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
-              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
-                {item.value}
-              </p>
-              <p className="mt-2 text-xs font-semibold text-slate-400">{item.helper}</p>
-            </div>
-          </article>
+            icon={item.icon}
+            label={item.label}
+            value={item.value}
+            helper={item.helper}
+            accent={CARD_ACCENTS[index]}
+          />
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
         <article className={`rounded-lg border p-5 shadow-sm ${command.className}`}>
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex gap-4">
@@ -164,19 +158,24 @@ export default async function DocumentsPage() {
                 <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 opacity-85">
                   {command.detail}
                 </p>
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  <DocumentStep label="Capture" value="Upload or link" />
+                  <DocumentStep label="Extract" value={`${automation.pendingCount} pending`} />
+                  <DocumentStep label="Review" value={`${automation.reviewCount} waiting`} />
+                </div>
               </div>
             </div>
-            <div className="min-w-[210px] rounded-lg bg-white/70 p-3 shadow-sm">
+            <div className="min-w-[210px] rounded-lg bg-white/75 p-3 shadow-sm">
               <DocumentAutomationRunForm />
             </div>
           </div>
         </article>
 
         <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-100">
-                <Upload className="h-4 w-4 text-slate-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50">
+                <Upload className="h-4 w-4 text-emerald-700" />
               </div>
               <div>
                 <p className="text-sm font-black text-slate-900">Add document</p>
@@ -188,6 +187,11 @@ export default async function DocumentsPage() {
             <span className="text-xs font-black text-slate-400 group-open:hidden">Expand</span>
             <span className="hidden text-xs font-black text-slate-400 group-open:inline">Collapse</span>
           </summary>
+          <div className="grid gap-2 border-b border-slate-100 p-4 sm:grid-cols-3">
+            <CaptureHint label="Freight" value="BOL, POD, rate confirmation" />
+            <CaptureHint label="Compliance" value="COI, W-9, agreement" />
+            <CaptureHint label="Finance" value="Invoice, audit upload" />
+          </div>
           <div className="border-t border-slate-100 p-5">
             <DocumentCreateForm />
           </div>
@@ -205,7 +209,7 @@ export default async function DocumentsPage() {
           <div>
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-emerald-600" />
-              <p className="text-sm font-black text-slate-800">Extraction and review queue</p>
+              <p className="text-sm font-black text-slate-800">Automation review desk</p>
             </div>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Automation can read documents, but extracted fields stay behind review before load, billing, payable, or compliance records change.
@@ -222,10 +226,10 @@ export default async function DocumentsPage() {
           </div>
         </div>
         <div className="grid gap-3 border-b border-slate-100 p-4 sm:grid-cols-2 xl:grid-cols-4">
-          <AutomationStat label="Pending extraction" value={automation.pendingCount} />
-          <AutomationStat label="Needs review" value={automation.reviewCount} />
-          <AutomationStat label="Failed extraction" value={automation.failedCount} />
-          <AutomationStat label="Completed" value={automation.completedCount} />
+          <AutomationStat label="Pending extraction" value={automation.pendingCount} tone="sky" />
+          <AutomationStat label="Needs review" value={automation.reviewCount} tone="amber" />
+          <AutomationStat label="Failed extraction" value={automation.failedCount} tone="red" />
+          <AutomationStat label="Completed" value={automation.completedCount} tone="emerald" />
         </div>
         <div className="grid gap-3 p-4 xl:grid-cols-2">
           {automation.queue.length ? (
@@ -306,7 +310,7 @@ export default async function DocumentsPage() {
         </div>
 
         {!documents.length ? (
-          <div className="border-t border-slate-100 px-5 py-10 text-center">
+          <div className="border-t border-slate-100 px-5 py-8 text-center">
             <Files className="mx-auto h-9 w-9 text-slate-300" />
             <p className="mt-3 text-sm font-black text-slate-700">
               No documents have been logged yet
@@ -317,7 +321,76 @@ export default async function DocumentsPage() {
           </div>
         ) : null}
       </section>
+
+      <section className="grid gap-4 xl:grid-cols-3">
+        <Guardrail
+          icon={FileCheck2}
+          title="Attach to the right record"
+          text="Every document should point to the load, carrier, shipper, or quote it supports."
+        />
+        <Guardrail
+          icon={Bot}
+          title="Review before applying"
+          text="AI extraction can assist, but field changes stay behind human review."
+        />
+        <Guardrail
+          icon={Download}
+          title="Keep files retrievable"
+          text="PODs, BOLs, invoices, COIs, and W-9s should remain downloadable for audit."
+        />
+      </section>
     </InternalShell>
+  );
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  accent,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  helper: string;
+  accent: (typeof CARD_ACCENTS)[number];
+}) {
+  return (
+    <article className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${accent.border}`}>
+      <div className="p-5">
+        <div className={`flex h-9 w-9 items-center justify-center rounded-md ${accent.icon}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <p className="mt-4 text-sm font-medium text-slate-600">{label}</p>
+        <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
+          {value}
+        </p>
+        <p className="mt-2 text-xs font-semibold text-slate-400">{helper}</p>
+      </div>
+    </article>
+  );
+}
+
+function DocumentStep({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white/70 px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] opacity-60">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-black">{value}</p>
+    </div>
+  );
+}
+
+function CaptureHint({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-slate-100 bg-white px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-xs font-semibold leading-5 text-slate-700">{value}</p>
+    </div>
   );
 }
 
@@ -447,14 +520,55 @@ function DocumentMobileCard({ document }: { document: DocumentCenterItem }) {
   );
 }
 
-function AutomationStat({ label, value }: { label: string; value: number }) {
+function AutomationStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "amber" | "emerald" | "red" | "sky";
+}) {
+  const className =
+    tone === "red"
+      ? "border-red-100 bg-red-50 text-red-800"
+      : tone === "amber"
+        ? "border-amber-100 bg-amber-50 text-amber-800"
+        : tone === "emerald"
+          ? "border-emerald-100 bg-emerald-50 text-emerald-800"
+          : "border-sky-100 bg-sky-50 text-sky-800";
+
   return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+    <div className={`rounded-lg border px-4 py-3 ${className}`}>
+      <p className="text-xs font-bold uppercase tracking-[0.12em] opacity-70">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-bold text-slate-950">{value}</p>
+      <p className="mt-1 text-2xl font-black">{value}</p>
     </div>
+  );
+}
+
+function Guardrail({
+  icon: Icon,
+  title,
+  text,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  title: string;
+  text: string;
+}) {
+  return (
+    <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-sm font-black text-slate-800">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{text}</p>
+        </div>
+      </div>
+    </article>
   );
 }
 

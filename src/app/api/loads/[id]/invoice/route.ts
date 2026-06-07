@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
 
+import { logAudit } from "@/lib/audit";
+import { requireInternalRole } from "@/lib/current-user";
 import { sendTransactionalEmail } from "@/lib/email";
 import { formValue, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
@@ -11,6 +13,22 @@ export async function POST(
   context: RouteContext<"/api/loads/[id]/invoice">,
 ) {
   const { id } = await context.params;
+  let currentUser: Awaited<ReturnType<typeof requireInternalRole>>;
+
+  try {
+    currentUser = await requireInternalRole(["OWNER", "ADMIN", "OPS"]);
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "You do not have permission to update invoices.",
+      },
+      { status: 403 },
+    );
+  }
+
   const formData = await request.formData();
   const parsed = invoiceCreateSchema.safeParse({
     amount: formValue(formData, "amount"),
@@ -61,6 +79,9 @@ export async function POST(
   }
 
   const input = parsed.data;
+  const existingInvoice = await prisma.invoice.findUnique({
+    where: { loadId: load.id },
+  });
   const paidAt = input.status === "PAID" ? new Date() : null;
   const nextLoadStatus =
     input.status === "PAID"
@@ -117,6 +138,36 @@ export async function POST(
   revalidatePath(`/loads/${id}`);
   revalidatePath("/billing");
   revalidatePath("/dashboard");
+  revalidatePath("/admin");
+
+  await logAudit({
+    action: "INVOICE_UPDATED",
+    entityType: "Invoice",
+    entityId: load.id,
+    summary: `Invoice ${input.status.toLowerCase()} for LD-${String(load.loadNumber).padStart(4, "0")}.`,
+    user: currentUser,
+    beforeJson: existingInvoice
+      ? {
+          invoiceNumber: existingInvoice.invoiceNumber,
+          amount: Number(existingInvoice.amount),
+          balance:
+            existingInvoice.balance === null
+              ? null
+              : Number(existingInvoice.balance),
+          status: existingInvoice.status,
+          dueDate: existingInvoice.dueDate,
+          paidAt: existingInvoice.paidAt,
+        }
+      : null,
+    afterJson: {
+      invoiceNumber: input.invoiceNumber || null,
+      amount: input.amount,
+      balance: input.amount,
+      status: input.status,
+      dueDate: optionalDate(input.dueDate),
+      paidAt,
+    },
+  });
 
   if (input.status === "SENT") {
     try {

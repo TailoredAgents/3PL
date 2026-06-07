@@ -1,14 +1,17 @@
 import { revalidatePath } from "next/cache";
 
 import { requireInternalRole } from "@/lib/current-user";
+import { logAudit } from "@/lib/audit";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import { saveQuoteEmailTemplate } from "@/lib/settings";
+import { getQuoteEmailTemplate, saveQuoteEmailTemplate } from "@/lib/settings";
 import { quoteEmailTemplateSettingsSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request) {
+  let currentUser: Awaited<ReturnType<typeof requireInternalRole>>;
+
   try {
-    await requireInternalRole(["OWNER", "ADMIN"]);
+    currentUser = await requireInternalRole(["OWNER", "ADMIN"]);
   } catch (error) {
     return Response.json(
       {
@@ -41,10 +44,21 @@ export async function PATCH(request: Request) {
     });
   }
 
+  const existing = await getQuoteEmailTemplate();
   await saveQuoteEmailTemplate(parsed.data);
+  await logAudit({
+    action: "QUOTE_EMAIL_TEMPLATE_UPDATED",
+    entityType: "AppSetting",
+    entityId: "quoteEmailTemplate",
+    summary: "Quote email template updated.",
+    user: currentUser,
+    beforeJson: existing,
+    afterJson: parsed.data,
+  });
 
   revalidatePath("/settings");
   revalidatePath("/quote-requests");
+  revalidatePath("/admin");
 
   return Response.json({ message: "Quote email template saved." });
 }

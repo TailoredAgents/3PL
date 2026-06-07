@@ -33,9 +33,10 @@ import {
   ShipmentEventCreateForm,
   LoadExceptionCreateForm,
   LoadExceptionUpdateForm,
+  LoadCommissionAttributionForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
-import { getLoadDetailView } from "@/lib/crm";
+import { getLoadDetailView, getUserOptions } from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +60,10 @@ export default async function LoadDetailPage({
   const tab: TabKey =
     TABS.find((t) => t.key === rawTab)?.key ?? "overview";
 
-  const load = await getLoadDetailView(id);
+  const [load, userOptions] = await Promise.all([
+    getLoadDetailView(id),
+    getUserOptions(),
+  ]);
   if (!load) {
     notFound();
   }
@@ -226,6 +230,35 @@ export default async function LoadDetailPage({
                     currentStatus={load.status}
                     currentCarrier={load.carrier}
                     currentCarrierRate={load.carrierRate}
+                  />
+                </div>
+              </article>
+
+              <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+                <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+                  <CircleDollarSign className="h-4 w-4 text-slate-400" />
+                  <p className="text-sm font-semibold text-slate-700">Commission attribution</p>
+                </div>
+                <div className="grid gap-4 p-5">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-slate-500">Load manager</p>
+                      <p className="mt-1 text-sm font-bold text-slate-900">
+                        {load.managingUserName}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-slate-500">Lifetime client owner</p>
+                      <p className="mt-1 text-sm font-bold text-slate-900">
+                        {load.customerOwnerName}
+                      </p>
+                    </div>
+                  </div>
+                  <LoadCommissionAttributionForm
+                    loadId={load.id}
+                    users={userOptions}
+                    managingUserId={load.managingUserId}
+                    customerOwnerUserId={load.customerOwnerUserId}
                   />
                 </div>
               </article>

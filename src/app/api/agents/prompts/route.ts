@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { logAudit } from "@/lib/audit";
 import { requireInternalRole } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl } from "@/lib/prisma";
@@ -60,8 +61,20 @@ export async function PATCH(request: Request) {
     changedByUserId: currentUser?.id ?? null,
     changeReason: parsed.data.changeReason,
   });
+  await logAudit({
+    action: "AGENT_PROMPT_UPDATED",
+    entityType: "AgentPromptTemplate",
+    entityId: parsed.data.agentName,
+    summary: `${parsed.data.agentName} prompt template updated.`,
+    user: currentUser,
+    afterJson: {
+      agentName: parsed.data.agentName,
+      changeReason: parsed.data.changeReason || null,
+    },
+  });
 
   revalidatePath("/agents");
+  revalidatePath("/admin");
 
   return Response.json({ message: "Prompt template saved." });
 }

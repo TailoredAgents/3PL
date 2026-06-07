@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { quoteConvertSchema } from "@/lib/validation";
@@ -32,6 +33,14 @@ export async function POST(
 
   const quote = await prisma.quoteRequest.findUnique({
     where: { id },
+    include: {
+      shipper: {
+        select: {
+          id: true,
+          acquisitionOwnerUserId: true,
+        },
+      },
+    },
   });
 
   if (!quote) {
@@ -39,16 +48,28 @@ export async function POST(
   }
 
   const input = parsed.data;
+  const currentUser = await getCurrentInternalUser();
   const carrierRate =
     typeof input.carrierRate === "number" ? input.carrierRate : null;
   const carrier = input.carrierCompanyName
     ? await findOrCreateCarrier(input.carrierCompanyName)
     : null;
+  const customerOwnerUserId =
+    quote.shipper.acquisitionOwnerUserId ?? currentUser?.id ?? null;
+
+  if (!quote.shipper.acquisitionOwnerUserId && customerOwnerUserId) {
+    await prisma.shipper.update({
+      where: { id: quote.shipperId },
+      data: { acquisitionOwnerUserId: customerOwnerUserId },
+    });
+  }
 
   const load = await prisma.load.create({
     data: {
       quoteRequestId: quote.id,
       shipperId: quote.shipperId,
+      managingUserId: currentUser?.id,
+      customerOwnerUserId,
       carrierId: carrier?.id,
       status: carrier?.complianceStatus === "APPROVED" ? "BOOKED" : "TENDERED",
       originCity: quote.originCity,

@@ -243,6 +243,12 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
           <p className="mt-2 w-fit rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
             {load.loadNumber}
           </p>
+          <p className="mt-2 text-xs font-medium text-slate-500">
+            Manager: <span className="font-semibold text-slate-700">{load.managingUserName}</span>
+          </p>
+          <p className="mt-0.5 text-xs font-medium text-slate-500">
+            Client owner: <span className="font-semibold text-slate-700">{load.customerOwnerName}</span>
+          </p>
         </div>
       </Td>
 
@@ -441,6 +447,8 @@ function LoadBoardMobileRow({ load }: { load: LoadView }) {
           value={`${load.equipment} / ${load.weight ?? "Weight needed"}`}
         />
         <MobileFact label="Carrier" value={load.carrier} />
+        <MobileFact label="Manager" value={load.managingUserName} />
+        <MobileFact label="Client owner" value={load.customerOwnerName} />
         <MobileFact
           label="Margin"
           value={`${toCurrency(load.margin)} / ${load.marginPercent}%`}

@@ -6,6 +6,7 @@ import {
   nullableString,
   optionalDate,
 } from "@/lib/server-utils";
+import { getCurrentInternalUser } from "@/lib/current-user";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { loadCreateSchema } from "@/lib/validation";
 
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
+  const currentUser = await getCurrentInternalUser();
   const carrierRate =
     typeof input.carrierRate === "number" ? input.carrierRate : null;
   const weight = typeof input.weight === "number" ? input.weight : null;
@@ -64,9 +66,19 @@ export async function POST(request: Request) {
   const grossProfit =
     carrierRate === null ? null : input.customerRate - carrierRate;
 
-  const existingShipper = await prisma.shipper.findFirst({
+  let existingShipper = await prisma.shipper.findFirst({
     where: { companyName: input.shipperCompanyName },
   });
+  if (
+    existingShipper &&
+    !existingShipper.acquisitionOwnerUserId &&
+    currentUser?.id
+  ) {
+    existingShipper = await prisma.shipper.update({
+      where: { id: existingShipper.id },
+      data: { acquisitionOwnerUserId: currentUser.id },
+    });
+  }
   const shipper =
     existingShipper ??
     (await prisma.shipper.create({
@@ -75,6 +87,7 @@ export async function POST(request: Request) {
         status: "ACTIVE",
         source: "MANUAL",
         notes: nullableString(input.notes),
+        acquisitionOwnerUserId: currentUser?.id,
       },
     }));
 
@@ -97,6 +110,9 @@ export async function POST(request: Request) {
   const load = await prisma.load.create({
       data: {
         shipperId: shipper.id,
+        managingUserId: currentUser?.id,
+        customerOwnerUserId:
+          shipper.acquisitionOwnerUserId ?? currentUser?.id ?? null,
         carrierId: carrier?.id,
       status: carrier?.complianceStatus === "APPROVED" ? "BOOKED" : "TENDERED",
       originCity: input.originCity,

@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireInternalRole } from "@/lib/current-user";
+import { logAudit } from "@/lib/audit";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import {
@@ -10,8 +11,10 @@ import {
 import { appSettingsSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request) {
+  let currentUser: Awaited<ReturnType<typeof requireInternalRole>>;
+
   try {
-    await requireInternalRole(["OWNER", "ADMIN"]);
+    currentUser = await requireInternalRole(["OWNER", "ADMIN"]);
   } catch (error) {
     return Response.json(
       {
@@ -45,6 +48,10 @@ export async function PATCH(request: Request) {
     });
   }
 
+  const existing = await prisma.appSetting.findUnique({
+    where: { key: CALL_RECORDING_DISCLOSURE_KEY },
+  });
+
   await prisma.appSetting.upsert({
     where: { key: CALL_RECORDING_DISCLOSURE_KEY },
     create: {
@@ -56,7 +63,18 @@ export async function PATCH(request: Request) {
     },
   });
 
+  await logAudit({
+    action: "SETTINGS_UPDATED",
+    entityType: "AppSetting",
+    entityId: CALL_RECORDING_DISCLOSURE_KEY,
+    summary: "Call recording disclosure updated.",
+    user: currentUser,
+    beforeJson: existing ? { value: existing.value } : null,
+    afterJson: { value: parsed.data.callRecordingDisclosure },
+  });
+
   revalidatePath("/settings");
+  revalidatePath("/admin");
 
   return Response.json({ message: "Settings saved." });
 }

@@ -682,7 +682,9 @@ Completion criteria:
 
 Goal: protect sensitive workflows as real users operate the system.
 
-Status: not started.
+Status: 11.1 complete. Admin controls, audit log foundation, user roster
+management, commission attribution, and commission forecast are in place.
+Clerk webhook sync and deeper payout workflows remain for later hardening.
 
 Build:
 
@@ -692,6 +694,33 @@ Build:
 - Add audit logs for settings, pricing overrides, compliance decisions, invoice
   changes, carrier payments, and AI approvals.
 - Add Clerk webhook user sync.
+- Add commission attribution foundation:
+  - Load manager receives 35% of gross profit for managing intake through
+    completion.
+  - Lifetime client converter receives 15% of gross profit for that shipper's
+    loads.
+  - Austin receives 20% of gross profit on every load.
+  - Company keeps 30% of gross profit.
+  - Actual payout processing is deferred until invoice/payment workflows are
+    launch-tested.
+
+Completed 11.1:
+
+- Added `AuditLog` model and shared audit writer.
+- Added `CommissionPlan` model with the DAO standard 35/15/20/30 gross-profit
+  split.
+- Added lifetime client owner on shippers and manager/client-owner attribution
+  on loads.
+- Added Admin Controls page for internal user records, commission plan settings,
+  commission forecast, load attribution review, and audit log review.
+- Added load detail commission attribution controls and load board attribution
+  readouts.
+- New loads and quote-converted loads now default the manager to the current
+  internal user and copy/set lifetime client owner from the shipper.
+- Audited settings changes, quote email template edits, agent prompt edits,
+  agent mode changes, AI approvals/rejections, carrier compliance updates, load
+  updates, invoice changes, user changes, commission plan changes, and load
+  attribution changes.
 
 Completion criteria:
 

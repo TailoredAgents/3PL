@@ -26,6 +26,7 @@ import {
 
 export { getDailyBriefView } from "@/lib/daily-brief";
 export { getDocumentAutomationView } from "@/lib/document-automation";
+export { getAdminControlsView, getUserOptions } from "@/lib/commissions";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];
@@ -190,6 +191,10 @@ export type LoadView = {
   id: string;
   loadNumber: string;
   shipper: string;
+  managingUserId?: string | null;
+  managingUserName: string;
+  customerOwnerUserId?: string | null;
+  customerOwnerName: string;
   carrier: string;
   lane: string;
   originAddress?: string;
@@ -1846,6 +1851,7 @@ export async function getShipperDetailView(
     const shipper = await prisma.shipper.findUnique({
       where: { id },
       include: {
+        acquisitionOwner: { select: { id: true, name: true } },
         contacts: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
         leads: { include: { contact: true }, orderBy: { updatedAt: "desc" } },
         quoteRequests: { orderBy: { createdAt: "desc" } },
@@ -1853,6 +1859,8 @@ export async function getShipperDetailView(
         loads: {
           include: {
             carrier: true,
+            managingUser: { select: { id: true, name: true } },
+            customerOwner: { select: { id: true, name: true } },
             documents: true,
             events: { orderBy: { occurredAt: "desc" } },
           },
@@ -2200,8 +2208,14 @@ export async function getCarrierDetailView(
         documents: { orderBy: { createdAt: "desc" }, take: 8 },
         loads: {
           include: {
-            shipper: true,
+            shipper: {
+              include: {
+                acquisitionOwner: { select: { id: true, name: true } },
+              },
+            },
             carrier: true,
+            managingUser: { select: { id: true, name: true } },
+            customerOwner: { select: { id: true, name: true } },
             documents: true,
             events: true,
           },
@@ -2288,8 +2302,12 @@ export async function getLoadViews(): Promise<LoadView[]> {
   try {
     const records = await prisma.load.findMany({
       include: {
-        shipper: true,
+        shipper: {
+          include: { acquisitionOwner: { select: { id: true, name: true } } },
+        },
         carrier: true,
+        managingUser: { select: { id: true, name: true } },
+        customerOwner: { select: { id: true, name: true } },
         invoice: true,
         documents: true,
         carrierQuotes: {
@@ -2548,8 +2566,12 @@ export async function getLoadDetailView(
     const load = await prisma.load.findUnique({
       where: { id },
       include: {
-        shipper: true,
+        shipper: {
+          include: { acquisitionOwner: { select: { id: true, name: true } } },
+        },
         carrier: true,
+        managingUser: { select: { id: true, name: true } },
+        customerOwner: { select: { id: true, name: true } },
         invoice: true,
         carrierQuotes: {
           include: { carrier: true },
@@ -3423,7 +3445,14 @@ function getDocumentRelatedRecord(document: {
 function mapLoad(load: {
   id: string;
   loadNumber?: number | null;
-  shipper: { companyName: string };
+  shipper: {
+    companyName: string;
+    acquisitionOwner?: { id: string; name: string } | null;
+  };
+  managingUserId?: string | null;
+  managingUser?: { id: string; name: string } | null;
+  customerOwnerUserId?: string | null;
+  customerOwner?: { id: string; name: string } | null;
   carrier?: { companyName: string } | null;
   originCity: string;
   originState: string;
@@ -3635,6 +3664,7 @@ function mapLoad(load: {
     revoked: link.revoked,
     created: formatFollowUp(link.createdAt),
   }));
+  const customerOwner = load.customerOwner ?? load.shipper.acquisitionOwner;
 
   return {
     id: load.id,
@@ -3642,6 +3672,10 @@ function mapLoad(load: {
       ? `LD-${String(load.loadNumber).padStart(4, "0")}`
       : "LD-????",
     shipper: load.shipper.companyName,
+    managingUserId: load.managingUser?.id ?? null,
+    managingUserName: load.managingUser?.name ?? "Unassigned manager",
+    customerOwnerUserId: customerOwner?.id ?? null,
+    customerOwnerName: customerOwner?.name ?? "Unassigned client owner",
     carrier: load.carrier?.companyName ?? "Carrier needed",
     lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
     originAddress: load.originAddress ?? "Pickup address needed",

@@ -436,6 +436,28 @@ export const aiAgentReviewSchema = z.object({
   reviewNotes: z.string().trim().optional(),
 });
 
+export const internalUserUpsertSchema = z.object({
+  name: requiredString,
+  email: z.email(),
+  role: z.enum(["OWNER", "SALES", "OPS", "ADMIN"]),
+  phone: z.string().trim().optional(),
+});
+
+export const commissionPlanUpdateSchema = z.object({
+  managingUserPercent: z.coerce.number().min(0).max(100),
+  customerOwnerPercent: z.coerce.number().min(0).max(100),
+  houseOwnerPercent: z.coerce.number().min(0).max(100),
+  companyPercent: z.coerce.number().min(0).max(100),
+  houseOwnerUserId: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const loadCommissionAttributionSchema = z.object({
+  managingUserId: z.string().trim().optional(),
+  customerOwnerUserId: z.string().trim().optional(),
+  applyToClient: z.boolean().default(false),
+});
+
 export type FreightAuditInput = z.infer<typeof freightAuditSchema>;
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;

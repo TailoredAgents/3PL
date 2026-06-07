@@ -17,6 +17,7 @@ import {
   getQuoteRequestDetailView,
 } from "@/lib/crm";
 import { enrichAgentContext } from "@/lib/agent-enrichment";
+import { logAudit } from "@/lib/audit";
 import { runBrokerageAgent } from "@/lib/grok";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { getCurrentInternalUser } from "@/lib/current-user";
@@ -224,6 +225,19 @@ export async function approveAgentRun(runId: string, reviewNotes?: string) {
     },
     getAgentResultFromOutput(run.outputJson),
   );
+  await logAudit({
+    action: "AI_AGENT_APPROVED",
+    entityType: "AiAgentRun",
+    entityId: run.id,
+    summary: `${run.agentName} output approved.`,
+    user,
+    beforeJson: { status: existing.status },
+    afterJson: { status: run.status, reviewNotes: run.reviewNotes },
+    metadata: {
+      relatedEntityType: run.relatedEntityType,
+      relatedEntityId: run.relatedEntityId,
+    },
+  });
 
   if (run.relatedEntityType && run.relatedEntityId) {
     revalidateAgentEntityPaths(
@@ -234,6 +248,7 @@ export async function approveAgentRun(runId: string, reviewNotes?: string) {
 
   revalidatePath("/agents");
   revalidatePath("/dashboard");
+  revalidatePath("/admin");
 
   return run;
 }
@@ -265,6 +280,19 @@ export async function rejectAgentRun(runId: string, reviewNotes?: string) {
       reviewNotes: reviewNotes?.trim() || existing.reviewNotes,
     },
   });
+  await logAudit({
+    action: "AI_AGENT_REJECTED",
+    entityType: "AiAgentRun",
+    entityId: run.id,
+    summary: `${run.agentName} output rejected.`,
+    user,
+    beforeJson: { status: existing.status },
+    afterJson: { status: run.status, reviewNotes: run.reviewNotes },
+    metadata: {
+      relatedEntityType: run.relatedEntityType,
+      relatedEntityId: run.relatedEntityId,
+    },
+  });
 
   if (run.relatedEntityType && run.relatedEntityId) {
     revalidateAgentEntityPaths(
@@ -275,6 +303,7 @@ export async function rejectAgentRun(runId: string, reviewNotes?: string) {
 
   revalidatePath("/agents");
   revalidatePath("/dashboard");
+  revalidatePath("/admin");
 
   return run;
 }

@@ -16,6 +16,22 @@ type AgentResult = {
   nextAction: string;
 };
 
+type UserOption = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
+
+type CommissionPlanFormValue = {
+  managingUserPercent: number;
+  customerOwnerPercent: number;
+  houseOwnerPercent: number;
+  companyPercent: number;
+  houseOwnerUserId: string | null;
+  notes: string | null;
+};
+
 async function submit(endpoint: string, form: HTMLFormElement, method: string) {
   const response = await fetch(endpoint, {
     method,
@@ -1509,6 +1525,131 @@ export function SettingsForm({
   );
 }
 
+export function AdminUserForm() {
+  const { state, onSubmit } = useCrmSubmit("/api/admin/users");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="name" label="Name" required />
+        <Field name="email" label="Email" type="email" required />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Select
+          name="role"
+          label="Role"
+          options={["OWNER", "ADMIN", "OPS", "SALES"]}
+          required
+        />
+        <Field name="phone" label="Phone" />
+      </div>
+      <FormFooter state={state} buttonLabel="Save user" />
+    </form>
+  );
+}
+
+export function CommissionPlanSettingsForm({
+  plan,
+  users,
+}: {
+  plan: CommissionPlanFormValue;
+  users: UserOption[];
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    "/api/admin/commission-plan",
+    "PATCH",
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Field
+          name="managingUserPercent"
+          label="Manager %"
+          type="number"
+          defaultValue={plan.managingUserPercent.toString()}
+          required
+        />
+        <Field
+          name="customerOwnerPercent"
+          label="Client owner %"
+          type="number"
+          defaultValue={plan.customerOwnerPercent.toString()}
+          required
+        />
+        <Field
+          name="houseOwnerPercent"
+          label="Austin %"
+          type="number"
+          defaultValue={plan.houseOwnerPercent.toString()}
+          required
+        />
+        <Field
+          name="companyPercent"
+          label="Company %"
+          type="number"
+          defaultValue={plan.companyPercent.toString()}
+          required
+        />
+      </div>
+      <UserSelect
+        name="houseOwnerUserId"
+        label="Austin / house owner user"
+        users={users}
+        defaultValue={plan.houseOwnerUserId ?? ""}
+      />
+      <Textarea
+        name="notes"
+        label="Commission notes"
+        rows={2}
+        defaultValue={plan.notes ?? undefined}
+      />
+      <FormFooter state={state} buttonLabel="Save commission plan" />
+    </form>
+  );
+}
+
+export function LoadCommissionAttributionForm({
+  loadId,
+  users,
+  managingUserId,
+  customerOwnerUserId,
+}: {
+  loadId: string;
+  users: UserOption[];
+  managingUserId?: string | null;
+  customerOwnerUserId?: string | null;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/commission-attribution`,
+    "PATCH",
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <UserSelect
+          name="managingUserId"
+          label="Load manager"
+          users={users}
+          defaultValue={managingUserId ?? ""}
+        />
+        <UserSelect
+          name="customerOwnerUserId"
+          label="Lifetime client owner"
+          users={users}
+          defaultValue={customerOwnerUserId ?? ""}
+        />
+      </div>
+      <Checkbox
+        name="applyToClient"
+        label="Apply client owner to this shipper for future loads"
+      />
+      <FormFooter state={state} buttonLabel="Save attribution" />
+    </form>
+  );
+}
+
 export function QuoteEmailTemplateSettingsForm({
   subject,
   body,
@@ -2055,6 +2196,32 @@ function Select({
         {options.map((option) => (
           <option key={option} value={option}>
             {option.replace("_", " ")}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function UserSelect({
+  label,
+  name,
+  users,
+  defaultValue,
+}: {
+  label: string;
+  name: string;
+  users: UserOption[];
+  defaultValue?: string;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      {label}
+      <select name={name} className={inputClass} defaultValue={defaultValue}>
+        <option value="">Unassigned</option>
+        {users.map((user) => (
+          <option key={user.id} value={user.id}>
+            {user.name} ({user.role})
           </option>
         ))}
       </select>

@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
 
+import { logAudit } from "@/lib/audit";
+import { requireInternalRole } from "@/lib/current-user";
 import { formValue, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { loadUpdateSchema } from "@/lib/validation";
@@ -9,6 +11,22 @@ export async function PATCH(
   context: RouteContext<"/api/loads/[id]">,
 ) {
   const { id } = await context.params;
+  let currentUser: Awaited<ReturnType<typeof requireInternalRole>>;
+
+  try {
+    currentUser = await requireInternalRole(["OWNER", "ADMIN", "OPS", "SALES"]);
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "You do not have permission to update loads.",
+      },
+      { status: 403 },
+    );
+  }
+
   const formData = await request.formData();
   const parsed = loadUpdateSchema.safeParse({
     status: formValue(formData, "status") ?? "TENDERED",
@@ -35,7 +53,15 @@ export async function PATCH(
   const input = parsed.data;
   const existing = await prisma.load.findUnique({
     where: { id },
-    select: { customerRate: true, carrierId: true, status: true },
+    select: {
+      customerRate: true,
+      carrierId: true,
+      carrierRate: true,
+      grossProfit: true,
+      status: true,
+      deliveryDate: true,
+      loadNumber: true,
+    },
   });
 
   if (!existing) {
@@ -96,6 +122,29 @@ export async function PATCH(
   revalidatePath("/loads");
   revalidatePath(`/loads/${id}`);
   revalidatePath("/dashboard");
+  revalidatePath("/admin");
+
+  await logAudit({
+    action: "LOAD_UPDATED",
+    entityType: "Load",
+    entityId: id,
+    summary: `LD-${String(existing.loadNumber).padStart(4, "0")} updated.`,
+    user: currentUser,
+    beforeJson: {
+      status: existing.status,
+      carrierId: existing.carrierId,
+      carrierRate: existing.carrierRate,
+      grossProfit: existing.grossProfit,
+      deliveryDate: existing.deliveryDate,
+    },
+    afterJson: {
+      status: input.status,
+      carrierId: carrier?.id ?? null,
+      carrierRate,
+      grossProfit,
+      deliveryDate,
+    },
+  });
 
   return Response.json({ message: "Load updated." });
 }

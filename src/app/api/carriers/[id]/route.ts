@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
 
+import { logAudit } from "@/lib/audit";
+import { requireInternalRole } from "@/lib/current-user";
 import { formValue, nullableString, optionalDate } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { carrierComplianceUpdateSchema } from "@/lib/validation";
@@ -9,6 +11,22 @@ export async function PATCH(
   context: RouteContext<"/api/carriers/[id]">,
 ) {
   const { id } = await context.params;
+  let currentUser: Awaited<ReturnType<typeof requireInternalRole>>;
+
+  try {
+    currentUser = await requireInternalRole(["OWNER", "ADMIN", "OPS"]);
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "You do not have permission to update carrier compliance.",
+      },
+      { status: 403 },
+    );
+  }
+
   const formData = await request.formData();
   const parsed = carrierComplianceUpdateSchema.safeParse({
     complianceStatus: formValue(formData, "complianceStatus") ?? "PENDING",
@@ -44,6 +62,17 @@ export async function PATCH(
   }
 
   const input = parsed.data;
+  const existing = await prisma.carrier.findUnique({
+    where: { id },
+    select: {
+      complianceStatus: true,
+      authorityStatus: true,
+      insuranceStatus: true,
+      safetyRating: true,
+      fraudRiskLevel: true,
+      blockedReason: true,
+    },
+  });
   const carrier = await prisma.carrier.update({
     where: { id },
     data: {
@@ -73,6 +102,24 @@ export async function PATCH(
   revalidatePath(`/carriers/${carrier.id}`);
   revalidatePath("/loads");
   revalidatePath("/dashboard");
+  revalidatePath("/admin");
+
+  await logAudit({
+    action: "CARRIER_COMPLIANCE_UPDATED",
+    entityType: "Carrier",
+    entityId: carrier.id,
+    summary: `${carrier.companyName} compliance set to ${carrier.complianceStatus}.`,
+    user: currentUser,
+    beforeJson: existing,
+    afterJson: {
+      complianceStatus: carrier.complianceStatus,
+      authorityStatus: carrier.authorityStatus,
+      insuranceStatus: carrier.insuranceStatus,
+      safetyRating: carrier.safetyRating,
+      fraudRiskLevel: carrier.fraudRiskLevel,
+      blockedReason: carrier.blockedReason,
+    },
+  });
 
   return Response.json({ message: "Carrier compliance updated." });
 }

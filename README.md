@@ -255,6 +255,7 @@ Completed paid load: qa-load-completed
 
 - [System overview](docs/system-overview.md)
 - [End-to-end build roadmap](docs/end-to-end-build-roadmap.md)
+- [Completion roadmap](docs/completion-roadmap.md)
 - [Local QA test plan](docs/local-qa-test-plan.md)
 - [Production environment checklist](docs/production-env-checklist.md)
 - [Render deployment guide](docs/render-deployment.md)
@@ -264,6 +265,7 @@ Completed paid load: qa-load-completed
 The roadmap phases are considered functionally complete. The remaining work is
 final pre-launch hardening:
 
+- complete the page-by-page aesthetics and UX pass
 - run the full local QA script with realistic records
 - fix bugs found during final usage testing
 - verify real provider credentials and webhook URLs

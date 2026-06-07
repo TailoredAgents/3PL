@@ -5,11 +5,13 @@ import {
   ArrowLeft,
   Bot,
   CalendarClock,
+  CheckCircle2,
   ClipboardList,
   Mail,
   MapPinned,
   Phone,
   Send,
+  Target,
   UserRound,
 } from "lucide-react";
 
@@ -36,6 +38,56 @@ function stageBadgeClass(stage: string) {
   return "bg-slate-100 text-slate-700";
 }
 
+function hasValue(value: string, emptyValue: string) {
+  return value !== emptyValue && !value.toLowerCase().includes("needed");
+}
+
+function getLeadPriority({
+  stage,
+  nextFollowUp,
+  hasPhone,
+  hasEmail,
+}: {
+  stage: string;
+  nextFollowUp: string;
+  hasPhone: boolean;
+  hasEmail: boolean;
+}) {
+  if (stage === "Won") {
+    return {
+      icon: CheckCircle2,
+      label: "Customer converted",
+      detail: "Keep the account file clean and move accepted freight into quote/load workflows.",
+      tone: "border-emerald-100 bg-emerald-50 text-emerald-900",
+    };
+  }
+
+  if (nextFollowUp !== "No follow-up set") {
+    return {
+      icon: CalendarClock,
+      label: "Follow-up is scheduled",
+      detail: `Next touch is ${nextFollowUp}. Use outreach, log the result, then update stage and next action.`,
+      tone: "border-amber-100 bg-amber-50 text-amber-900",
+    };
+  }
+
+  if (!hasPhone && !hasEmail) {
+    return {
+      icon: UserRound,
+      label: "Contact path missing",
+      detail: "Add a usable phone number or email before assigning follow-up work to sales or AI agents.",
+      tone: "border-red-100 bg-red-50 text-red-900",
+    };
+  }
+
+  return {
+    icon: Target,
+    label: "Qualify the opportunity",
+    detail: "Confirm lane frequency, equipment, urgency, pain, and target timing before quoting.",
+    tone: "border-sky-100 bg-sky-50 text-sky-900",
+  };
+}
+
 export default async function LeadDetailPage({
   params,
 }: {
@@ -50,6 +102,16 @@ export default async function LeadDetailPage({
 
   const outreachPhone = lead.phone === "No phone" ? undefined : lead.phone;
   const outreachEmail = lead.email === "No email" ? undefined : lead.email;
+  const hasPhone = Boolean(outreachPhone);
+  const hasEmail = Boolean(outreachEmail);
+  const hasLanes = hasValue(lead.lanes, "Lane details needed");
+  const leadPriority = getLeadPriority({
+    stage: lead.stage,
+    nextFollowUp: lead.nextFollowUp,
+    hasPhone,
+    hasEmail,
+  });
+  const PriorityIcon = leadPriority.icon;
   const defaultSmsMessage = `Hi ${lead.contact}, this is DAO Logistics following up on your freight lanes. Is now a good time to confirm your shipment needs?`;
   const defaultEmailBody = `Hi ${lead.contact},\n\nI wanted to follow up on your freight lanes and see what shipments you need help with next.\n\nThanks,`;
 
@@ -69,15 +131,37 @@ export default async function LeadDetailPage({
         Back to lead pipeline
       </Link>
 
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        {/* Contact + context card */}
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(560px,1.08fr)]">
+        <div className="grid gap-5">
+          <article className={`rounded-lg border p-5 shadow-sm ${leadPriority.tone}`}>
+            <div className="flex gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+                <PriorityIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-75">
+                  Sales priority
+                </p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight">{leadPriority.label}</h2>
+                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 opacity-85">
+                  {leadPriority.detail}
+                </p>
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  <ReadinessChip label="Phone" value={hasPhone ? "Ready" : "Missing"} ready={hasPhone} />
+                  <ReadinessChip label="Email" value={hasEmail ? "Ready" : "Missing"} ready={hasEmail} />
+                  <ReadinessChip label="Lane context" value={hasLanes ? "Ready" : "Needed"} ready={hasLanes} />
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
           <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
             <div className="flex items-center gap-2">
               <UserRound className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">{lead.contact}</p>
+              <p className="text-sm font-black text-slate-800">{lead.contact}</p>
             </div>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${stageBadgeClass(lead.stage)}`}>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${stageBadgeClass(lead.stage)}`}>
               {lead.stage}
             </span>
           </div>
@@ -109,7 +193,7 @@ export default async function LeadDetailPage({
               </div>
             </div>
 
-            <div className="mt-5 rounded-md bg-slate-50 p-4">
+            <div className="mt-5 rounded-md border border-slate-100 bg-slate-50 p-4">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 <MapPinned className="h-3.5 w-3.5" />
                 Lane & freight context
@@ -125,23 +209,29 @@ export default async function LeadDetailPage({
             <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50 p-4">
               <div className="flex items-center gap-2">
                 <Bot className="h-4 w-4 text-emerald-600" />
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">
                   AI next action
                 </p>
               </div>
               <p className="mt-2 text-sm leading-6 text-emerald-900">{lead.aiNextAction}</p>
             </div>
           </div>
-        </article>
+          </article>
+        </div>
 
-        {/* Action cards */}
         <div className="grid gap-6">
           <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
             <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
               <Bot className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">Run AI agent</p>
+              <p className="text-sm font-black text-slate-800">AI sales support</p>
             </div>
-            <div className="p-5">
+            <div className="grid gap-4 p-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-emerald-900">
+                <p className="text-xs font-black uppercase tracking-[0.16em]">Agent target</p>
+                <p className="mt-2 text-sm font-semibold leading-6">
+                  Use sales follow-up for relationship touches or quote pricing when the lane is ready to price.
+                </p>
+              </div>
               <AiAgentRunForm
                 relatedEntityType="Lead"
                 relatedEntityId={lead.id}
@@ -154,7 +244,7 @@ export default async function LeadDetailPage({
           <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
             <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
               <Send className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">Outreach</p>
+              <p className="text-sm font-black text-slate-800">Outreach workspace</p>
             </div>
             <div className="grid gap-4 p-5 xl:grid-cols-3">
               <LeadClickToCallForm leadId={lead.id} defaultPhone={outreachPhone} />
@@ -172,34 +262,51 @@ export default async function LeadDetailPage({
             </div>
           </article>
 
-          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <ClipboardList className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">Update lead</p>
-            </div>
+          <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-slate-400" />
+                <div>
+                  <p className="text-sm font-black text-slate-800">Update lead</p>
+                  <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                    Stage, priority, follow-up, and next action.
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-black text-slate-400 group-open:hidden">Expand</span>
+              <span className="hidden text-xs font-black text-slate-400 group-open:inline">Collapse</span>
+            </summary>
             <div className="p-5">
               <LeadUpdateForm leadId={lead.id} currentStage={lead.stage} />
             </div>
-          </article>
+          </details>
 
-          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <Activity className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">Add activity</p>
-            </div>
+          <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-slate-400" />
+                <div>
+                  <p className="text-sm font-black text-slate-800">Add activity</p>
+                  <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                    Log calls, emails, SMS, notes, meetings, and outcomes.
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-black text-slate-400 group-open:hidden">Expand</span>
+              <span className="hidden text-xs font-black text-slate-400 group-open:inline">Collapse</span>
+            </summary>
             <div className="p-5">
               <ActivityCreateForm leadId={lead.id} />
             </div>
-          </article>
+          </details>
         </div>
       </section>
 
-      {/* Activity timeline */}
       <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Activity timeline</p>
+            <p className="text-sm font-black text-slate-800">Activity timeline</p>
           </div>
           <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
             {lead.activities.length}
@@ -228,5 +335,26 @@ export default async function LeadDetailPage({
         )}
       </article>
     </InternalShell>
+  );
+}
+
+function ReadinessChip({
+  label,
+  value,
+  ready,
+}: {
+  label: string;
+  value: string;
+  ready: boolean;
+}) {
+  return (
+    <div className="rounded-md bg-white/70 px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] opacity-60">
+        {label}
+      </p>
+      <p className={`mt-1 text-sm font-black ${ready ? "text-emerald-800" : "text-amber-800"}`}>
+        {value}
+      </p>
+    </div>
   );
 }

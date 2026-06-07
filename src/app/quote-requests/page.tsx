@@ -5,10 +5,12 @@ import {
   Bot,
   CalendarDays,
   ClipboardCheck,
+  DollarSign,
   FilePlus2,
   Gauge,
   PhoneCall,
   Package,
+  Route,
   Truck,
 } from "lucide-react";
 
@@ -49,6 +51,17 @@ export default async function QuoteRequestsPage() {
   const pricingWork = quoteRequestViews.filter((request) =>
     ["Pricing", "New", "Quoted"].includes(request.status),
   );
+  const rateWork = quoteRequestViews.filter((request) =>
+    ["Pricing", "New"].includes(request.status),
+  );
+  const followUpWork = quoteRequestViews.filter(
+    (request) => request.status === "Quoted",
+  );
+  const urgentWork = quoteRequestViews.filter((request) =>
+    ["High", "Urgent", "Same day", "Today"].some((term) =>
+      request.urgency?.toLowerCase().includes(term.toLowerCase()),
+    ),
+  );
   const phoneChecklist = [
     "Origin, destination, pickup, and delivery timing",
     "Equipment, weight, commodity, and pallet count",
@@ -73,16 +86,20 @@ export default async function QuoteRequestsPage() {
       {/* Status cards */}
       <section className="grid gap-4 md:grid-cols-3">
         {statusItems.map((item) => (
-          <article
+          <Link
             key={item.label}
+            href="#pricing-work"
             className={cn(
-              "overflow-hidden rounded-lg shadow-md shadow-slate-950/5",
+              "group overflow-hidden rounded-lg shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/10",
               statusPanelClass[item.label] ?? "border border-slate-100 bg-white",
             )}
           >
             <div className="p-5">
-              <div className={cn("flex h-9 w-9 items-center justify-center rounded-md", statusIconClass[item.label] ?? "bg-slate-50 text-slate-700")}>
-                <item.icon className="h-4 w-4" />
+              <div className="flex items-start justify-between gap-4">
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-md", statusIconClass[item.label] ?? "bg-slate-50 text-slate-700")}>
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-600" />
               </div>
               <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
               <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
@@ -90,16 +107,65 @@ export default async function QuoteRequestsPage() {
               </p>
               <p className="mt-2 text-xs text-slate-500">{item.note}</p>
             </div>
-          </article>
+          </Link>
         ))}
       </section>
 
-      {/* Phone intake form + call checklist */}
-      <section className="grid items-start gap-6 xl:grid-cols-[1fr_360px]">
-        <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
+      <section className="grid items-start gap-6 xl:grid-cols-[1fr_380px]">
+        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+                Pricing command desk
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+                Rate, protect margin, and convert
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                Work new and pricing requests first, validate DAT/Truckstop
+                market context on the quote record, then follow up quoted
+                customers before the rate gets stale.
+              </p>
+            </div>
+            <Link href="#pricing-work" className="dao-primary-action shrink-0 text-xs">
+              Open pricing queue <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <CommandTile
+              icon={Gauge}
+              label="Needs rate work"
+              value={rateWork.length.toString()}
+              detail="New or pricing status"
+              tone="amber"
+            />
+            <CommandTile
+              icon={ClipboardCheck}
+              label="Quoted follow-up"
+              value={followUpWork.length.toString()}
+              detail="Customer decision needed"
+              tone="emerald"
+            />
+            <CommandTile
+              icon={Route}
+              label="Active lanes"
+              value={pricingWork.length.toString()}
+              detail="In pricing workflow"
+              tone="sky"
+            />
+            <CommandTile
+              icon={DollarSign}
+              label="Urgent requests"
+              value={urgentWork.length.toString()}
+              detail="Same-day/high urgency"
+              tone="red"
+            />
+          </div>
+
+          <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-950 text-white">
                 <PhoneCall className="h-4 w-4" />
               </div>
               <div>
@@ -107,21 +173,22 @@ export default async function QuoteRequestsPage() {
                   Phone quote intake
                 </p>
                 <p className="text-sm font-semibold text-slate-900">
-                  Create quote while the shipper is on the phone
+                  Create a quote while the shipper is on the phone
                 </p>
               </div>
             </div>
-            <span className="text-xs font-semibold text-slate-400 group-open:hidden">
-              Expand
-            </span>
-            <span className="hidden text-xs font-semibold text-slate-400 group-open:inline">
-              Collapse
-            </span>
-          </summary>
-          <div className="border-t border-slate-200 p-5">
-            <QuoteRequestCreateForm />
+            <details className="group mt-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:border-emerald-200">
+                Open quick intake form
+                <span className="text-xs text-slate-400 group-open:hidden">Expand</span>
+                <span className="hidden text-xs text-slate-400 group-open:inline">Collapse</span>
+              </summary>
+              <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5">
+                <QuoteRequestCreateForm />
+              </div>
+            </details>
           </div>
-        </details>
+        </article>
 
         <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
           <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
@@ -156,21 +223,27 @@ export default async function QuoteRequestsPage() {
         </article>
       </section>
 
-      {/* Mini pricing queue */}
       <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div id="pricing-work" className="scroll-mt-24 flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
-          <p className="text-sm font-semibold text-slate-700">What needs pricing attention</p>
+        <div id="pricing-work" className="scroll-mt-24 flex flex-col gap-2 border-b border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
+              Pricing queue
+            </p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
+              What needs pricing attention
+            </h2>
+          </div>
           <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
             {pricingWork.length} active
           </span>
         </div>
 
-        <div className="grid gap-3 p-4 lg:grid-cols-3">
+        <div className="grid gap-3 p-4 xl:grid-cols-3">
           {pricingWork.length ? pricingWork.map((request) => (
             <Link
               key={`work-${request.id}`}
               href={`/quote-requests/${request.id}`}
-              className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+              className="rounded-lg border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -195,7 +268,18 @@ export default async function QuoteRequestsPage() {
                   <p className="text-xs font-semibold text-slate-500">Pickup</p>
                   <p className="mt-0.5 text-sm font-semibold text-slate-900">{request.pickup}</p>
                 </div>
+                <div className="rounded-md bg-white px-3 py-2">
+                  <p className="text-xs font-semibold text-slate-500">Margin target</p>
+                  <p className="mt-0.5 text-sm font-semibold text-slate-900">{request.targetMarginPercent}</p>
+                </div>
+                <div className="rounded-md bg-white px-3 py-2">
+                  <p className="text-xs font-semibold text-slate-500">Urgency</p>
+                  <p className="mt-0.5 text-sm font-semibold text-slate-900">{request.urgency}</p>
+                </div>
               </div>
+              <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
+                {request.pricingNotes}
+              </p>
               <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
                 Open quote
                 <ArrowRight className="h-3 w-3" />
@@ -209,16 +293,14 @@ export default async function QuoteRequestsPage() {
         </div>
       </section>
 
-      {/* Full quote detail cards */}
       <section className="grid gap-4">
         {quoteRequestViews.map((request) => (
           <article
             key={request.id}
             className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5"
           >
-            {/* Card header bar */}
             <div className="flex items-center justify-between gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-3">
                 <p className="font-semibold text-slate-900">{request.company}</p>
                 <span
                   className={cn(
@@ -232,7 +314,7 @@ export default async function QuoteRequestsPage() {
               </div>
               <Link
                 href={`/quote-requests/${request.id}`}
-                className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
               >
                 Open quote
                 <ArrowRight className="h-3 w-3" />
@@ -240,19 +322,19 @@ export default async function QuoteRequestsPage() {
             </div>
 
             <div className="p-5">
-              {/* Metrics */}
               <div className="grid gap-3 md:grid-cols-4">
                 <Metric icon={Truck} label="Equipment" value={request.equipment} />
                 <Metric icon={CalendarDays} label="Pickup" value={request.pickup} />
                 <Metric icon={Package} label="Weight" value={request.weight} />
-                <Metric
-                  icon={Gauge}
-                  label="Priority"
-                  value={request.status === "Pricing" ? "High" : "Normal"}
-                />
+                <Metric icon={Gauge} label="Urgency" value={request.urgency ?? "Normal"} />
               </div>
 
-              {/* Details + AI note */}
+              <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_1fr_1fr]">
+                <Metric icon={DollarSign} label="Target margin" value={request.targetMarginPercent ?? "Not set"} />
+                <Metric icon={CalendarDays} label="Delivery" value={request.delivery ?? "Not set"} />
+                <Metric icon={Package} label="Commodity" value={request.commodity ?? "Commodity needed"} />
+              </div>
+
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
                 <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
@@ -266,11 +348,14 @@ export default async function QuoteRequestsPage() {
                   <div className="flex items-center gap-2">
                     <Bot className="h-4 w-4 text-emerald-600" />
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                      AI pricing note
+                      Pricing note
                     </p>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {request.aiSummary}
+                    {request.pricingNotes}
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-emerald-700">
+                    AI: {request.aiSummary}
                   </p>
                 </div>
               </div>
@@ -298,6 +383,44 @@ function Metric({
         {label}
       </p>
       <p className="mt-0.5 text-sm font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function CommandTile({
+  icon: Icon,
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  detail: string;
+  tone: "amber" | "emerald" | "red" | "sky";
+}) {
+  const toneClass = {
+    amber: "border-amber-100 bg-amber-50 text-amber-950",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950",
+    red: "border-red-100 bg-red-50 text-red-950",
+    sky: "border-sky-100 bg-sky-50 text-sky-950",
+  }[tone];
+
+  return (
+    <div className={cn("rounded-lg border p-4", toneClass)}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.14em] opacity-75">
+            {label}
+          </p>
+          <p className="mt-1 text-2xl font-black tracking-normal">{value}</p>
+        </div>
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-white/70 shadow-sm">
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 opacity-85">{detail}</p>
     </div>
   );
 }

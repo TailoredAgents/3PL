@@ -61,6 +61,11 @@ libraries wherever practical.
   /api/integrations/test + "Test health" buttons on /integrations cards (XAI
   does real minimal ping). Updated views + page. No duplication of
   marketplace. Validation + push passed. Followed all handoff rules.
+- Phase 6.3 completed: Twilio/Resend webhook + voice inbound instrumentation.
+  Added logIntegration (WEBHOOK_RECEIVED) to Resend webhook and key Twilio
+  voice routes (incoming, status callbacks, transcription). Inbound calls,
+  transcripts, and email events now appear in /integrations activity. Updated
+  page notes. Reused 6.2 helper/enum. Validation + push passed. Followed rules.
 
 ## Multi-Agent Handoff Rules
 
@@ -310,7 +315,7 @@ Next: 5.4 for provider adapters when needed.
 
 Goal: make external provider connectivity manageable from inside the app.
 
-Status: 6.2 complete; remaining (full Twilio/Resend/FMCSA instrumentation + inbound reply surfaces, safe retry for failed marketplace actions, DAT/Truckstop payload mapping details, deeper per-provider dashboards) deferred to 6.3+.
+Status: 6.3 complete; remaining (full FMCSA/HERE/EIA logging, safe retry buttons for failed marketplace posts, deeper per-provider dashboards, DAT/Truckstop payload mapping details) deferred to 6.4+.
 
 Build (Phase 6.1 completed): [see prior entry in Current State Log + previous roadmap update]
 
@@ -332,7 +337,25 @@ Completion criteria progress:
 - "Integration failures are visible without checking server logs" is true for xAI in addition to DAT/Truckstop.
 - 6.2 directly delivers on the roadmap's call for "expanded logging (Twilio/Resend/xAI/FMCSA calls)" and "safe retry/test actions".
 
-Next for Phase 6: 6.3+ for Twilio/Resend webhook + voice instrumentation (inbound replies, delivery callbacks), full FMCSA/HERE/EIA logging, safe retry buttons for failed marketplace posts, and any remaining provider-specific surfaces.
+Build (Phase 6.3 completed):
+
+- Instrumented inbound/webhook receivers using the central logIntegration helper (WEBHOOK_RECEIVED action, provider TWILIO/RESEND):
+  - Resend /webhook: logs email events (delivered, bounced, etc.) with externalEventId and type after Activity creation.
+  - Twilio voice/incoming: logs inbound call webhooks (with fromPhone, callSid) after BrokerageCall + Activity.
+  - Twilio voice/outbound/status: logs call status/delivery callbacks.
+  - Twilio voice/transcription: logs transcription received (or failed) for inbound call intelligence.
+- These logs now automatically appear in the /integrations recent cross-provider activity table and in the per-provider "Recent activity" lists for Twilio and Resend cards (last success/failure will reflect webhook health).
+- Updated page text (health summary box and global logs note) to document that Twilio/Resend inbound (calls, transcripts, email events) are now logged.
+- Reuses existing DB work, revalidates, and the enum/helper from 6.2. No changes to Activity model or call/email business logic (no duplication). No new UI beyond the automatic visibility in existing tables.
+- Full validation + commit + push + roadmap update.
+- Followed all handoff rules.
+
+Completion criteria progress:
+- Twilio and Resend webhook/voice instrumentation (inbound replies, delivery callbacks) complete.
+- Inbound events from these providers are now visible in the central Integrations admin page without checking server logs.
+- The /integrations page now shows meaningful recent activity for communication providers when webhooks fire (e.g. customer calls or email deliveries).
+
+Next for Phase 6: 6.4+ for full FMCSA/HERE/EIA logging, safe retry buttons for failed marketplace posts, deeper per-provider dashboards, and any remaining provider-specific surfaces.
 
 ## Phase 7: Customer Portal
 

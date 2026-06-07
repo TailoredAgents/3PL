@@ -98,6 +98,16 @@ export type IntegrationLogView = {
   error: string | null;
   created: string;
 };
+
+export type ProviderStatus = {
+  name: string;
+  envKey?: string;
+  configured: boolean;
+  description: string;
+  lastSuccess?: string | null;
+  lastFailure?: string | null;
+  recentLogs: IntegrationLogView[];
+};
 export type InvoiceView = {
   invoiceNumber?: string | null;
   amount: number;
@@ -3622,6 +3632,95 @@ export type LoadNeedingPayableView = {
 function formatMaybe(d: Date | null | undefined): string | null {
   if (!d) return null;
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+export async function getIntegrationsOverview(): Promise<{
+  providers: ProviderStatus[];
+  totalLogs: number;
+  failureRate: string;
+  recentGlobalLogs: IntegrationLogView[];
+}> {
+  const providersList = [
+    { name: "DAT", envKey: "DAT_API_KEY", description: "Marketplace rates, capacity, load posting" },
+    { name: "TRUCKSTOP", envKey: "TRUCKSTOP_CLIENT_ID", description: "Rates, carrier risk, ELD" },
+    { name: "Twilio", envKey: "TWILIO_ACCOUNT_SID", description: "Voice/SMS automation and callbacks" },
+    { name: "Resend", envKey: "RESEND_API_KEY", description: "Transactional email and webhooks" },
+    { name: "xAI (Grok)", envKey: "XAI_API_KEY", description: "AI agents and reasoning" },
+    { name: "FMCSA", envKey: "FMCSA_WEB_KEY", description: "Carrier authority and safety data" },
+    { name: "HERE", envKey: "HERE_API_KEY", description: "Truck routing and mileage" },
+    { name: "EIA", envKey: "EIA_API_KEY", description: "Diesel price benchmarks" },
+    { name: "CarrierOk", envKey: "CARRIEROK_API_KEY", description: "Carrier risk and vetting" },
+  ];
+
+  if (!hasDatabaseUrl() || !prisma) {
+    return {
+      providers: providersList.map((p) => ({
+        ...p,
+        configured: !!process.env[p.envKey],
+        lastSuccess: null,
+        lastFailure: null,
+        recentLogs: [],
+      })),
+      totalLogs: 0,
+      failureRate: "N/A (no DB)",
+      recentGlobalLogs: [],
+    };
+  }
+
+  const logs = await prisma.integrationLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+
+  const byProvider: Record<string, unknown[]> = {};
+  logs.forEach((log) => {
+    const key = log.provider as string;
+    if (!byProvider[key]) byProvider[key] = [];
+    byProvider[key].push(log);
+  });
+
+  const providers = providersList.map((p) => {
+    const pLogs = (byProvider[p.name] as unknown[]) || [];
+    const lastSuccess = (pLogs.find((l: unknown) => (l as Record<string, unknown>).status === "SUCCESS") as Record<string, unknown> | undefined)?.createdAt as Date | undefined;
+    const lastFailure = (pLogs.find((l: unknown) => (l as Record<string, unknown>).status === "FAILED") as Record<string, unknown> | undefined)?.createdAt as Date | undefined;
+    return {
+      ...p,
+      configured: !!process.env[p.envKey],
+      lastSuccess: lastSuccess ? formatFollowUp(lastSuccess) : null,
+      lastFailure: lastFailure ? formatFollowUp(lastFailure) : null,
+      recentLogs: pLogs.slice(0, 5).map((l: unknown) => {
+        const r = l as Record<string, unknown>;
+        return {
+          id: String(r.id ?? ""),
+          provider: String(r.provider ?? ""),
+          action: String(r.action ?? ""),
+          status: String(r.status ?? ""),
+          message: (r.message as string) ?? "",
+          error: (r.error as string) ?? null,
+          created: formatFollowUp(r.createdAt as Date),
+        };
+      }),
+    };
+  });
+
+  const total = logs.length;
+  const failures = logs.filter((l) => l.status === "FAILED").length;
+  const failureRate = total ? `${Math.round((failures / total) * 100)}%` : "0%";
+
+  const recentGlobalLogs: IntegrationLogView[] = logs.slice(0, 12).map((l: unknown) => {
+    const r = l as Record<string, unknown>;
+    return {
+      id: String(r.id ?? ""),
+      provider: String(r.provider ?? ""),
+      action: String(r.action ?? ""),
+      status: String(r.status ?? ""),
+      message: (r.message as string) ?? "",
+      error: (r.error as string) ?? null,
+      created: formatFollowUp(r.createdAt as Date),
+    };
+  });
+
+  return { providers, totalLogs: total, failureRate, recentGlobalLogs };
 }
 
 export async function getCarrierInvoiceViews(): Promise<CarrierInvoiceView[]> {

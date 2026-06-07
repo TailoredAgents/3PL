@@ -9,6 +9,7 @@ import {
   LineChart,
   MapPinned,
   MessageSquareText,
+  Plug,
   Radar,
   ReceiptText,
   Search,
@@ -70,6 +71,7 @@ export const internalNavGroups = [
   {
     label: "Admin / AI",
     items: [
+      { label: "Integrations", href: "/integrations", icon: Plug },
       { label: "AI Command Center", href: "/agents", icon: Bot },
       { label: "Settings", href: "/settings", icon: Settings },
     ],

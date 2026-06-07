@@ -48,3 +48,6 @@ function hash(value: string) {
 
   return Math.abs(hashValue).toString(36);
 }
+
+export const carrierAuthCookie =
+  process.env.CARRIER_AUTH_COOKIE ?? "atlanta_freight_carrier";

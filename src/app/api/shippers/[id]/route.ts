@@ -17,6 +17,7 @@ export async function PATCH(
     website: formValue(formData, "website"),
     status: formValue(formData, "status"),
     notes: formValue(formData, "notes"),
+    portalEnabled: formValue(formData, "portalEnabled") === "on" || formValue(formData, "portalEnabled") === "true",
   });
 
   if (!parsed.success) {
@@ -47,6 +48,7 @@ export async function PATCH(
       website: nullableString(input.website),
       status: input.status ?? shipper.status,
       notes: nullableString(input.notes),
+      portalEnabled: input.portalEnabled ?? shipper.portalEnabled,
     },
   });
 

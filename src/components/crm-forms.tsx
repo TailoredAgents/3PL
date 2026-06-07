@@ -198,6 +198,7 @@ export function ShipperEditForm({
     website: string;
     status: string;
     notes: string;
+    portalEnabled: boolean;
   };
 }) {
   const { state, onSubmit } = useCrmSubmit(`/api/shippers/${shipperId}`, "PATCH");
@@ -216,6 +217,10 @@ export function ShipperEditForm({
         defaultValue={defaults.status}
       />
       <Textarea name="notes" label="Notes / lane context" defaultValue={defaults.notes} />
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="portalEnabled" defaultChecked={defaults.portalEnabled} className="h-4 w-4" />
+        Enable customer portal access
+      </label>
       <FormFooter state={state} buttonLabel="Save shipper" />
     </form>
   );

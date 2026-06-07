@@ -60,6 +60,7 @@ export default async function ShipperEditPage({
               website: shipper.website ?? "",
               status: shipper.status,
               notes: shipper.notes ?? "",
+              portalEnabled: Boolean((shipper as Record<string, unknown>).portalEnabled),
             }}
           />
         </div>

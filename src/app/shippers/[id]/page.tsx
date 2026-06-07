@@ -87,6 +87,11 @@ export default async function ShipperDetailPage({
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
               {shipper.status}
             </span>
+            {Boolean((shipper as Record<string, unknown>).portalEnabled) && (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                Portal enabled
+              </span>
+            )}
           </div>
           <div className="p-5">
             <p className="text-xs font-medium text-slate-500">{shipper.industry}</p>

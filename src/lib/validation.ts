@@ -443,6 +443,7 @@ export const shipperUpdateSchema = z.object({
   website: z.string().trim().optional(),
   status: z.enum(["LEAD", "ACTIVE", "INACTIVE"]).optional(),
   notes: z.string().trim().optional(),
+  portalEnabled: z.boolean().optional(),
 });
 
 export const contactUpdateSchema = z.object({

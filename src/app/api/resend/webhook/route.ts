@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 
+import { logIntegration } from "@/lib/integrations/logging";
 import { upsertEmailSuppressionFromResendEvent } from "@/lib/email-suppression";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import {
@@ -87,6 +88,14 @@ export async function POST(request: Request) {
   });
 
   await upsertEmailSuppressionFromResendEvent(event, eventId);
+
+  await logIntegration({
+    provider: "RESEND",
+    action: "WEBHOOK_RECEIVED",
+    status: "SUCCESS",
+    externalId: eventId,
+    message: `Resend ${event.type} for email ${emailId}`,
+  });
 
   revalidatePath("/dashboard");
   revalidatePath("/email");

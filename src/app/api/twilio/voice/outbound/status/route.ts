@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { formValue } from "@/lib/server-utils";
+import { logIntegration } from "@/lib/integrations/logging";
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -38,6 +39,14 @@ export async function POST(request: Request) {
             ? "FAILED"
             : "IN_PROGRESS",
     },
+  });
+
+  await logIntegration({
+    provider: "TWILIO",
+    action: "WEBHOOK_RECEIVED",
+    status: ["completed", "failed", "busy", "no-answer", "canceled"].includes(callStatus || "") ? "SUCCESS" : "SUCCESS",
+    externalId: callSid,
+    message: `Call status update: ${callStatus}`,
   });
 
   revalidatePath("/calls");

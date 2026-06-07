@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 export type IntegrationLogInput = {
@@ -36,8 +38,8 @@ export async function logIntegration(input: IntegrationLogInput): Promise<void> 
         status: input.status,
         loadId: input.loadId ?? null,
         quoteRequestId: input.quoteRequestId ?? null,
-        requestJson: input.requestJson ? (JSON.parse(JSON.stringify(input.requestJson)) as any) : undefined,
-        responseJson: input.responseJson ? (JSON.parse(JSON.stringify(input.responseJson)) as any) : undefined,
+        requestJson: input.requestJson ? (JSON.parse(JSON.stringify(input.requestJson)) as Prisma.InputJsonValue) : undefined,
+        responseJson: input.responseJson ? (JSON.parse(JSON.stringify(input.responseJson)) as Prisma.InputJsonValue) : undefined,
         externalId: input.externalId ?? null,
         message: input.message ?? null,
         error: input.error ?? null,

@@ -2,6 +2,7 @@ import { buildInboundCallTwiml } from "@/lib/twilio-voice";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { matchCallerByPhone } from "@/lib/calls";
+import { logIntegration } from "@/lib/integrations/logging";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -53,6 +54,14 @@ export async function POST(request: Request) {
       },
     });
   }
+
+  await logIntegration({
+    provider: "TWILIO",
+    action: "WEBHOOK_RECEIVED",
+    status: "SUCCESS",
+    externalId: callSid,
+    message: `Inbound call from ${fromPhone ?? "unknown"}`,
+  });
 
   return buildInboundCallTwiml(call.id);
 }

@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { logIntegration } from "@/lib/integrations/logging";
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -50,6 +51,14 @@ export async function POST(request: Request) {
       },
     });
   }
+
+  await logIntegration({
+    provider: "TWILIO",
+    action: "WEBHOOK_RECEIVED",
+    status: transcriptionStatus === "completed" ? "SUCCESS" : "FAILED",
+    externalId: callSid,
+    message: transcriptionText ? "Call transcription received" : "Transcription failed or empty",
+  });
 
   revalidatePath("/calls");
   revalidatePath(`/calls/${call.id}`);

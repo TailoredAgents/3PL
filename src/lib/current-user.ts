@@ -108,6 +108,29 @@ export async function requireInternalRole(allowedRoles: InternalRole[]) {
   return user;
 }
 
+export async function guardInternalRole(
+  allowedRoles: InternalRole[],
+  fallbackMessage: string,
+) {
+  try {
+    return {
+      currentUser: await requireInternalRole(allowedRoles),
+      response: null,
+    };
+  } catch (error) {
+    return {
+      currentUser: null,
+      response: Response.json(
+        {
+          error:
+            error instanceof Error ? error.message : fallbackMessage,
+        },
+        { status: 403 },
+      ),
+    };
+  }
+}
+
 async function getBootstrapRole(): Promise<UserRole> {
   if (!prisma) {
     return "SALES";

@@ -1,13 +1,20 @@
 import { revalidatePath } from "next/cache";
 
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
-import { formValue } from "@/lib/server-utils";
+import { formValue, safeFormData } from "@/lib/server-utils";
 import { logIntegration } from "@/lib/integrations/logging";
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const callId = searchParams.get("callId");
-  const formData = await request.formData();
+  const formData = await safeFormData(request);
+  if (!formData) {
+    return Response.json(
+      { error: "Expected Twilio form data." },
+      { status: 400 },
+    );
+  }
+
   const callSid = formValue(formData, "CallSid");
   const callStatus = formValue(formData, "CallStatus");
 

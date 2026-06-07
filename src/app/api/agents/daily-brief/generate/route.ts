@@ -1,6 +1,13 @@
+import { guardInternalRole } from "@/lib/current-user";
 import { generateDailyBrief } from "@/lib/daily-brief";
 
 export async function POST() {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to generate the daily brief.",
+  );
+  if (guard.response) return guard.response;
+
   try {
     const brief = await generateDailyBrief();
 

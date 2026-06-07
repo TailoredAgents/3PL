@@ -1,3 +1,4 @@
+import { guardInternalRole } from "@/lib/current-user";
 import { downloadStoredFile } from "@/lib/storage";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
@@ -5,6 +6,12 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to download internal documents.",
+  );
+  if (guard.response) return guard.response;
+
   const { id } = await context.params;
 
   if (!hasDatabaseUrl() || !prisma) {

@@ -6,7 +6,7 @@ import {
   isFileLike,
   type DocumentRelationInput,
 } from "@/lib/documents";
-import { getCurrentInternalUser } from "@/lib/current-user";
+import { guardInternalRole } from "@/lib/current-user";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { formValue } from "@/lib/server-utils";
 import { documentCreateSchema } from "@/lib/validation";
@@ -19,6 +19,12 @@ type RelatedEntityType =
   | "SAVINGS_AUDIT";
 
 export async function POST(request: Request) {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to upload internal documents.",
+  );
+  if (guard.response) return guard.response;
+
   const formData = await request.formData();
   const rawFile = formData.get("file");
   const uploadedFile = isFileLike(rawFile) ? rawFile : null;
@@ -65,7 +71,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Related record not found." }, { status: 404 });
   }
 
-  const currentUser = await getCurrentInternalUser();
+  const currentUser = guard.currentUser;
   const input = parsed.data;
   const documentData = await buildDocumentCreateData({
     type: input.type as DocumentType,

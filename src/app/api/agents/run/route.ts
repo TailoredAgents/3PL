@@ -1,8 +1,15 @@
 import { runAndLogBrokerageAgent } from "@/lib/agent-workflow";
+import { guardInternalRole } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { aiAgentRunRequestSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to run AI agents.",
+  );
+  if (guard.response) return guard.response;
+
   const formData = await request.formData();
   const parsed = aiAgentRunRequestSchema.safeParse({
     agentName: formValue(formData, "agentName"),

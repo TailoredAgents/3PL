@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 
-import { formValue } from "@/lib/server-utils";
+import { formValue, safeFormData } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { twimlResponse, say, hangup } from "@/lib/twilio-voice";
 
@@ -9,7 +9,14 @@ export async function POST(
 ) {
   const { searchParams } = new URL(request.url);
   const callId = searchParams.get("callId");
-  const formData = await request.formData();
+  const formData = await safeFormData(request);
+  if (!formData) {
+    return Response.json(
+      { error: "Expected Twilio form data." },
+      { status: 400 },
+    );
+  }
+
   const callSid = formValue(formData, "CallSid");
   const recordingSid = formValue(formData, "RecordingSid");
   const recordingUrl = formValue(formData, "RecordingUrl");

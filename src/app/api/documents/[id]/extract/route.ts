@@ -4,6 +4,7 @@ import {
   runDocumentExtraction,
   type DocumentStructuredFields,
 } from "@/lib/documents";
+import { guardInternalRole } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
@@ -11,6 +12,12 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to extract document data.",
+  );
+  if (guard.response) return guard.response;
+
   const { id } = await context.params;
 
   if (!hasDatabaseUrl() || !prisma) {

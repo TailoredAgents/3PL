@@ -1,6 +1,13 @@
+import { guardInternalRole } from "@/lib/current-user";
 import { runPendingDocumentAutomation } from "@/lib/document-automation";
 
 export async function POST() {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS"],
+    "You do not have permission to run document automation.",
+  );
+  if (guard.response) return guard.response;
+
   try {
     const result = await runPendingDocumentAutomation();
 

@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { type DocumentType } from "@prisma/client";
 
 import { buildDocumentCreateData, isFileLike } from "@/lib/documents";
-import { getCurrentInternalUser } from "@/lib/current-user";
+import { guardInternalRole } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { documentCreateSchema } from "@/lib/validation";
@@ -11,6 +11,12 @@ export async function POST(
   request: Request,
   context: RouteContext<"/api/loads/[id]/documents">,
 ) {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to upload load documents.",
+  );
+  if (guard.response) return guard.response;
+
   const { id } = await context.params;
   const formData = await request.formData();
 
@@ -49,7 +55,7 @@ export async function POST(
   }
 
   const input = parsed.data;
-  const currentUser = await getCurrentInternalUser();
+  const currentUser = guard.currentUser;
   await prisma.document.create({
     data: await buildDocumentCreateData({
       type: input.type as DocumentType,
@@ -58,8 +64,8 @@ export async function POST(
       extractedText: input.extractedText,
       uploadedFile,
       relations: {
-      loadId: load.id,
-      shipperId: load.shipperId,
+        loadId: load.id,
+        shipperId: load.shipperId,
         carrierId: load.carrierId,
         quoteRequestId: load.quoteRequestId,
         uploadedByUserId: currentUser?.id ?? null,

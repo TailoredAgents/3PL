@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 
-import { getCurrentInternalUser } from "@/lib/current-user";
+import { guardInternalRole } from "@/lib/current-user";
 import { formValue } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { quoteConvertSchema } from "@/lib/validation";
@@ -9,6 +9,12 @@ export async function POST(
   request: Request,
   context: RouteContext<"/api/quote-requests/[id]/convert-to-load">,
 ) {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to convert quotes to loads.",
+  );
+  if (guard.response) return guard.response;
+
   const { id } = await context.params;
   const formData = await request.formData();
   const parsed = quoteConvertSchema.safeParse({
@@ -48,7 +54,7 @@ export async function POST(
   }
 
   const input = parsed.data;
-  const currentUser = await getCurrentInternalUser();
+  const currentUser = guard.currentUser;
   const carrierRate =
     typeof input.carrierRate === "number" ? input.carrierRate : null;
   const carrier = input.carrierCompanyName

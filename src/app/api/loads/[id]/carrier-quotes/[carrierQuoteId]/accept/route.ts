@@ -1,11 +1,18 @@
 import { revalidatePath } from "next/cache";
 
+import { guardInternalRole } from "@/lib/current-user";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 export async function POST(
   _request: Request,
   context: RouteContext<"/api/loads/[id]/carrier-quotes/[carrierQuoteId]/accept">,
 ) {
+  const guard = await guardInternalRole(
+    ["OWNER", "ADMIN", "OPS", "SALES"],
+    "You do not have permission to accept carrier offers.",
+  );
+  if (guard.response) return guard.response;
+
   const { id, carrierQuoteId } = await context.params;
 
   if (!hasDatabaseUrl() || !prisma) {

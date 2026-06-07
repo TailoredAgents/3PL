@@ -1,11 +1,18 @@
 import { buildInboundCallTwiml } from "@/lib/twilio-voice";
-import { formValue } from "@/lib/server-utils";
+import { formValue, safeFormData } from "@/lib/server-utils";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { matchCallerByPhone } from "@/lib/calls";
 import { logIntegration } from "@/lib/integrations/logging";
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
+  const formData = await safeFormData(request);
+  if (!formData) {
+    return Response.json(
+      { error: "Expected Twilio form data." },
+      { status: 400 },
+    );
+  }
+
   const callSid = formValue(formData, "CallSid");
   const fromPhone = formValue(formData, "From");
   const toPhone = formValue(formData, "To");

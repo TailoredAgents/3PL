@@ -88,6 +88,18 @@ libraries wherever practical.
   rename instead of a risky automatic change. Validation passed locally:
   prisma generate, lint, TypeScript, production build, diff check, and branding
   audit for app/docs/runtime files.
+- Phase 12.2 completed: First high-risk local QA hardening batch. Added a shared
+  `guardInternalRole` helper and applied route-level Clerk role checks to AI
+  agent run/review/retry, daily brief generation, document automation, document
+  upload/extract/download, quote-to-load conversion, load document upload,
+  carrier offer acceptance, and outbound Twilio call initiation. Added
+  `/api/documents` to protected middleware prefixes and protected only the exact
+  outbound Twilio initiation route so Twilio status/recording/transcription/
+  inbound callbacks remain open. Added safe Twilio form parsing so malformed
+  callback posts return controlled 400 responses instead of 500 stack traces.
+  Local password-mode smoke checks passed for protected documents/outbound call
+  routes, login redirect, Twilio form callbacks, and malformed callback
+  handling. Full local validation passed.
 
 ## Multi-Agent Handoff Rules
 
@@ -775,8 +787,9 @@ Completion criteria:
 
 Goal: stabilize the finished product after all major functionality exists.
 
-Status: 12.1 complete. Local QA script and initial hardening audit are complete.
-Manual workflow testing and bug fixing remain.
+Status: 12.2 complete. Local QA script, initial hardening audit, and first
+high-risk API protection batch are complete. Record-based manual workflow
+testing and bug fixing remain.
 
 Build:
 
@@ -787,7 +800,7 @@ Build:
   are deferred unless the team intentionally tests the live service.
 - Verify real environment variables and webhook URLs through local config review
   and provider dashboards where local proof is not possible.
-- Fix all bugs found during workflow testing.
+- In progress: fix all bugs found during workflow testing.
 - In progress: remove stale sample copy where production data should appear.
 - In progress: confirm no prior-company or legacy product-name terminology
   exists anywhere user-facing or in runtime defaults.

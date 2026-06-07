@@ -17,6 +17,14 @@ export function formValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : undefined;
 }
 
+export async function safeFormData(request: Request) {
+  try {
+    return await request.formData();
+  } catch {
+    return null;
+  }
+}
+
 export function checkboxValue(formData: FormData, key: string) {
   return formData.get(key) === "true";
 }

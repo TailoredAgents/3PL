@@ -33,15 +33,20 @@ const protectedPrefixes = [
   "/api/loads",
   "/api/contacts",
   "/api/carrier-invoices",
+  "/api/documents",
   "/api/integrations",
   "/api/lane-quote-templates",
   "/api/lane-margin-rules",
   "/api/settings",
 ];
+const protectedExactPaths = ["/api/twilio/voice/outbound"];
 const protectedRoutePatterns = protectedPrefixes.map(
   (prefix) => `${prefix}(.*)`,
 );
-const isProtectedRoute = createRouteMatcher(protectedRoutePatterns);
+const isProtectedRoute = createRouteMatcher([
+  ...protectedRoutePatterns,
+  ...protectedExactPaths,
+]);
 const clerkConfigured = Boolean(
   process.env.CLERK_SECRET_KEY &&
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
@@ -58,9 +63,11 @@ function passwordProxy(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname;
-  const isProtected = protectedPrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  const isProtected =
+    protectedExactPaths.includes(pathname) ||
+    protectedPrefixes.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    );
 
   if (!isProtected) {
     return NextResponse.next();
@@ -126,10 +133,12 @@ export const config = {
     "/api/loads/:path*",
     "/api/contacts/:path*",
     "/api/carrier-invoices/:path*",
+    "/api/documents/:path*",
     "/api/integrations/:path*",
     "/api/lane-quote-templates/:path*",
     "/api/lane-margin-rules/:path*",
     "/api/settings/:path*",
+    "/api/twilio/voice/outbound",
   ],
 };
 

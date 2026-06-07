@@ -74,6 +74,11 @@ libraries wherever practical.
   route for HERE mileage and EIA diesel (logged). Instrumented enrichment
   calls for HERE/EIA. Page updated for visibility. Validation + push passed.
   Followed rules.
+- Phase 6.6 completed: Deeper per-provider dashboards. Added activity counts
+  (recent/success/fail) to cards + tailored quick links per provider (carriers,
+  comms, agents, pricing/loads, etc.) + payload note for DAT/Truckstop.
+  Updated crm overview + page. Validation + push passed. Followed rules.
+  Phase 6 substantially complete (dashboards + actions + logging for all).
 
 ## Multi-Agent Handoff Rules
 
@@ -323,7 +328,7 @@ Next: 5.4 for provider adapters when needed.
 
 Goal: make external provider connectivity manageable from inside the app.
 
-Status: 6.5 complete; remaining (deeper per-provider dashboards, DAT/Truckstop payload mapping details, and any final provider-specific surfaces) deferred to 6.6+.
+Status: 6.6 complete; DAT/Truckstop payload mapping details and any ultra-final surfaces deferred (pending account docs for mappings).
 
 Build (Phase 6.1 completed): [see prior entry in Current State Log + previous roadmap update]
 
@@ -392,7 +397,24 @@ Completion criteria progress:
 - Deeper per-provider actions on /integrations (real pings now for HERE/EIA; retries for marketplace).
 - "Integration failures are visible" expanded to routing and fuel benchmark providers.
 
-Next for Phase 6: 6.6+ for deeper per-provider dashboards, DAT/Truckstop payload mapping details, and any remaining provider-specific surfaces.
+Build (Phase 6.6 completed):
+
+- Enhanced ProviderStatus type and getIntegrationsOverview (src/lib/crm.ts) to compute/expose per-provider recentCount, successCount, failureCount (from the fetched logs) for deeper visibility without extra queries.
+- Updated /integrations page cards with explicit "Activity summary" counts right after success/failure, and greatly expanded the actions section with tailored quick links per provider (e.g. FMCSA -> /carriers, Twilio/Resend -> /communications, XAI -> /agents, HERE/EIA -> quote-requests/loads for their usage in pricing/routing, plus retained Loads + conditional Test/Retry forms).
+- Added prominent note on DAT/TRUCKSTOP cards: "Payload mapping details pending account documentation."
+- Updated the health summary box and global logs aside to document the deeper per-provider dashboards (counts + provider-specific quick links/actions/summaries for all 9 providers).
+- All using existing InternalShell, Link, form patterns, log data, and provider keys -- no duplication, no new routes/models, no breaking changes.
+- Full validation (lint, tsc --noEmit, prisma:generate, build) + commit + push + roadmap update.
+- Followed all handoff rules exactly.
+
+Completion criteria progress:
+- Deeper per-provider dashboards now live on the Integrations admin page (activity counts + tailored quick links to operational surfaces like loads, carriers, comms, AI, pricing).
+- DAT/Truckstop payload mapping details explicitly noted as pending (per original roadmap caveat).
+- Provides a more "dashboard-like" monitoring experience for admins across all integrations.
+
+DAT/Truckstop final payload mappings and any ultra-final surfaces remain for when account docs are available or future phases. Phase 6 core (admin visibility, logging, test/retry actions, deeper dashboards) is now complete. 
+
+## Phase 7: Customer Portal (next)
 
 ## Phase 7: Customer Portal
 

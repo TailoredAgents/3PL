@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
-import { getCustomerQuoteRequestViews } from "@/lib/crm";
+import { getCustomerQuoteRequestViews, getShipperDetailView } from "@/lib/crm";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const CUSTOMER_COOKIE = "atlanta_freight_customer";
 
@@ -28,6 +30,9 @@ export default async function CustomerPortalPage() {
   });
 
   const myQuotes = shipper?.portalEnabled ? await getCustomerQuoteRequestViews(shipperId) : [];
+  const detail = shipper?.portalEnabled ? await getShipperDetailView(shipperId) : null;
+  const myLoads = detail?.loads || [];
+  const myDocuments = detail?.documents || [];
 
   if (!shipper?.portalEnabled) {
     return (
@@ -89,14 +94,40 @@ export default async function CustomerPortalPage() {
           </div>
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Active Loads &amp; Tracking</h2>
-            <p className="mt-2 text-sm text-slate-600">Track shipments, view PODs and documents.</p>
-            <Link href="/tracking" className="mt-4 inline-block text-sm font-semibold text-emerald-700">Open tracking workspace →</Link>
-            <p className="mt-1 text-xs text-slate-500">Use public tracking links provided by your team for detailed views.</p>
+            {myLoads.filter(l => !['DELIVERED','POD_RECEIVED','INVOICED','PAID'].includes(l.status)).length > 0 ? (
+              <ul className="mt-3 space-y-2 text-sm">
+                {(() => {
+              const active = (myLoads as any[]).filter((l: any) => !['DELIVERED','POD_RECEIVED','INVOICED','PAID'].includes(l.status)).slice(0,3);
+              return active.length > 0 ? (
+                <ul className="mt-3 space-y-2 text-sm">
+                  {active.map((l: any) => (
+                    <li key={l.id} className="border-b pb-1">
+                      <div>{l.lane || `${l.originCity} → ${l.destinationCity}`} | {l.status}</div>
+                      <div className="text-xs text-slate-500">Pickup: {l.pickup || 'TBD'} | Carrier: {l.carrier?.companyName || 'TBD'}</div>
+                      {l.publicTrackingLinks?.length > 0 && <a href={`/track/${l.publicTrackingLinks[0].token}`} className="text-emerald-700 text-xs">Track →</a>}
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="mt-2 text-sm text-slate-600">No active loads.</p>;
+            })()}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">No active loads.</p>
+            )}
+            <p className="mt-2 text-xs text-slate-500">Full tracking and updates via links from your broker or internal team.</p>
           </div>
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Documents &amp; Invoices</h2>
-            <p className="mt-2 text-sm text-slate-600">Access your BOLs, PODs, rate confirmations, and invoices.</p>
-            <Link href="/documents" className="mt-4 inline-block text-sm font-semibold text-emerald-700">View documents →</Link>
+            {myDocuments.length > 0 ? (
+              <ul className="mt-3 space-y-1 text-sm">
+                {myDocuments.slice(0,4).map((d) => (
+                  <li key={(d as any).id} className="text-xs">• {(d as any).type} - {(d as any).fileName} <a href={(d as any).downloadUrl} className="text-emerald-700">download</a></li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">No recent documents.</p>
+            )}
+            <p className="mt-2 text-xs text-slate-500">Invoices and PODs attached to your loads. Contact broker for full access.</p>
           </div>
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Support</h2>

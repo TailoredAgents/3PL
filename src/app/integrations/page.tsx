@@ -35,7 +35,7 @@ export default async function IntegrationsPage() {
         </div>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm col-span-2">
           <p className="text-sm font-semibold text-amber-800">Health summary</p>
-          <p className="mt-1 text-xs text-amber-700">Review per-provider last success/failure below. Use Test health / Retry (for DAT/TRUCKSTOP marketplace) buttons. FMCSA lookups now logged on enrichment.</p>
+          <p className="mt-1 text-xs text-amber-700">Review per-provider last success/failure + activity counts below. Use tailored Test health / Retry / quick links (Loads, Carriers, Communications, AI, etc.). Deeper dashboards added for all providers.</p>
         </div>
       </section>
 
@@ -55,7 +55,7 @@ export default async function IntegrationsPage() {
             <div className="p-5 text-sm">
               <p className="text-xs text-slate-500 mb-3">{provider.description}</p>
 
-              <div className="grid grid-cols-2 gap-4 text-xs mb-4">
+              <div className="grid grid-cols-2 gap-4 text-xs mb-2">
                 <div>
                   <p className="font-semibold text-emerald-700">Last success</p>
                   <p>{provider.lastSuccess ?? "Never"}</p>
@@ -65,6 +65,8 @@ export default async function IntegrationsPage() {
                   <p>{provider.lastFailure ?? "None"}</p>
                 </div>
               </div>
+
+              <p className="text-[10px] text-slate-500 mb-3">Activity summary: {provider.recentCount} recent logs ({provider.successCount} success / {provider.failureCount} failed)</p>
 
               {provider.recentLogs.length > 0 && (
                 <div className="mb-4">
@@ -80,17 +82,22 @@ export default async function IntegrationsPage() {
                 </div>
               )}
 
-              <div className="flex gap-2 mt-1">
-                <Link href="/loads" className="text-xs font-semibold text-emerald-700 hover:underline">View in loads</Link>
+              <div className="flex gap-2 mt-1 flex-wrap">
+                <Link href="/loads" className="text-xs font-semibold text-emerald-700 hover:underline">Loads</Link>
                 {provider.key === "DAT" || provider.key === "TRUCKSTOP" ? (
-                  <Link href="/quote-requests" className="text-xs font-semibold text-emerald-700 hover:underline">Test rates</Link>
+                  <Link href="/quote-requests" className="text-xs font-semibold text-emerald-700 hover:underline">Quote requests & rates</Link>
                 ) : null}
+                {provider.key === "FMCSA" && <Link href="/carriers" className="text-xs font-semibold text-emerald-700 hover:underline">Carriers (compliance)</Link>}
+                {(provider.key === "TWILIO" || provider.key === "RESEND") && <Link href="/communications" className="text-xs font-semibold text-emerald-700 hover:underline">Communications</Link>}
+                {provider.key === "XAI" && <Link href="/agents" className="text-xs font-semibold text-emerald-700 hover:underline">AI Command Center</Link>}
+                {provider.key === "HERE" && <Link href="/quote-requests" className="text-xs font-semibold text-emerald-700 hover:underline">Routing in quotes</Link>}
+                {provider.key === "EIA" && <Link href="/loads" className="text-xs font-semibold text-emerald-700 hover:underline">Fuel in loads</Link>}
                 <form action="/api/integrations/test" method="post" className="inline">
                   <input type="hidden" name="provider" value={provider.key || provider.name} />
                   <button
                     type="submit"
                     className="text-xs font-semibold text-emerald-700 hover:underline"
-                    title={'Run a minimal health check / ping for this provider (result logged)'}
+                    title={'Run a real health check / ping for this provider (result logged)'}
                   >
                     Test health
                   </button>
@@ -127,8 +134,11 @@ export default async function IntegrationsPage() {
                     </form>
                   </>
                 ) : null}
-                <span className="text-xs text-slate-400">(Retries create new logs)</span>
+                <span className="text-xs text-slate-400">(Provider-specific actions)</span>
               </div>
+              { (provider.key === "DAT" || provider.key === "TRUCKSTOP") && (
+                <p className="mt-1 text-[10px] text-amber-600">Payload mapping details pending account documentation.</p>
+              )}
             </div>
           </article>
         ))}
@@ -181,7 +191,7 @@ export default async function IntegrationsPage() {
       {/* Global logs note */}
       <aside className="mt-6 rounded-lg border border-slate-100 bg-white p-5 text-sm text-slate-600">
         <p className="font-semibold">Integration logs</p>
-        <p className="mt-1">DAT/TRUCKSTOP (with retries), xAI, FMCSA/HERE/EIA (via enrichment), Twilio/Resend webhooks now log here. Test health does real pings for HERE/EIA.</p>
+        <p className="mt-1">All providers (DAT/TRUCKSTOP with retries + payload note pending docs, xAI, FMCSA/HERE/EIA via enrichment + real pings, Twilio/Resend webhooks) now have deeper per-card dashboards with tailored quick links and activity summaries.</p>
         <p className="mt-2 text-xs">Webhook endpoints (Twilio voice, Resend) are active at /api/twilio/... and /api/resend/... . Inbound calls, transcriptions, status callbacks, and email events now emit WEBHOOK_RECEIVED logs.</p>
       </aside>
     </InternalShell>

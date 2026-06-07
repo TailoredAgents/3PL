@@ -108,6 +108,9 @@ export type ProviderStatus = {
   lastSuccess?: string | null;
   lastFailure?: string | null;
   recentLogs: IntegrationLogView[];
+  recentCount: number;
+  successCount: number;
+  failureCount: number;
 };
 export type InvoiceView = {
   invoiceNumber?: string | null;
@@ -3664,6 +3667,9 @@ export async function getIntegrationsOverview(): Promise<{
         lastSuccess: null,
         lastFailure: null,
         recentLogs: [],
+        recentCount: 0,
+        successCount: 0,
+        failureCount: 0,
       })),
       totalLogs: 0,
       failureRate: "N/A (no DB)",
@@ -3687,6 +3693,9 @@ export async function getIntegrationsOverview(): Promise<{
     const pLogs = (byProvider[p.key] as unknown[]) || [];
     const lastSuccess = (pLogs.find((l: unknown) => (l as Record<string, unknown>).status === "SUCCESS") as Record<string, unknown> | undefined)?.createdAt as Date | undefined;
     const lastFailure = (pLogs.find((l: unknown) => (l as Record<string, unknown>).status === "FAILED") as Record<string, unknown> | undefined)?.createdAt as Date | undefined;
+    const recentCount = pLogs.length;
+    const successCount = pLogs.filter((l: unknown) => (l as Record<string, unknown>).status === "SUCCESS").length;
+    const failureCount = pLogs.filter((l: unknown) => (l as Record<string, unknown>).status === "FAILED").length;
     return {
       name: p.label,
       key: p.key,
@@ -3707,6 +3716,9 @@ export async function getIntegrationsOverview(): Promise<{
           created: formatFollowUp(r.createdAt as Date),
         };
       }),
+      recentCount,
+      successCount,
+      failureCount,
     };
   });
 

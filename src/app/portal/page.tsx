@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 
+import { getCustomerQuoteRequestViews } from "@/lib/crm";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
 const CUSTOMER_COOKIE = "atlanta_freight_customer";
@@ -25,6 +26,8 @@ export default async function CustomerPortalPage() {
     where: { id: shipperId },
     select: { id: true, companyName: true, portalEnabled: true },
   });
+
+  const myQuotes = shipper?.portalEnabled ? await getCustomerQuoteRequestViews(shipperId) : [];
 
   if (!shipper?.portalEnabled) {
     return (
@@ -51,8 +54,38 @@ export default async function CustomerPortalPage() {
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Your Quotes &amp; Requests</h2>
-            <p className="mt-2 text-sm text-slate-600">View and approve pending quotes. (Full view coming in next update)</p>
-            <Link href="/quote-requests" className="mt-4 inline-block text-sm font-semibold text-emerald-700">Go to quotes →</Link>
+            {myQuotes.length > 0 ? (
+              <ul className="mt-3 space-y-2 text-sm">
+                {myQuotes.slice(0, 5).map((q) => (
+                  <li key={q.id} className="flex justify-between border-b pb-1">
+                    <span>{q.originCity} → {q.destinationCity} ({q.equipment || 'N/A'})</span>
+                    <span className="text-xs px-2 py-0.5 bg-slate-100 rounded">{q.status}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">No quote requests yet.</p>
+            )}
+            <details className="mt-3">
+              <summary className="text-sm font-semibold text-emerald-700 cursor-pointer">Request new quote</summary>
+              <form action="/api/portal/quote-requests" method="post" className="mt-2 grid gap-2 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <input name="originCity" placeholder="Origin city" required className="border p-1 text-xs" />
+                  <input name="originState" placeholder="State" required className="border p-1 text-xs" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input name="destinationCity" placeholder="Dest city" required className="border p-1 text-xs" />
+                  <input name="destinationState" placeholder="State" required className="border p-1 text-xs" />
+                </div>
+                <select name="equipmentType" className="border p-1 text-xs">
+                  <option>Dry Van</option>
+                  <option>Reefer</option>
+                  <option>Flatbed</option>
+                </select>
+                <button type="submit" className="bg-emerald-600 text-white text-xs py-1 rounded">Submit request</button>
+              </form>
+            </details>
+            <Link href="/quote-requests" className="mt-2 inline-block text-xs text-emerald-700">Full quote history →</Link>
           </div>
           <div className="rounded-lg border p-6">
             <h2 className="font-semibold">Active Loads &amp; Tracking</h2>

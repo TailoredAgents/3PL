@@ -1518,6 +1518,32 @@ export async function getQuoteRequestViews(): Promise<QuoteRequestView[]> {
   }
 }
 
+export async function getCustomerQuoteRequestViews(shipperId: string): Promise<QuoteRequestView[]> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return [];
+  }
+
+  try {
+    const records = await prisma.quoteRequest.findMany({
+      where: { shipperId },
+      include: {
+        shipper: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!records.length) {
+      return [];
+    }
+
+    return records.map((request) =>
+      mapQuoteRequest(request, request.shipper.companyName),
+    );
+  } catch {
+    return [];
+  }
+}
+
 export async function getQuoteRequestDetailView(
   id: string,
 ): Promise<QuoteRequestDetailView | null> {

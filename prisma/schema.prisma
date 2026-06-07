@@ -321,6 +321,8 @@ model Shipper {
   audits        SavingsAudit[]
   quoteRequests QuoteRequest[]
   loads         Load[]
+  laneQuoteTemplates LaneQuoteTemplate[]
+  laneMarginRules LaneMarginRule[]
   documents     Document[]
   invoices      Invoice[]
   calls         BrokerageCall[]
@@ -556,6 +558,60 @@ model PricingRecommendation {
   @@index([quoteRequestId])
   @@index([source])
   @@index([createdAt])
+}
+
+model LaneQuoteTemplate {
+  id                  String   @id @default(cuid())
+  name                String
+  shipperId           String?
+  shipper             Shipper? @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  originCity          String
+  originState         String
+  destinationCity     String
+  destinationState    String
+  equipmentType       String
+  targetCarrierCost   Decimal? @db.Decimal(12, 2)
+  customerRate        Decimal? @db.Decimal(12, 2)
+  targetMarginPercent Decimal? @db.Decimal(5, 2)
+  commodity           String?
+  pickupWindow        String?
+  deliveryWindow      String?
+  accessorials        String?
+  notes               String?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([shipperId])
+  @@index([originCity, originState, destinationCity, destinationState])
+  @@index([equipmentType])
+  @@index([active])
+}
+
+model LaneMarginRule {
+  id                  String   @id @default(cuid())
+  name                String
+  shipperId           String?
+  shipper             Shipper? @relation(fields: [shipperId], references: [id], onDelete: Cascade)
+  originCity          String?
+  originState         String?
+  destinationCity     String?
+  destinationState    String?
+  equipmentType       String?
+  urgency             String?
+  targetMarginPercent Decimal  @db.Decimal(5, 2)
+  minimumMarginPercent Decimal? @db.Decimal(5, 2)
+  priority            Int      @default(3)
+  notes               String?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([shipperId])
+  @@index([originCity, originState, destinationCity, destinationState])
+  @@index([equipmentType])
+  @@index([urgency])
+  @@index([active, priority])
 }
 
 model Load {

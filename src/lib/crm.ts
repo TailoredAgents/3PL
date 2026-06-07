@@ -3462,6 +3462,11 @@ export type AnalyticsData = {
     profiles: LaneIntelligenceProfile[];
     opportunities: LaneRevenueOpportunity[];
   };
+  laneRuleManagement: {
+    shippers: { id: string; companyName: string }[];
+    templates: LaneQuoteTemplateView[];
+    rules: LaneMarginRuleView[];
+  };
   topCarriers: { name: string; loads: number; totalGrossProfit: number }[];
   salesFunnel: { stage: string; count: number }[];
   quoteConversion: { status: string; count: number }[];
@@ -3498,6 +3503,31 @@ export type LaneRevenueOpportunity = {
   tone: "amber" | "emerald" | "red" | "sky";
 };
 
+export type LaneQuoteTemplateView = {
+  id: string;
+  name: string;
+  shipper: string;
+  lane: string;
+  equipmentType: string;
+  targetCarrierCost: number | null;
+  customerRate: number | null;
+  targetMarginPercent: number | null;
+  notes: string | null;
+};
+
+export type LaneMarginRuleView = {
+  id: string;
+  name: string;
+  shipper: string;
+  lane: string;
+  equipmentType: string;
+  urgency: string;
+  targetMarginPercent: number;
+  minimumMarginPercent: number | null;
+  priority: number;
+  notes: string | null;
+};
+
 export async function getAnalyticsData(): Promise<AnalyticsData> {
   if (!hasDatabaseUrl() || !prisma) {
     return getSampleAnalyticsData();
@@ -3513,6 +3543,9 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       loadGroups,
       topCarrierLoads,
       quoteRequests,
+      laneQuoteTemplates,
+      laneMarginRules,
+      activeShippers,
       leadGroups,
       quoteGroups,
     ] = await Promise.all([
@@ -3573,6 +3606,24 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         },
         orderBy: { createdAt: "desc" },
         take: 1000,
+      }),
+      prisma.laneQuoteTemplate.findMany({
+        where: { active: true },
+        include: { shipper: { select: { companyName: true } } },
+        orderBy: [{ createdAt: "desc" }],
+        take: 20,
+      }),
+      prisma.laneMarginRule.findMany({
+        where: { active: true },
+        include: { shipper: { select: { companyName: true } } },
+        orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
+        take: 20,
+      }),
+      prisma.shipper.findMany({
+        where: { status: { in: ["LEAD", "ACTIVE"] } },
+        select: { id: true, companyName: true },
+        orderBy: { companyName: "asc" },
+        take: 200,
       }),
       prisma.lead.groupBy({ by: ["stage"], _count: true }),
       prisma.quoteRequest.groupBy({ by: ["status"], _count: true }),
@@ -3646,6 +3697,45 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       .slice(0, 8)
       .map(([name, data]) => ({ name, ...data, totalGrossProfit: data.totalGP }));
     const laneIntelligence = buildLaneIntelligence(allLoads, quoteRequests);
+    const laneRuleManagement = {
+      shippers: activeShippers,
+      templates: laneQuoteTemplates.map((template) => ({
+        id: template.id,
+        name: template.name,
+        shipper: template.shipper?.companyName ?? "Any customer",
+        lane: `${template.originCity}, ${template.originState} -> ${template.destinationCity}, ${template.destinationState}`,
+        equipmentType: template.equipmentType,
+        targetCarrierCost:
+          template.targetCarrierCost === null
+            ? null
+            : Number(template.targetCarrierCost),
+        customerRate:
+          template.customerRate === null ? null : Number(template.customerRate),
+        targetMarginPercent:
+          template.targetMarginPercent === null
+            ? null
+            : Number(template.targetMarginPercent),
+        notes: template.notes,
+      })),
+      rules: laneMarginRules.map((rule) => ({
+        id: rule.id,
+        name: rule.name,
+        shipper: rule.shipper?.companyName ?? "Any customer",
+        lane:
+          rule.originCity && rule.originState && rule.destinationCity && rule.destinationState
+            ? `${rule.originCity}, ${rule.originState} -> ${rule.destinationCity}, ${rule.destinationState}`
+            : "Any lane",
+        equipmentType: rule.equipmentType ?? "Any equipment",
+        urgency: rule.urgency ?? "Any urgency",
+        targetMarginPercent: Number(rule.targetMarginPercent),
+        minimumMarginPercent:
+          rule.minimumMarginPercent === null
+            ? null
+            : Number(rule.minimumMarginPercent),
+        priority: rule.priority,
+        notes: rule.notes,
+      })),
+    };
 
     const statusOrder = [
       "TENDERED",
@@ -3686,6 +3776,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       loadsByStatus,
       topLanes,
       laneIntelligence,
+      laneRuleManagement,
       topCarriers,
       salesFunnel,
       quoteConversion,
@@ -4448,6 +4539,51 @@ function getSampleAnalyticsData(): AnalyticsData {
           detail: "Atlanta, GA -> Dallas, TX has 58% confidence.",
           impact: "Add DAT/Truckstop or manual benchmarks before quoting.",
           tone: "amber",
+        },
+      ],
+    },
+    laneRuleManagement: {
+      shippers: [
+        { id: "sample-shipper-apex", companyName: "Apex Manufacturing" },
+        { id: "sample-shipper-cold", companyName: "Cold Chain Foods" },
+      ],
+      templates: [
+        {
+          id: "sample-template-1",
+          name: "Apex ATL -> Nashville dry van",
+          shipper: "Apex Manufacturing",
+          lane: "Atlanta, GA -> Nashville, TN",
+          equipmentType: "Dry Van",
+          targetCarrierCost: 1975,
+          customerRate: 2450,
+          targetMarginPercent: 19,
+          notes: "Recurring dry van lane. Use short validity during volatile weeks.",
+        },
+      ],
+      rules: [
+        {
+          id: "sample-rule-1",
+          name: "Default dry van margin",
+          shipper: "Any customer",
+          lane: "Any lane",
+          equipmentType: "Dry Van",
+          urgency: "Any urgency",
+          targetMarginPercent: 18,
+          minimumMarginPercent: 15,
+          priority: 3,
+          notes: "Baseline rule for standard dry van quotes.",
+        },
+        {
+          id: "sample-rule-2",
+          name: "Savannah reefer margin floor",
+          shipper: "Cold Chain Foods",
+          lane: "Savannah, GA -> Atlanta, GA",
+          equipmentType: "Reefer",
+          urgency: "Any urgency",
+          targetMarginPercent: 22,
+          minimumMarginPercent: 18,
+          priority: 1,
+          notes: "Protect margin on reefer capacity.",
         },
       ],
     },

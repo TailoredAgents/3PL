@@ -32,6 +32,8 @@ const protectedPrefixes = [
   "/api/contacts",
   "/api/carrier-invoices",
   "/api/integrations",
+  "/api/lane-quote-templates",
+  "/api/lane-margin-rules",
   "/api/settings",
 ];
 const protectedRoutePatterns = protectedPrefixes.map(
@@ -121,6 +123,8 @@ export const config = {
     "/api/contacts/:path*",
     "/api/carrier-invoices/:path*",
     "/api/integrations/:path*",
+    "/api/lane-quote-templates/:path*",
+    "/api/lane-margin-rules/:path*",
     "/api/settings/:path*",
   ],
 };

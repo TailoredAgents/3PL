@@ -544,15 +544,15 @@ Next for Phase 8: 8.3+ for any remaining (e.g. deeper tender details, payment di
 
 Goal: help salespeople quote better and build repeat lanes.
 
-Status: 9.1 complete; lane intelligence is derived from existing quote/load history. Saved quote templates, explicit margin rules, deeper DAT/Truckstop benchmark automation, and expanded sales insights remain for 9.2+.
+Status: 9.1 + 9.2 complete; lane intelligence, saved quote templates, and explicit margin rules are in place. Deeper DAT/Truckstop benchmark automation and expanded sales insights remain for 9.3+.
 
 Build:
 
 - Complete 9.1: add structured lane history derived from quotes/loads inside Analytics.
 - Show customer lane history, carrier lane history, margin history, win/loss,
   seasonality, and quote confidence.
-- Add saved quote templates for recurring lanes.
-- Add target margin rules by customer, lane, equipment, and urgency.
+- Complete 9.2: add saved quote templates for recurring lanes.
+- Complete 9.2: add target margin rules by customer, lane, equipment, and urgency.
 - Add sales opportunity insights: dormant shippers, repeat-lane opportunities,
   underpriced lanes, and customers needing follow-up.
 
@@ -563,6 +563,14 @@ Build (Phase 9.1 completed):
 - Added revenue opportunity detection for underpriced lanes, repeat-lane candidates, benchmark gaps, and carrier coverage gaps.
 - Updated Analytics with lane intelligence summary cards, detailed lane profile table, and opportunity cards.
 - Kept DAT/Truckstop as benchmark inputs when rate benchmark records exist, while leaving live marketplace automation and saved templates for later Phase 9 sub-phases.
+
+Build (Phase 9.2 completed):
+
+- Added persistent LaneQuoteTemplate records for recurring-lane sell/buy targets, target margin, equipment, windows, accessorials, and notes.
+- Added persistent LaneMarginRule records for global/customer/lane/equipment/urgency target margins with minimum margin and priority.
+- Added internal APIs and Analytics management forms for creating templates and rules.
+- Updated Analytics to show active templates and margin rules beside the lane intelligence workspace.
+- Updated system pricing generation so explicit quote margin wins, then best matching margin rule, then matching quote template, then default margin. Matching templates can also provide fallback buy/sell inputs when live market/internal history is missing.
 
 Completion criteria:
 

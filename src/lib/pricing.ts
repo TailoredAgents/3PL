@@ -14,6 +14,8 @@ export type PricingBasis = {
   marginPercent: number;
   riskLevel: string;
   validForHours: number;
+  appliedMarginRule: string | null;
+  appliedQuoteTemplate: string | null;
   summary: string;
 };
 
@@ -55,6 +57,7 @@ export async function buildPricingBasis(
     take: 20,
   });
 
+  const { marginRule, quoteTemplate } = await findLanePricingControls(quote);
   const marketBenchmarkAverage = average(
     quote.rateBenchmarks
       .filter((benchmark) => ["DAT", "TRUCKSTOP"].includes(benchmark.source))
@@ -77,13 +80,34 @@ export async function buildPricingBasis(
     quote.customerQuotes[0]?.quotedRate === undefined
       ? null
       : Number(quote.customerQuotes[0].quotedRate);
+  const templateCarrierCost =
+    quoteTemplate?.targetCarrierCost === null ||
+    quoteTemplate?.targetCarrierCost === undefined
+      ? null
+      : Number(quoteTemplate.targetCarrierCost);
+  const templateCustomerRate =
+    quoteTemplate?.customerRate === null ||
+    quoteTemplate?.customerRate === undefined
+      ? null
+      : Number(quoteTemplate.customerRate);
+  const templateTargetMargin =
+    quoteTemplate?.targetMarginPercent === null ||
+    quoteTemplate?.targetMarginPercent === undefined
+      ? null
+      : Number(quoteTemplate.targetMarginPercent);
   const targetMarginPercent = quote.targetMarginPercent
     ? Number(quote.targetMarginPercent)
-    : 18;
+    : marginRule
+      ? Number(marginRule.targetMarginPercent)
+      : templateTargetMargin ?? 18;
   const buyRate =
     marketBenchmarkAverage ??
     fallbackBenchmarkAverage ??
     internalBuyAverage ??
+    templateCarrierCost ??
+    (templateCustomerRate
+      ? Math.round(templateCustomerRate * (1 - targetMarginPercent / 100))
+      : null) ??
     (latestCustomerQuote ? Math.round(latestCustomerQuote * 0.82) : null);
 
   if (!buyRate) {
@@ -123,14 +147,18 @@ export async function buildPricingBasis(
     marginPercent,
     riskLevel,
     validForHours,
+    appliedMarginRule: marginRule?.name ?? null,
+    appliedQuoteTemplate: quoteTemplate?.name ?? null,
     summary: [
       `Recommended ${formatCurrency(recommendedCustomerRate)} sell rate on ${formatCurrency(recommendedCarrierCost)} target buy.`,
       `Target margin ${targetMarginPercent}%, projected margin ${formatCurrency(projectedGrossProfit)} (${marginPercent}%).`,
+      marginRule ? `Applied margin rule: ${marginRule.name}.` : null,
+      quoteTemplate ? `Matched saved quote template: ${quoteTemplate.name}.` : null,
       marketBenchmarkAverage
         ? "Primary basis: DAT/Truckstop market benchmark."
         : "Primary basis: fallback benchmark/internal history because live market rates are unavailable.",
       `Risk level ${riskLevel.toLowerCase()} based on benchmark count, lane history, urgency, hazmat, and appointments.`,
-    ].join(" "),
+    ].filter(Boolean).join(" "),
   };
 }
 
@@ -164,9 +192,120 @@ export async function createSystemPricingRecommendation(quoteRequestId: string) 
         internalBuyAverage: basis.internalBuyAverage,
         internalSellAverage: basis.internalSellAverage,
         latestCustomerQuote: basis.latestCustomerQuote,
+        appliedMarginRule: basis.appliedMarginRule,
+        appliedQuoteTemplate: basis.appliedQuoteTemplate,
       }),
     },
   });
+}
+
+async function findLanePricingControls(quote: {
+  shipperId: string;
+  originCity: string;
+  originState: string;
+  destinationCity: string;
+  destinationState: string;
+  equipmentType: string;
+  urgency?: string | null;
+}) {
+  const db = prisma;
+  if (!db) {
+    return { marginRule: null, quoteTemplate: null };
+  }
+
+  const [rules, templates] = await Promise.all([
+    db.laneMarginRule.findMany({
+      where: {
+        active: true,
+        OR: [{ shipperId: null }, { shipperId: quote.shipperId }],
+      },
+      orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
+      take: 100,
+    }),
+    db.laneQuoteTemplate.findMany({
+      where: {
+        active: true,
+        originCity: { equals: quote.originCity, mode: "insensitive" },
+        originState: quote.originState,
+        destinationCity: { equals: quote.destinationCity, mode: "insensitive" },
+        destinationState: quote.destinationState,
+        equipmentType: { equals: quote.equipmentType, mode: "insensitive" },
+        OR: [{ shipperId: null }, { shipperId: quote.shipperId }],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+  ]);
+
+  const marginRule = rules
+    .map((rule) => ({ rule, score: scoreMarginRule(rule, quote) }))
+    .filter((item) => item.score >= 0)
+    .sort((a, b) => b.score - a.score || a.rule.priority - b.rule.priority)[0]?.rule ?? null;
+  const quoteTemplate =
+    templates
+      .sort((a, b) => getTemplateScore(b, quote) - getTemplateScore(a, quote))[0] ??
+    null;
+
+  return { marginRule, quoteTemplate };
+}
+
+function scoreMarginRule(
+  rule: {
+    shipperId: string | null;
+    originCity: string | null;
+    originState: string | null;
+    destinationCity: string | null;
+    destinationState: string | null;
+    equipmentType: string | null;
+    urgency: string | null;
+  },
+  quote: {
+    shipperId: string;
+    originCity: string;
+    originState: string;
+    destinationCity: string;
+    destinationState: string;
+    equipmentType: string;
+    urgency?: string | null;
+  },
+) {
+  let score = 0;
+
+  if (!nullableMatch(rule.shipperId, quote.shipperId, true)) return -1;
+  if (!nullableMatch(rule.originCity, quote.originCity)) return -1;
+  if (!nullableMatch(rule.originState, quote.originState, true)) return -1;
+  if (!nullableMatch(rule.destinationCity, quote.destinationCity)) return -1;
+  if (!nullableMatch(rule.destinationState, quote.destinationState, true)) return -1;
+  if (!nullableMatch(rule.equipmentType, quote.equipmentType)) return -1;
+  if (!nullableMatch(rule.urgency, quote.urgency ?? "")) return -1;
+
+  if (rule.shipperId) score += 20;
+  if (rule.originCity && rule.originState && rule.destinationCity && rule.destinationState) {
+    score += 20;
+  }
+  if (rule.equipmentType) score += 10;
+  if (rule.urgency) score += 6;
+
+  return score;
+}
+
+function getTemplateScore(
+  template: { shipperId: string | null },
+  quote: { shipperId: string },
+) {
+  return template.shipperId === quote.shipperId ? 10 : 0;
+}
+
+function nullableMatch(ruleValue: string | null, quoteValue: string, exact = false) {
+  if (!ruleValue) {
+    return true;
+  }
+
+  if (exact) {
+    return ruleValue === quoteValue;
+  }
+
+  return ruleValue.toLowerCase() === quoteValue.toLowerCase();
 }
 
 function average(values: Array<number | null>) {

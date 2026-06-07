@@ -10,6 +10,10 @@ import {
   Users,
 } from "lucide-react";
 
+import {
+  LaneMarginRuleCreateForm,
+  LaneQuoteTemplateCreateForm,
+} from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
 import { getAnalyticsData } from "@/lib/crm";
 
@@ -28,6 +32,7 @@ export default async function AnalyticsPage() {
     loadsByStatus,
     topLanes,
     laneIntelligence,
+    laneRuleManagement,
     topCarriers,
     salesFunnel,
     quoteConversion,
@@ -129,6 +134,91 @@ export default async function AnalyticsPage() {
             </div>
           </article>
         ))}
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <Target className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Saved quote templates</p>
+          </div>
+          <div className="grid gap-5 p-5">
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold text-emerald-700">
+                Add recurring-lane template
+              </summary>
+              <div className="mt-4">
+                <LaneQuoteTemplateCreateForm shipperOptions={laneRuleManagement.shippers} />
+              </div>
+            </details>
+            {laneRuleManagement.templates.length ? (
+              <div className="grid gap-3">
+                {laneRuleManagement.templates.slice(0, 5).map((template) => (
+                  <div key={template.id} className="rounded-md border border-slate-100 bg-slate-50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{template.name}</p>
+                        <p className="mt-1 text-xs text-slate-500">{template.shipper} · {template.lane} · {template.equipmentType}</p>
+                      </div>
+                      <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-700">
+                        {template.targetMarginPercent ?? "No"}% target
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-600">
+                      Buy {template.targetCarrierCost === null ? "TBD" : formatCurrency(template.targetCarrierCost)}
+                      {" / "}
+                      Sell {template.customerRate === null ? "TBD" : formatCurrency(template.customerRate)}
+                    </p>
+                    {template.notes ? <p className="mt-2 text-xs leading-5 text-slate-500">{template.notes}</p> : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState text="No saved quote templates yet." />
+            )}
+          </div>
+        </article>
+
+        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <TrendingUp className="h-4 w-4 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-700">Lane margin rules</p>
+          </div>
+          <div className="grid gap-5 p-5">
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold text-emerald-700">
+                Add margin rule
+              </summary>
+              <div className="mt-4">
+                <LaneMarginRuleCreateForm shipperOptions={laneRuleManagement.shippers} />
+              </div>
+            </details>
+            {laneRuleManagement.rules.length ? (
+              <div className="grid gap-3">
+                {laneRuleManagement.rules.slice(0, 6).map((rule) => (
+                  <div key={rule.id} className="rounded-md border border-slate-100 bg-slate-50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{rule.name}</p>
+                        <p className="mt-1 text-xs text-slate-500">{rule.shipper} · {rule.lane}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{rule.equipmentType} · {rule.urgency}</p>
+                      </div>
+                      <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700">
+                        {rule.targetMarginPercent}% target
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-600">
+                      Minimum {rule.minimumMarginPercent ?? "none"}% · Priority {rule.priority}
+                    </p>
+                    {rule.notes ? <p className="mt-2 text-xs leading-5 text-slate-500">{rule.notes}</p> : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState text="No lane margin rules yet." />
+            )}
+          </div>
+        </article>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">

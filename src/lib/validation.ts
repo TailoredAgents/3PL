@@ -284,6 +284,39 @@ export const pricingRecommendationCreateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+export const laneQuoteTemplateCreateSchema = z.object({
+  name: requiredString,
+  shipperId: z.string().trim().optional(),
+  originCity: requiredString,
+  originState: requiredString,
+  destinationCity: requiredString,
+  destinationState: requiredString,
+  equipmentType: requiredString,
+  targetCarrierCost: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  customerRate: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  targetMarginPercent: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  commodity: z.string().trim().optional(),
+  pickupWindow: z.string().trim().optional(),
+  deliveryWindow: z.string().trim().optional(),
+  accessorials: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export const laneMarginRuleCreateSchema = z.object({
+  name: requiredString,
+  shipperId: z.string().trim().optional(),
+  originCity: z.string().trim().optional(),
+  originState: z.string().trim().optional(),
+  destinationCity: z.string().trim().optional(),
+  destinationState: z.string().trim().optional(),
+  equipmentType: z.string().trim().optional(),
+  urgency: z.string().trim().optional(),
+  targetMarginPercent: z.coerce.number().positive(),
+  minimumMarginPercent: z.coerce.number().nonnegative().optional().or(z.literal("")),
+  priority: z.coerce.number().int().min(1).max(10).default(3),
+  notes: z.string().trim().optional(),
+});
+
 export const marketRateFetchSchema = z.object({
   providers: z
     .array(z.enum(["DAT", "TRUCKSTOP"]))
@@ -410,6 +443,8 @@ export type QuoteStatusUpdateInput = z.infer<typeof quoteStatusUpdateSchema>;
 export type QuoteEmailSendInput = z.infer<typeof quoteEmailSendSchema>;
 export type RateBenchmarkCreateInput = z.infer<typeof rateBenchmarkCreateSchema>;
 export type PricingRecommendationCreateInput = z.infer<typeof pricingRecommendationCreateSchema>;
+export type LaneQuoteTemplateCreateInput = z.infer<typeof laneQuoteTemplateCreateSchema>;
+export type LaneMarginRuleCreateInput = z.infer<typeof laneMarginRuleCreateSchema>;
 export type MarketRateFetchInput = z.infer<typeof marketRateFetchSchema>;
 export type DocumentCreateInput = z.infer<typeof documentCreateSchema>;
 export type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;

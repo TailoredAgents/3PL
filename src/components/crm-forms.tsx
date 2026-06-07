@@ -964,6 +964,77 @@ export function PricingRecommendationGenerateForm({ quoteId }: { quoteId: string
   );
 }
 
+export function LaneQuoteTemplateCreateForm({
+  shipperOptions,
+}: {
+  shipperOptions: { id: string; companyName: string }[];
+}) {
+  const { state, onSubmit } = useCrmSubmit("/api/lane-quote-templates");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field name="name" label="Template name" required placeholder="Apex ATL to Nashville dry van" />
+      <ShipperSelect shipperOptions={shipperOptions} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="originCity" label="Origin city" required />
+        <Field name="originState" label="Origin state" required />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="destinationCity" label="Destination city" required />
+        <Field name="destinationState" label="Destination state" required />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="equipmentType" label="Equipment" required placeholder="Dry Van" />
+        <Field name="targetCarrierCost" label="Target carrier cost" type="number" />
+        <Field name="customerRate" label="Customer rate" type="number" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="targetMarginPercent" label="Target margin %" type="number" />
+        <Field name="pickupWindow" label="Pickup window" />
+        <Field name="deliveryWindow" label="Delivery window" />
+      </div>
+      <Field name="commodity" label="Commodity" />
+      <Textarea name="accessorials" label="Accessorials" rows={2} />
+      <Textarea name="notes" label="Template notes" rows={2} />
+      <FormFooter state={state} buttonLabel="Save template" />
+    </form>
+  );
+}
+
+export function LaneMarginRuleCreateForm({
+  shipperOptions,
+}: {
+  shipperOptions: { id: string; companyName: string }[];
+}) {
+  const { state, onSubmit } = useCrmSubmit("/api/lane-margin-rules");
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field name="name" label="Rule name" required placeholder="Default dry van margin" />
+      <ShipperSelect shipperOptions={shipperOptions} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="originCity" label="Origin city" />
+        <Field name="originState" label="Origin state" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="destinationCity" label="Destination city" />
+        <Field name="destinationState" label="Destination state" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field name="equipmentType" label="Equipment" placeholder="Dry Van" />
+        <Field name="urgency" label="Urgency" placeholder="Same day" />
+        <Field name="priority" label="Priority 1-10" type="number" defaultValue="3" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field name="targetMarginPercent" label="Target margin %" type="number" required />
+        <Field name="minimumMarginPercent" label="Minimum margin %" type="number" />
+      </div>
+      <Textarea name="notes" label="Rule notes" rows={2} />
+      <FormFooter state={state} buttonLabel="Save rule" />
+    </form>
+  );
+}
+
 export function DocumentCreateForm({
   loadId,
   relatedEntityType,
@@ -1014,6 +1085,26 @@ export function DocumentCreateForm({
       <Textarea name="extractedText" label="Notes / extracted text" />
       <FormFooter state={state} buttonLabel="Add document" />
     </form>
+  );
+}
+
+function ShipperSelect({
+  shipperOptions,
+}: {
+  shipperOptions: { id: string; companyName: string }[];
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      Customer scope
+      <select name="shipperId" className={inputClass} defaultValue="">
+        <option value="">Any customer</option>
+        {shipperOptions.map((shipper) => (
+          <option key={shipper.id} value={shipper.id}>
+            {shipper.companyName}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

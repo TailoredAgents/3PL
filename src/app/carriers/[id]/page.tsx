@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ComponentType } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -131,6 +132,12 @@ export default async function CarrierDetailPage({
     { label: "Payment setup", value: carrier.paymentSetup },
     { label: "Callback verified", value: carrier.callbackVerifiedAt },
   ];
+  const complianceFieldGaps = complianceItems.filter((item) => !isFilled(item.value)).length;
+  const callbackReady = isFilled(carrier.callbackVerifiedAt);
+  const scorecardOnTime =
+    carrier.onTimePickupRate === null || carrier.onTimePickupRate === undefined
+      ? "No data"
+      : `${carrier.onTimePickupRate}%`;
 
   return (
     <InternalShell
@@ -163,6 +170,27 @@ export default async function CarrierDetailPage({
                 <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 opacity-85">
                   {tenderDecision.detail}
                 </p>
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  <ReadinessChip
+                    label="Compliance"
+                    value={carrier.complianceStatus}
+                    ready={carrier.complianceStatus === "Approved" && !carrier.blockedReason}
+                  />
+                  <ReadinessChip
+                    label="Onboarding docs"
+                    value={
+                      missingRequiredDocuments.length
+                        ? `${missingRequiredDocuments.length} missing`
+                        : "Complete"
+                    }
+                    ready={!missingRequiredDocuments.length}
+                  />
+                  <ReadinessChip
+                    label="Callback"
+                    value={callbackReady ? "Verified" : "Missing"}
+                    ready={callbackReady}
+                  />
+                </div>
               </div>
             </div>
             <div className="rounded-lg bg-white/70 px-4 py-3 text-sm font-black shadow-sm">
@@ -261,7 +289,7 @@ export default async function CarrierDetailPage({
                 <p className="text-sm font-black text-slate-800">Compliance checklist</p>
               </div>
               <span className="text-xs font-bold text-slate-400">
-                {missingRequiredDocuments.length ? `${missingRequiredDocuments.length} gaps` : "Complete"}
+                {complianceFieldGaps ? `${complianceFieldGaps} open fields` : "Complete"}
               </span>
             </div>
             <div className="grid gap-0 sm:grid-cols-2">
@@ -335,8 +363,12 @@ export default async function CarrierDetailPage({
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-2">
             <ScoreFact label="Loads handled" value={carrier.loads.length.toString()} />
-            <ScoreFact label="On-time proxy" value={carrier.onTimePickupRate === null ? "-" : `${carrier.onTimePickupRate}%`} />
-            <ScoreFact label="Issues / blocks" value={(carrier.issuesCount ?? 0).toString()} valueClassName="text-amber-700" />
+            <ScoreFact label="On-time proxy" value={scorecardOnTime} muted={scorecardOnTime === "No data"} />
+            <ScoreFact
+              label="Issues / blocks"
+              value={(carrier.issuesCount ?? 0).toString()}
+              valueClassName={(carrier.issuesCount ?? 0) > 0 ? "text-amber-700" : "text-slate-950"}
+            />
             <ScoreFact label="Margin handled" value={toCurrency(marginHandled)} />
           </div>
           <p className="border-t border-slate-100 px-5 py-3 text-xs leading-5 text-slate-500">
@@ -400,7 +432,7 @@ function MetricTile({
   label,
   value,
 }: {
-  icon: typeof Truck;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   value: string;
 }) {
@@ -423,7 +455,7 @@ function ContactLine({
   icon: Icon,
   value,
 }: {
-  icon: typeof UserRound;
+  icon: ComponentType<{ className?: string }>;
   value: string;
 }) {
   return (
@@ -438,15 +470,40 @@ function ScoreFact({
   label,
   value,
   valueClassName,
+  muted,
 }: {
   label: string;
   value: string;
   valueClassName?: string;
+  muted?: boolean;
 }) {
   return (
     <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
       <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</p>
-      <p className={cn("mt-2 text-2xl font-black text-slate-950", valueClassName)}>{value}</p>
+      <p className={cn("mt-2 text-2xl font-black text-slate-950", muted ? "text-slate-400" : valueClassName)}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ReadinessChip({
+  label,
+  value,
+  ready,
+}: {
+  label: string;
+  value: string;
+  ready: boolean;
+}) {
+  return (
+    <div className="rounded-md bg-white/70 px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] opacity-60">
+        {label}
+      </p>
+      <p className={cn("mt-1 text-sm font-black", ready ? "text-emerald-800" : "text-amber-800")}>
+        {value}
+      </p>
     </div>
   );
 }

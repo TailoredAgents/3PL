@@ -35,7 +35,7 @@ export default async function IntegrationsPage() {
         </div>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm col-span-2">
           <p className="text-sm font-semibold text-amber-800">Health summary</p>
-          <p className="mt-1 text-xs text-amber-700">Review per-provider last success/failure below. Use Test health buttons for pings. Webhook secrets (Twilio/Resend) now log inbound calls, transcripts, and email events (WEBHOOK_RECEIVED).</p>
+          <p className="mt-1 text-xs text-amber-700">Review per-provider last success/failure below. Use Test health / Retry (for DAT/TRUCKSTOP marketplace) buttons. FMCSA lookups now logged on enrichment.</p>
         </div>
       </section>
 
@@ -95,7 +95,39 @@ export default async function IntegrationsPage() {
                     Test health
                   </button>
                 </form>
-                <span className="text-xs text-slate-400">(Test via flows or the button above)</span>
+                {provider.key === "DAT" || provider.key === "TRUCKSTOP" ? (
+                  <>
+                    <form action="/api/integrations/test" method="post" className="inline flex gap-1 items-center">
+                      <input type="hidden" name="provider" value={provider.key} />
+                      <input type="hidden" name="action" value="retry-capacity" />
+                      <input
+                        type="text"
+                        name="loadId"
+                        placeholder="load id"
+                        className="text-[10px] border px-1 w-20"
+                        required
+                      />
+                      <button type="submit" className="text-xs font-semibold text-emerald-700 hover:underline">
+                        Retry capacity
+                      </button>
+                    </form>
+                    <form action="/api/integrations/test" method="post" className="inline flex gap-1 items-center">
+                      <input type="hidden" name="provider" value={provider.key} />
+                      <input type="hidden" name="action" value="retry-post" />
+                      <input
+                        type="text"
+                        name="loadId"
+                        placeholder="load id"
+                        className="text-[10px] border px-1 w-20"
+                        required
+                      />
+                      <button type="submit" className="text-xs font-semibold text-emerald-700 hover:underline">
+                        Retry post
+                      </button>
+                    </form>
+                  </>
+                ) : null}
+                <span className="text-xs text-slate-400">(Retries create new logs)</span>
               </div>
             </div>
           </article>
@@ -149,8 +181,8 @@ export default async function IntegrationsPage() {
       {/* Global logs note */}
       <aside className="mt-6 rounded-lg border border-slate-100 bg-white p-5 text-sm text-slate-600">
         <p className="font-semibold">Integration logs</p>
-        <p className="mt-1">DAT and TRUCKSTOP marketplace activity writes here via the marketplace workflow. xAI (Grok) agent and document extraction calls are now logged automatically. Use the Test health button on cards to trigger a logged HEALTH_CHECK for supported providers. Per-load logs also appear on individual load pages.</p>
-        <p className="mt-2 text-xs">Webhook endpoints (Twilio voice, Resend) are active at /api/twilio/... and /api/resend/... . Inbound calls, transcriptions, status callbacks, and email events (delivered/bounced) now emit WEBHOOK_RECEIVED logs to IntegrationLog and appear in recent activity.</p>
+        <p className="mt-1">DAT and TRUCKSTOP marketplace activity (including manual retries) writes here via the marketplace workflow. xAI (Grok) agent and document extraction calls are now logged automatically. FMCSA lookups are logged on agent enrichment. Use Test health / Retry buttons on cards.</p>
+        <p className="mt-2 text-xs">Webhook endpoints (Twilio voice, Resend) are active at /api/twilio/... and /api/resend/... . Inbound calls, transcriptions, status callbacks, and email events now emit WEBHOOK_RECEIVED logs.</p>
       </aside>
     </InternalShell>
   );

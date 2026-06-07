@@ -6,6 +6,7 @@ import { getCarrierRiskProfile } from "@/lib/external/carrierok";
 import { getEiaDieselPrice, calcFuelSurcharge } from "@/lib/external/eia";
 import { lookupCarrierByDot, lookupCarrierByMc } from "@/lib/external/fmcsa";
 import { getTruckMileage } from "@/lib/external/here";
+import { logIntegration } from "@/lib/integrations/logging";
 import {
   getTruckstopRateIntelligence,
   getTruckstopCarrierRisk,
@@ -410,6 +411,20 @@ async function enrichCarrierCoverage(
         carrierId ? getCarrierHistory(carrierId) : Promise.resolve(null),
       ]);
 
+      // Log FMCSA result for integrations monitoring
+      const fmcsaRes = fmcsa.status === "fulfilled" ? fmcsa.value : null;
+      if (fmcsaRes) {
+        const hasError = "error" in fmcsaRes && !!fmcsaRes.error;
+        const f = fmcsaRes as any;
+        await logIntegration({
+          provider: "FMCSA",
+          action: "CARRIER_RESPONSE_SYNC",
+          status: hasError ? "FAILED" : fmcsaRes.found ? "SUCCESS" : "SKIPPED",
+          message: fmcsaRes.found ? `FMCSA data for ${f.dotNumber || f.mcNumber || ""}` : "No FMCSA match",
+          error: hasError ? f.error : null,
+        });
+      }
+
       return {
         candidateId: candidate.id,
         companyName: candidate.companyName,
@@ -624,6 +639,15 @@ async function enrichCarrierCompliance(
           ? lookupCarrierByMc(mcNumber)
           : Promise.resolve({ configured: false, found: false as const })
     );
+
+    const fmcsaHasError = "error" in fmcsaResult && !!fmcsaResult.error;
+    await logIntegration({
+      provider: "FMCSA",
+      action: "CARRIER_RESPONSE_SYNC",
+      status: fmcsaHasError ? "FAILED" : fmcsaResult.found ? "SUCCESS" : "SKIPPED",
+      message: fmcsaResult.found ? `FMCSA data for ${fmcsaResult.dotNumber || fmcsaResult.mcNumber || ""}` : "No FMCSA match or not configured",
+      error: fmcsaHasError ? (fmcsaResult as any).error : null,
+    });
 
     if (fmcsaResult.configured && fmcsaResult.found) {
       const snapshot = strip(fmcsaResult);

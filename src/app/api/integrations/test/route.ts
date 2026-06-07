@@ -2,6 +2,10 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { logIntegration } from "@/lib/integrations/logging";
+import {
+  searchAndStoreMarketplaceCapacity,
+  postLoadToMarketplaces,
+} from "@/lib/marketplace/marketplace-workflow";
 
 const xaiApiKey = process.env.XAI_API_KEY;
 const xaiModel = process.env.XAI_MODEL ?? "grok-4.3";
@@ -64,6 +68,36 @@ export async function POST(request: Request) {
         provider: "XAI",
         action: "HEALTH_CHECK",
         status: "FAILED",
+        error: message,
+      });
+    }
+  } else if ((provider === "DAT" || provider === "TRUCKSTOP") && formData.get("action")) {
+    const action = formData.get("action") as string;
+    const loadId = formData.get("loadId") as string | null;
+
+    if (!loadId) {
+      result = { ok: false, message: "loadId is required for marketplace retry" };
+      return NextResponse.json(result);
+    }
+
+    try {
+      if (action === "retry-capacity") {
+        await searchAndStoreMarketplaceCapacity(loadId);
+        result = { ok: true, message: `Retried capacity search for load ${loadId} (new logs created)` };
+      } else if (action === "retry-post") {
+        await postLoadToMarketplaces(loadId);
+        result = { ok: true, message: `Retried load post for load ${loadId} (new logs created)` };
+      } else {
+        result = { ok: false, message: `Unknown action ${action}` };
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "retry failed";
+      result = { ok: false, message, error: message };
+      await logIntegration({
+        provider: provider.toUpperCase(),
+        action: "LOAD_POST", // or CAPACITY_SEARCH, but generic
+        status: "FAILED",
+        loadId,
         error: message,
       });
     }

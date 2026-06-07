@@ -25,6 +25,7 @@ import {
 } from "@/lib/settings";
 
 export { getDailyBriefView } from "@/lib/daily-brief";
+export { getDocumentAutomationView } from "@/lib/document-automation";
 
 export type LeadView = (typeof leads)[number];
 export type ActivityView = (typeof activities)[number];

@@ -26,6 +26,7 @@ import { isClerkAuthConfigured } from "@/lib/auth";
 import {
   getAiCommandCenterView,
   getDailyBriefView,
+  getDocumentAutomationView,
   type AiAgentRunView,
 } from "@/lib/crm";
 import { getCurrentInternalUser } from "@/lib/current-user";
@@ -41,11 +42,18 @@ const CARD_ACCENTS = [
 ] as const;
 
 export default async function AgentsPage() {
-  const [commandCenter, promptTemplates, currentUser, dailyBrief] = await Promise.all([
+  const [
+    commandCenter,
+    promptTemplates,
+    currentUser,
+    dailyBrief,
+    documentAutomation,
+  ] = await Promise.all([
     getAiCommandCenterView(),
     getAgentPromptTemplates(),
     getCurrentInternalUser(),
     getDailyBriefView(),
+    getDocumentAutomationView(),
   ]);
   const clerkEnabled = isClerkAuthConfigured();
   const canManagePrompts =
@@ -135,6 +143,50 @@ export default async function AgentsPage() {
             ))
           ) : (
             <EmptyState message="No daily brief actions are currently flagged." />
+          )}
+        </div>
+      </article>
+
+      {/* Document automation */}
+      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <FileWarning className="h-4 w-4 text-amber-500" />
+            <p className="text-sm font-semibold text-slate-700">Document automation review</p>
+          </div>
+          <Link href="/documents" className="text-xs font-semibold text-emerald-700 hover:underline">
+            Open Documents
+          </Link>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-4">
+          <AutomationMetric label="Pending" value={documentAutomation.pendingCount} />
+          <AutomationMetric label="Needs review" value={documentAutomation.reviewCount} />
+          <AutomationMetric label="Failed" value={documentAutomation.failedCount} />
+          <AutomationMetric label="Completed" value={documentAutomation.completedCount} />
+        </div>
+        <div className="grid gap-3 border-t border-slate-100 p-4 xl:grid-cols-2">
+          {documentAutomation.queue.slice(0, 6).map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{item.fileName}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {item.type} · {item.relatedLabel}
+                  </p>
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${dailyBriefPriorityClass(item.priority)}`}>
+                  {item.priority}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.reason}</p>
+            </Link>
+          ))}
+          {!documentAutomation.queue.length && (
+            <EmptyState message="No document automation exceptions are currently queued." />
           )}
         </div>
       </article>
@@ -447,6 +499,17 @@ function dailyBriefPriorityClass(priority: "High" | "Medium" | "Low") {
   if (priority === "High") return "bg-red-50 text-red-700";
   if (priority === "Medium") return "bg-amber-50 text-amber-700";
   return "bg-slate-100 text-slate-600";
+}
+
+function AutomationMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-slate-100 bg-slate-50 px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-bold text-slate-950">{value}</p>
+    </div>
+  );
 }
 
 function Guardrail({ title, detail }: { title: string; detail: string }) {

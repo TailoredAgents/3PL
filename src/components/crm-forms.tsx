@@ -1640,6 +1640,16 @@ export function DailyBriefGenerateForm() {
   );
 }
 
+export function DocumentAutomationRunForm() {
+  const { state, onSubmit } = useCrmSubmit("/api/documents/automation/run");
+
+  return (
+    <form onSubmit={onSubmit}>
+      <FormFooter state={state} buttonLabel="Run pending extraction" />
+    </form>
+  );
+}
+
 export function AgentModeToggleForm({
   agentName,
   currentMode,

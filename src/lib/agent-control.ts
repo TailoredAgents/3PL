@@ -98,6 +98,19 @@ const policies: Record<BrokerageAgentName, AgentAutomationPolicy> = {
       "Load status updates",
     ],
   },
+  "Document Automation Agent": {
+    riskLevel: "medium",
+    approvalRequired: true,
+    actionSummary:
+      "Runs document extraction and queues human review before operational data changes.",
+    gatedActions: [
+      "Load field updates",
+      "Invoice field updates",
+      "Carrier payable updates",
+      "Billing status changes",
+      "Compliance changes",
+    ],
+  },
 };
 
 export function getAgentAutomationPolicy(

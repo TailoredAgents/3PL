@@ -7,6 +7,7 @@ export const brokerageAgentNames = [
   "Carrier Compliance Agent",
   "Conversation Notes Agent",
   "Daily Brief Agent",
+  "Document Automation Agent",
 ] as const;
 
 export type BrokerageAgentName = (typeof brokerageAgentNames)[number];
@@ -160,6 +161,18 @@ export const defaultBrokerageAgentTemplates: BrokerageAgentTemplate[] = [
       "POD/billing blockers, and AI approvals. Keep each recommended action specific and tied to the provided href.",
     placeholderNextAction:
       "Start with overdue revenue follow-ups, then clear quote/customer update blockers, then review AI approvals.",
+  },
+  {
+    agentName: "Document Automation Agent",
+    systemPrompt:
+      "You are a freight brokerage document automation controller. " +
+      "You review document extraction jobs, structured freight fields, and exception hints. " +
+      "You must preserve the human review gate: never claim that extracted data has updated a load, invoice, payable, billing status, carrier status, or compliance decision.",
+    task:
+      "Summarize the document extraction batch, identify documents needing human review, and recommend the next review order. " +
+      "Prioritize POD/BOL/invoice exceptions, missing BOL/PRO numbers, mismatched pieces/weight/rate hints, failed PDF/OCR items, and low-information extraction results.",
+    placeholderNextAction:
+      "Review failed or exception documents first, then save reviewed fields before any downstream billing or load action.",
   },
 ];
 

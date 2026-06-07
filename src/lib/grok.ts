@@ -595,6 +595,8 @@ export type DocumentStructuredFields = {
   rate?: number | null;
   carrierName?: string | null;
   customerReference?: string | null;
+  extractionConfidence?: number | null;
+  extractionSummary?: string | null;
   exceptions?: string[];
   notes?: string | null;
 };
@@ -685,10 +687,24 @@ ${input.extractedText || "(no prior text extraction)"}`;
       message: `Document structured extraction (${input.documentType})`,
     });
 
+    const confidence = typeof parsed.confidence === "number" ? parsed.confidence : 0.6;
+    const summary = parsed.summary || "Structured fields extracted from document.";
+    const fields = (parsed.fields || {}) as DocumentStructuredFields;
+    const exceptions = Array.isArray(parsed.exceptions)
+      ? parsed.exceptions.filter((item: unknown): item is string => typeof item === "string")
+      : Array.isArray(fields.exceptions)
+        ? fields.exceptions
+        : [];
+
     return {
-      fields: parsed.fields || {},
-      confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.6,
-      summary: parsed.summary || "Structured fields extracted from document.",
+      fields: {
+        ...fields,
+        extractionConfidence: confidence,
+        extractionSummary: summary,
+        exceptions,
+      },
+      confidence,
+      summary,
     };
   } catch (err) {
     await logIntegration({

@@ -598,10 +598,10 @@ Completion criteria:
 
 Goal: automate repetitive work only after the data and workflows are stable.
 
-Status: 10.1-10.3 complete. AI control layer, prompt version history,
+Status: 10.1-10.4 complete. AI control layer, prompt version history,
 run-level approval metadata, rejection controls, Communications AI draft
-suggestions, and generated Daily Brief workflow are in place. Feature-specific
-automation remains for later sub-phases.
+suggestions, generated Daily Brief workflow, and document automation queue are
+in place. Feature-specific automation remains for later sub-phases.
 
 Build:
 
@@ -642,7 +642,28 @@ Build:
   - No outreach, load update, billing action, carrier action, or approval is
     executed automatically; the brief points users back to existing workspaces
     and Phase 10.2 draft tools.
-- Add autonomous document extraction jobs with human review for exceptions.
+- Complete 10.4: add autonomous document extraction jobs with human review for
+  exceptions:
+  - Added `Document Automation Agent` to shared prompt settings, mode controls,
+    and automation policy.
+  - Documents page now has an automation queue with pending, failed, completed,
+    and needs-review counts plus latest batch run status.
+  - Added batch route `/api/documents/automation/run` and "Run pending
+    extraction" action that processes existing Document records through the
+    current `runDocumentExtraction` pipeline.
+  - Text and supported image paths reuse the existing extraction/vision
+    adapters. PDFs that cannot be read are flagged for OCR/PDF provider or
+    manual review.
+  - Exception documents are marked `NEEDS_REVIEW` and keep exception hints in
+    `extractedFields.exceptions`; structured confidence/summary are preserved in
+    extracted fields.
+  - AI Command Center surfaces document automation queue counts and top
+    exceptions.
+  - Every batch creates an `AiAgentRun` with prompt snapshot, prompt version,
+    risk/approval controls, processed/review counts, and gated-action audit
+    detail.
+  - No extracted data is automatically applied to loads, invoices, payables,
+    billing status, carriers, or compliance decisions.
 - Add AI carrier shortlist generation based on compliance, lane history, and
   pricing.
 - Add AI tracking exception triage.
@@ -702,9 +723,8 @@ Completion criteria:
 ## Current Known Technical Debt
 
 - `npm run lint` currently passes as of Phase 10.1 validation.
-- Document storage + extraction foundation complete (Phase 1 + 2.1). Full OCR
-  provider integration, structured BOL/POD/invoice parsing, and autonomous
-  extraction jobs remain for later phases.
+- Document storage + extraction foundation and automation queue are complete.
+  Full PDF OCR/provider integration remains for later hardening.
 - DAT/Truckstop adapters exist, but final account-specific provider mappings are
   still required.
 - Background workers/queues are not yet implemented.

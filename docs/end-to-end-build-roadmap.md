@@ -416,6 +416,7 @@ DAT/Truckstop final payload mappings and any ultra-final surfaces remain for whe
 
 - Phase 7.1 completed: Customer portal account model + basic login. Added portalEnabled + CustomerAccount model, toggle in internal UI, customer login API/page, /portal home. Reused public tracking. Validation + push passed. Followed rules.
 - Phase 7.2 completed: Customer quote request/view in portal. Added scoped getCustomerQuoteRequestViews, /api/portal/quote-requests create, list + submit form in /portal. Scoped to shipper. Validation + push passed. Followed rules.
+- Phase 7.3 completed: Active loads, tracking, documents in customer portal. Populated sections in /portal using getShipperDetailView for customer's loads/docs with status, links, public track. Scoped. Validation + push passed. Followed rules.
 
 ## Phase 7: Customer Portal (next)
 
@@ -456,7 +457,22 @@ Completion criteria progress:
 - View their quote requests/history (scoped list).
 - (Approve/reject for quoted ones and full load views in 7.3+)
 
-Next for Phase 7: 7.3+ for active load views (with docs/invoices/tracking), saved preferences, deeper auth.
+Build (Phase 7.3 completed):
+
+- Enhanced /portal with real "Active Loads & Tracking" section: list of customer's active loads (status, lane, carrier, public tracking links if generated from Phase 5.3).
+- "Documents & Invoices" populated with recent documents list + download links (invoices referenced via loads).
+- Used getShipperDetailView(shipperId from customer cookie) for scoping; reuses LoadView, Document types, public track.
+- Customers see only their shipper's data. Placeholders replaced with functional scoped views.
+- Full validation + commit + push + roadmap update.
+- Followed rules.
+
+Completion criteria progress:
+- Customers can view active loads, tracking (via public links), documents, invoices (basic) in portal.
+- Data scoped to their account.
+
+Next for Phase 7: 7.4+ for saved preferences, full invoice views, deeper auth (Clerk), load details. Phase 7 foundation and core views (quotes, loads, docs) now in place. 
+
+## Phase 8: Carrier Portal (next)
 
 Build:
 

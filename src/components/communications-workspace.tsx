@@ -141,7 +141,7 @@ export function CommunicationsWorkspace({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/25 xl:grid xl:h-[calc(100vh-16rem)] xl:min-h-[640px] xl:max-h-[820px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/25 xl:grid xl:h-[calc(100vh-13rem)] xl:min-h-[720px] xl:max-h-[920px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
       {/* Left — inbox */}
       <aside className="grid max-h-[380px] grid-rows-[auto_minmax(0,1fr)] border-b border-slate-200 bg-slate-50/80 xl:max-h-none xl:min-h-0 xl:border-b-0 xl:border-r">
         <div className="border-b border-slate-200 bg-white px-4 py-3">
@@ -200,7 +200,7 @@ export function CommunicationsWorkspace({
       </aside>
 
       {/* Center — conversation */}
-      <article className="grid h-[calc(100vh-8rem)] min-h-[560px] max-h-[760px] grid-rows-[auto_auto_minmax(160px,1fr)_auto] xl:h-auto xl:min-h-0 xl:max-h-none xl:grid-rows-[auto_auto_minmax(220px,0.8fr)_auto]">
+      <article className="grid h-[calc(100vh-8rem)] min-h-[560px] max-h-[760px] grid-rows-[auto_auto_minmax(140px,1fr)_minmax(230px,auto)] xl:h-auto xl:min-h-0 xl:max-h-none xl:grid-rows-[auto_auto_minmax(180px,1fr)_minmax(250px,auto)]">
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3">
           <div>
             <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export function CommunicationsWorkspace({
           )}
         </div>
 
-        <div className="border-t border-slate-200 bg-white p-4 shadow-[0_-12px_30px_rgba(15,23,42,0.04)]">
+        <div className="min-h-0 overflow-y-auto border-t border-slate-200 bg-white p-4 shadow-[0_-12px_30px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/95">
           <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-bold text-slate-900">

@@ -1,6 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Activity, ArrowLeft, Building2, Mail, Phone, Star, UserRound } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  Mail,
+  Phone,
+  Star,
+  UserRound,
+} from "lucide-react";
 
 import { InternalShell } from "@/components/internal-shell";
 import { ContactEditForm } from "@/components/crm-forms";
@@ -20,6 +31,15 @@ export default async function ContactDetailPage({
     notFound();
   }
 
+  const missingFields = [
+    !contact.email ? "email" : null,
+    !contact.phone ? "phone" : null,
+    !contact.isPrimary ? "primary flag" : null,
+  ].filter(Boolean);
+  const isOutreachReady = Boolean(
+    contact.email && contact.phone && contact.isPrimary,
+  );
+
   return (
     <InternalShell
       active="Shippers"
@@ -35,6 +55,39 @@ export default async function ContactDetailPage({
         <ArrowLeft className="h-4 w-4" />
         Back to {contact.company}
       </Link>
+
+      <section
+        className={`rounded-lg border p-5 shadow-sm ${
+          isOutreachReady
+            ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+            : "border-amber-200 bg-amber-50 text-amber-950"
+        }`}
+      >
+        <div className="flex gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+            {isOutreachReady ? (
+              <CheckCircle2 className="h-5 w-5" />
+            ) : (
+              <AlertTriangle className="h-5 w-5" />
+            )}
+          </span>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] opacity-70">
+              Contact readiness
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight">
+              {isOutreachReady
+                ? "Ready for customer outreach"
+                : "Finish the contact record"}
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 opacity-80">
+              {isOutreachReady
+                ? "This contact has the key fields needed for phone, email, and customer follow-up workflows."
+                : `Add ${missingFields.join(", ")} before relying on automated follow-up or portal communication.`}
+            </p>
+          </div>
+        </div>
+      </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         {/* Contact info */}
@@ -56,27 +109,37 @@ export default async function ContactDetailPage({
               <p className="text-xs font-medium text-slate-500">{contact.title}</p>
             )}
             <div className="mt-4 grid gap-3 text-sm text-slate-700">
-              <div className="flex items-center gap-3">
-                <Building2 className="h-4 w-4 flex-none text-slate-400" />
+              <ContactFact
+                icon={<Building2 className="h-4 w-4 flex-none text-slate-400" />}
+                label="Company"
+              >
                 <Link
                   href={`/shippers/${contact.shipperId}`}
                   className="font-medium hover:text-emerald-700"
                 >
                   {contact.company}
                 </Link>
-              </div>
-              {contact.email && (
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 flex-none text-slate-400" />
-                  <span>{contact.email}</span>
-                </div>
-              )}
-              {contact.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 flex-none text-slate-400" />
-                  <span>{contact.phone}</span>
-                </div>
-              )}
+              </ContactFact>
+              <ContactFact
+                icon={<Mail className="h-4 w-4 flex-none text-slate-400" />}
+                label="Email"
+              >
+                {contact.email || (
+                  <span className="font-semibold text-amber-700">
+                    Email needed
+                  </span>
+                )}
+              </ContactFact>
+              <ContactFact
+                icon={<Phone className="h-4 w-4 flex-none text-slate-400" />}
+                label="Phone"
+              >
+                {contact.phone || (
+                  <span className="font-semibold text-amber-700">
+                    Phone needed
+                  </span>
+                )}
+              </ContactFact>
             </div>
           </div>
         </article>
@@ -157,5 +220,27 @@ export default async function ContactDetailPage({
         </article>
       )}
     </InternalShell>
+  );
+}
+
+function ContactFact({
+  icon,
+  label,
+  children,
+}: {
+  icon: ReactNode;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid gap-1 rounded-md bg-slate-50 px-3 py-2">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <div className="flex items-center gap-3">
+        {icon}
+        <div className="min-w-0 text-slate-700">{children}</div>
+      </div>
+    </div>
   );
 }

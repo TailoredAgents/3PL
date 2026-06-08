@@ -54,9 +54,13 @@ const composerTabs: { id: ComposerMode; label: string; icon: typeof Send }[] = [
 ];
 
 function priorityBadgeClass(priority: string) {
-  if (priority === "High") return "bg-amber-100 text-amber-800";
-  if (priority === "Medium") return "bg-sky-50 text-sky-700";
-  return "bg-slate-100 text-slate-600";
+  if (priority === "High") {
+    return "bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200";
+  }
+  if (priority === "Medium") {
+    return "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200";
+  }
+  return "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200";
 }
 
 export function CommunicationsWorkspace({
@@ -130,7 +134,7 @@ export function CommunicationsWorkspace({
 
   if (!workspace.threads.length || !selectedThread) {
     return (
-      <section className="rounded-lg border border-slate-100 bg-white p-8 text-center shadow-md shadow-slate-950/5">
+      <section className="rounded-lg border border-slate-100 bg-white p-8 text-center shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/25">
         <MessageSquareText className="mx-auto h-8 w-8 text-slate-300" />
         <p className="mt-3 text-sm font-semibold text-slate-600">No conversations yet</p>
         <p className="mt-1 text-sm text-slate-400">
@@ -141,16 +145,16 @@ export function CommunicationsWorkspace({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/25 xl:grid xl:h-[calc(100vh-13rem)] xl:min-h-[720px] xl:max-h-[920px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-2xl dark:shadow-black/30 xl:grid xl:h-[calc(100vh-12rem)] xl:min-h-[760px] xl:max-h-[1100px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
       {/* Left — inbox */}
-      <aside className="grid max-h-[380px] grid-rows-[auto_minmax(0,1fr)] border-b border-slate-200 bg-slate-50/80 xl:max-h-none xl:min-h-0 xl:border-b-0 xl:border-r">
-        <div className="border-b border-slate-200 bg-white px-4 py-3">
+      <aside className="grid max-h-[380px] grid-rows-[auto_minmax(0,1fr)] border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/55 xl:max-h-none xl:min-h-0 xl:border-b-0 xl:border-r">
+        <div className="border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950/75">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <MessageSquareText className="h-4 w-4 text-emerald-600" />
               <p className="text-sm font-bold text-slate-900">Customer inbox</p>
             </div>
-            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {workspace.threads.length}
             </span>
           </div>
@@ -167,8 +171,8 @@ export function CommunicationsWorkspace({
               className={cn(
                 "w-full rounded-lg border p-3 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:hover:border-emerald-700 dark:hover:bg-slate-950",
                 selectedThread.id === thread.id
-                  ? "border-slate-900 bg-white shadow-md shadow-slate-950/10 ring-1 ring-slate-900/5 dark:border-emerald-500 dark:bg-slate-950 dark:ring-emerald-500/20"
-                  : "border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-900",
+                  ? "border-slate-900 bg-white shadow-md shadow-slate-950/10 ring-1 ring-slate-900/5 dark:border-emerald-500/80 dark:bg-emerald-950/20 dark:shadow-black/30 dark:ring-emerald-400/20"
+                  : "border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-900",
               )}
             >
               <div className="flex items-start justify-between gap-2">
@@ -200,8 +204,8 @@ export function CommunicationsWorkspace({
       </aside>
 
       {/* Center — conversation */}
-      <article className="grid h-[calc(100vh-8rem)] min-h-[560px] max-h-[760px] grid-rows-[auto_auto_minmax(140px,1fr)_minmax(230px,auto)] xl:h-auto xl:min-h-0 xl:max-h-none xl:grid-rows-[auto_auto_minmax(180px,1fr)_minmax(250px,auto)]">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3">
+      <article className="grid h-[calc(100vh-8rem)] min-h-[560px] max-h-[760px] grid-rows-[auto_auto_minmax(140px,1fr)_minmax(230px,auto)] bg-white dark:bg-slate-900 xl:h-auto xl:min-h-0 xl:max-h-none xl:grid-rows-[auto_auto_minmax(220px,1fr)_minmax(250px,auto)]">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-950/45">
           <div>
             <div className="flex items-center gap-2">
               <p className="text-lg font-bold text-slate-950">{selectedThread.company}</p>
@@ -215,22 +219,22 @@ export function CommunicationsWorkspace({
           </div>
           <Link
             href={`/leads/${selectedThread.leadId}`}
-            className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-lg shadow-slate-950/15 hover:bg-slate-700"
+            className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-700 dark:bg-slate-950 dark:shadow-black/30 dark:ring-1 dark:ring-slate-800 dark:hover:bg-slate-800"
           >
             Open record <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-3">
+        <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/35">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_270px] lg:items-stretch">
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3">
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 shadow-sm dark:border-emerald-500/45 dark:bg-emerald-950/35 dark:shadow-black/20">
               <div className="flex items-center gap-2">
-                <Bot className="h-4 w-4 text-emerald-700" />
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-800">
+                <Bot className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-800 dark:text-emerald-200">
                   Next best action
                 </p>
               </div>
-              <p className="mt-1 text-sm leading-6 text-emerald-950">
+              <p className="mt-1 text-sm leading-6 text-emerald-950 dark:text-emerald-100">
                 {selectedThread.aiNextAction}
               </p>
             </div>
@@ -242,7 +246,7 @@ export function CommunicationsWorkspace({
           </div>
         </div>
 
-        <div className="min-h-0 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f2_100%)] p-5 dark:bg-[linear-gradient(180deg,#0f172a_0%,#111827_100%)]">
+        <div className="min-h-0 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f2_100%)] p-5 dark:bg-[linear-gradient(180deg,#0f172a_0%,#0b1220_100%)]">
           {selectedThread.messages.length ? (
             [...selectedThread.messages].reverse().map((message) => (
               <div
@@ -250,9 +254,9 @@ export function CommunicationsWorkspace({
                 className={cn(
                   "max-w-[86%] rounded-lg border p-4 shadow-sm",
                   message.direction === "Outbound"
-                    ? "ml-auto border-emerald-100 bg-emerald-50"
+                    ? "ml-auto border-emerald-100 bg-emerald-50 dark:border-emerald-500/45 dark:bg-emerald-950/35"
                     : message.direction === "Inbound"
-                      ? "border-sky-100 bg-sky-50"
+                      ? "border-sky-100 bg-sky-50 dark:border-sky-500/35 dark:bg-sky-950/35"
                     : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950",
                 )}
               >
@@ -272,7 +276,7 @@ export function CommunicationsWorkspace({
                   {message.body}
                 </p>
                 {message.outcome && (
-                  <p className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-white/70 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                  <p className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-white/70 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-950/55 dark:text-slate-300">
                     <CheckCircle2 className="h-3 w-3" />
                     {message.outcome}
                   </p>
@@ -280,7 +284,7 @@ export function CommunicationsWorkspace({
               </div>
             ))
           ) : (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+            <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/60">
               <MessageSquareText className="mx-auto h-8 w-8 text-slate-300" />
               <p className="mt-3 font-semibold text-slate-700">
                 No messages logged yet
@@ -290,7 +294,7 @@ export function CommunicationsWorkspace({
           )}
         </div>
 
-        <div className="min-h-0 overflow-y-auto border-t border-slate-200 bg-white p-4 shadow-[0_-12px_30px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/95">
+        <div className="min-h-0 overflow-y-auto border-t border-slate-200 bg-white p-4 shadow-[0_-12px_30px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-950/55 dark:shadow-[0_-18px_36px_rgba(0,0,0,0.28)]">
           <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-bold text-slate-900">
@@ -309,8 +313,8 @@ export function CommunicationsWorkspace({
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold",
                     composerMode === tab.id
-                      ? "border-slate-900 bg-slate-900 text-white dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-emerald-600 dark:hover:text-emerald-300",
+                      ? "border-slate-900 bg-slate-900 text-white shadow-sm dark:border-emerald-400 dark:bg-emerald-500 dark:text-slate-950 dark:shadow-emerald-950/20"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-300 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300",
                   )}
                 >
                   <tab.icon className="h-3.5 w-3.5" />
@@ -369,10 +373,10 @@ export function CommunicationsWorkspace({
       </article>
 
       {/* Right — context sidebar */}
-      <aside className="min-h-0 overflow-y-auto border-t border-slate-200 bg-slate-50 xl:border-l xl:border-t-0">
+      <aside className="min-h-0 overflow-y-auto border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/40 xl:border-l xl:border-t-0">
         {/* Customer context */}
-        <div className="overflow-hidden rounded-none border-b border-slate-200 bg-white">
-          <div className="border-b border-slate-100 bg-slate-50 px-4 py-4">
+        <div className="overflow-hidden rounded-none border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/70">
+          <div className="border-b border-slate-100 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/35">
             <div className="flex items-center gap-2">
               <AtSign className="h-4 w-4 text-emerald-600" />
               <p className="text-sm font-bold text-slate-900">Customer intelligence</p>
@@ -390,9 +394,9 @@ export function CommunicationsWorkspace({
         </div>
 
         {/* AI actions */}
-        <div className="border-b border-slate-200 p-4">
+        <div className="border-b border-slate-200 p-4 dark:border-slate-800">
           <div className="grid gap-3">
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-emerald-900 shadow-sm">
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-emerald-900 shadow-sm dark:border-emerald-500/45 dark:bg-emerald-950/35 dark:text-emerald-100 dark:shadow-black/20">
               <div className="flex items-center gap-2">
                 <Bot className="h-4 w-4" />
                 <p className="text-xs font-black uppercase tracking-[0.16em]">
@@ -405,7 +409,7 @@ export function CommunicationsWorkspace({
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-black/20">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-slate-600" />
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
@@ -439,14 +443,14 @@ export function CommunicationsWorkspace({
               <p className={cn(
                 "mt-3 rounded-md px-3 py-2 text-xs leading-5",
                 draftState.status === "error"
-                  ? "bg-red-50 text-red-700"
-                  : "bg-emerald-50 text-emerald-800",
+                  ? "bg-red-50 text-red-700 dark:bg-red-950/35 dark:text-red-200"
+                  : "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/35 dark:text-emerald-200",
               )}>
                 {draftState.message}
               </p>
             ) : null}
             {activeDraft ? (
-              <div className="mt-3 rounded-md border border-emerald-100 bg-emerald-50 p-3 text-xs leading-5 text-emerald-950">
+              <div className="mt-3 rounded-md border border-emerald-100 bg-emerald-50 p-3 text-xs leading-5 text-emerald-950 dark:border-emerald-500/40 dark:bg-emerald-950/35 dark:text-emerald-100">
                 <p className="font-semibold">Latest draft</p>
                 <p className="mt-1">{activeDraft.summary}</p>
                 <p className="mt-1 font-semibold">
@@ -456,7 +460,7 @@ export function CommunicationsWorkspace({
               </div>
             ) : null}
             {selectedThread.latestAiDraft ? (
-              <div className="mt-3 rounded-md border border-slate-100 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+              <div className="mt-3 rounded-md border border-slate-100 bg-slate-50 p-3 text-xs leading-5 text-slate-600 dark:border-slate-800 dark:bg-slate-950/70">
                 <p className="font-semibold text-slate-900">Saved AI draft</p>
                 <p className="mt-1">
                   {selectedThread.latestAiDraft.channel} · {selectedThread.latestAiDraft.purpose} · {selectedThread.latestAiDraft.status}
@@ -472,7 +476,7 @@ export function CommunicationsWorkspace({
             ) : null}
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-black/20">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
                 Run agent
               </p>
@@ -489,8 +493,8 @@ export function CommunicationsWorkspace({
         </div>
 
         {/* Sales notes */}
-        <div className="overflow-hidden border-b border-slate-200 bg-white">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
+        <div className="overflow-hidden border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/70">
+          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/35">
             <MessageSquareText className="h-4 w-4 text-slate-500" />
             <p className="text-sm font-bold text-slate-900">Account facts</p>
           </div>
@@ -545,7 +549,7 @@ function ContextFact({ label, value }: { label: string; value: string }) {
 
 function ThreadStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
+    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/65 dark:shadow-black/20">
       <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
         {label}
       </p>
@@ -556,7 +560,7 @@ function ThreadStat({ label, value }: { label: string; value: string }) {
 
 function SidebarFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2">
+    <div className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-950/65">
       <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
         {label}
       </p>
@@ -568,10 +572,16 @@ function SidebarFact({ label, value }: { label: string; value: string }) {
 }
 
 function channelClass(channel: string) {
-  if (channel === "Sms") return "bg-emerald-100 text-emerald-800";
-  if (channel === "Email") return "bg-sky-100 text-sky-800";
-  if (channel === "Call") return "bg-amber-100 text-amber-800";
-  return "bg-slate-100 text-slate-700";
+  if (channel === "Sms") {
+    return "bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200";
+  }
+  if (channel === "Email") {
+    return "bg-sky-100 text-sky-800 dark:bg-sky-400/15 dark:text-sky-200";
+  }
+  if (channel === "Call") {
+    return "bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200";
+  }
+  return "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
 }
 
 function cleanValue(value: string) {

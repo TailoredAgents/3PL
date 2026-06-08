@@ -61,12 +61,18 @@ In Render:
 The Blueprint defines:
 
 ```txt
-Build command: npm ci && npm run prisma:deploy && npm run build
+Build command: npm ci && npm run build
 Start command: npm run start
 Health check: /api/health
 ```
 
-The build command runs database migrations before the production Next.js build.
+The build command installs dependencies and creates the production Next.js
+build. On Render Free, do not run database migrations inside the build command:
+if the database is temporarily unavailable, the deploy fails before the app can
+build. Run `npm run prisma:deploy` manually against the production database when
+the Render Postgres service is reachable, or move it to a Render pre-deploy
+command after upgrading the web service to a plan that supports pre-deploy
+commands.
 
 ## 4. Required Credentials
 

@@ -41,8 +41,10 @@ QA. The remaining work is intentionally pushed to the final launch step:
 ## Current State Log
 
 - 2026-06-06: Phase 0 completed. Lint, TypeScript, and production build all
-  pass. Render blueprint still uses `npm ci && npm run prisma:deploy &&
-  npm run build`, `npm run start`, and `/api/health`.
+  pass. Render blueprint now uses `npm ci && npm run build`, `npm run start`,
+  and `/api/health`; production migrations should run separately when the
+  Render Postgres service is reachable or through a supported pre-deploy
+  command after upgrading from the Free web service plan.
 - 2026-06-06: Phase 1 completed. Documents now have a central register,
   S3/R2-compatible storage metadata, a download route, file size/MIME/source/
   status/extraction fields, and document links on load, shipper, carrier,

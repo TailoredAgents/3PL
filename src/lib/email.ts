@@ -63,7 +63,7 @@ export async function sendTransactionalEmail(
     sent: true,
     provider: "RESEND",
     providerId: payload.id,
-    message: "Quote email sent.",
+    message: "Email sent.",
   };
 }
 

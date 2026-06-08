@@ -34,6 +34,7 @@ import {
   MarketplaceLoadPostForm,
   RateConfirmationGenerateForm,
   RateConfirmationForm,
+  RateConfirmationSendForm,
   ShipmentEventCreateForm,
   LoadExceptionCreateForm,
   LoadExceptionUpdateForm,
@@ -897,6 +898,7 @@ function RateConfirmationWorkspace({
   latestRateConfirmation?: LoadDocumentView;
 }) {
   const readiness = getRateConfirmationReadiness(load, latestRateConfirmation);
+  const sendDraft = buildRateConfirmationSendDraft(load);
   const sentOrSigned = ["Sent", "Signed"].includes(
     load.rateConfirmationStatus ?? "",
   );
@@ -1033,7 +1035,7 @@ function RateConfirmationWorkspace({
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
+        <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
             <div className="mb-3 flex items-center gap-2">
               <FileText className="h-4 w-4 text-emerald-600" />
@@ -1048,6 +1050,27 @@ function RateConfirmationWorkspace({
             </p>
           </div>
 
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Send className="h-4 w-4 text-emerald-600" />
+              <p className="text-sm font-semibold text-slate-800">
+                Send carrier package
+              </p>
+            </div>
+            <RateConfirmationSendForm
+              loadId={load.id}
+              toEmail={load.carrierEmail ?? ""}
+              subject={sendDraft.subject}
+              body={sendDraft.body}
+            />
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              Sending updates the load to Sent only after Resend accepts the
+              email. Local validation logs the attempt without marking it sent.
+            </p>
+          </div>
+        </section>
+
+        <section className="grid gap-4">
           <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
             <div className="mb-3 flex items-center gap-2">
               <Clock className="h-4 w-4 text-slate-500" />
@@ -1158,6 +1181,33 @@ function getRateConfirmationReadiness(
     badgeClass: "bg-red-100 text-red-800",
     panelClass: "border-red-200 bg-red-50 text-red-950",
   };
+}
+
+function buildRateConfirmationSendDraft(load: LoadDetailView) {
+  const subject = `Rate Confirmation - ${load.loadNumber} | ${load.lane}`;
+  const greeting =
+    load.carrierContactName && load.carrierContactName !== "No dispatch contact"
+      ? `Hi ${load.carrierContactName},`
+      : "Hi Dispatch,";
+  const body = [
+    greeting,
+    "",
+    `Please review the attached/linked rate confirmation for ${load.loadNumber}.`,
+    "",
+    `Carrier: ${load.carrier}`,
+    `Lane: ${load.lane}`,
+    `Pickup: ${load.pickup} ${load.pickupWindow ?? ""}`.trim(),
+    `Delivery: ${load.delivery} ${load.deliveryWindow ?? ""}`.trim(),
+    `Equipment: ${load.equipment}`,
+    `Carrier rate: ${load.carrierRate ? toCurrency(load.carrierRate) : "Rate needed"}`,
+    "",
+    "Please review, sign, and reply with the signed confirmation. Report any pickup, delivery, accessorial, or tracking issue before dispatch.",
+    "",
+    "Thank you,",
+    "DAO Logistics",
+  ].join("\n");
+
+  return { subject, body };
 }
 
 function RateConStatusStep({

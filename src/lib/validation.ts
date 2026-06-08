@@ -398,6 +398,12 @@ export const rateConfirmationUpdateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+export const rateConfirmationSendSchema = z.object({
+  toEmail: z.email(),
+  subject: requiredString,
+  body: requiredString,
+});
+
 export const appSettingsSchema = z.object({
   callRecordingDisclosure: requiredString,
 });
@@ -500,6 +506,7 @@ export type CarrierCandidateRequestQuoteInput = z.infer<
 >;
 export type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
 export type RateConfirmationUpdateInput = z.infer<typeof rateConfirmationUpdateSchema>;
+export type RateConfirmationSendInput = z.infer<typeof rateConfirmationSendSchema>;
 export type AiAgentRunRequestInput = z.infer<typeof aiAgentRunRequestSchema>;
 export type AgentPromptTemplateInput = z.infer<
   typeof agentPromptTemplateSchema

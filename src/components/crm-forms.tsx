@@ -1270,6 +1270,31 @@ export function RateConfirmationGenerateForm({ loadId }: { loadId: string }) {
   );
 }
 
+export function RateConfirmationSendForm({
+  loadId,
+  toEmail,
+  subject,
+  body,
+}: {
+  loadId: string;
+  toEmail: string;
+  subject: string;
+  body: string;
+}) {
+  const { state, onSubmit } = useCrmSubmit(
+    `/api/loads/${loadId}/rate-confirmation/send`,
+  );
+
+  return (
+    <form className="grid gap-3" onSubmit={onSubmit}>
+      <Field name="toEmail" label="Carrier dispatch email" defaultValue={toEmail} required />
+      <Field name="subject" label="Subject" defaultValue={subject} required />
+      <Textarea name="body" label="Carrier message" defaultValue={body} rows={7} />
+      <FormFooter state={state} buttonLabel="Send rate confirmation" />
+    </form>
+  );
+}
+
 export function CarrierQuoteCreateForm({ loadId }: { loadId: string }) {
   const { state, onSubmit } = useCrmSubmit(`/api/loads/${loadId}/carrier-quotes`);
 

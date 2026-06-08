@@ -82,7 +82,10 @@ export async function POST(
   const documentUrl = buildPublicUrl(
     `/api/loads/${load.id}/rate-confirmation/print`,
   );
-  const text = `${input.body.trim()}\n\nReview / print rate confirmation:\n${documentUrl}`;
+  const carrierPortalUrl = buildPublicUrl(
+    `/carrier-login?next=${encodeURIComponent("/carrier-portal")}`,
+  );
+  const text = `${input.body.trim()}\n\nReview / print rate confirmation:\n${documentUrl}\n\nSign in to review and sign in the carrier portal:\n${carrierPortalUrl}`;
   const emailResult: SendEmailResult = await sendTransactionalEmail({
     to: input.toEmail,
     subject: input.subject,

@@ -21,12 +21,16 @@ import { InternalShell } from "@/components/internal-shell";
 import {
   getDocumentAutomationView,
   getDocumentCenterViews,
+  getRateConfirmationControlViews,
 } from "@/lib/crm";
 
 export const dynamic = "force-dynamic";
 
 type DocumentCenterItem = Awaited<ReturnType<typeof getDocumentCenterViews>>[number];
 type DocumentAutomationView = Awaited<ReturnType<typeof getDocumentAutomationView>>;
+type RateConfirmationControlItem = Awaited<
+  ReturnType<typeof getRateConfirmationControlViews>
+>[number];
 
 const CARD_ACCENTS = [
   { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
@@ -99,9 +103,10 @@ function getDocumentCommand({
 }
 
 export default async function DocumentsPage() {
-  const [documents, automation] = await Promise.all([
+  const [documents, automation, rateConfirmations] = await Promise.all([
     getDocumentCenterViews(),
     getDocumentAutomationView(),
+    getRateConfirmationControlViews(),
   ]);
   const missingStorage = documents.filter(
     (document) => document.storageState === "Missing storage",
@@ -267,6 +272,8 @@ export default async function DocumentsPage() {
         </div>
       </section>
 
+      <RateConfirmationControl rateConfirmations={rateConfirmations} />
+
       <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
         <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
@@ -341,6 +348,178 @@ export default async function DocumentsPage() {
       </section>
     </InternalShell>
   );
+}
+
+function RateConfirmationControl({
+  rateConfirmations,
+}: {
+  rateConfirmations: RateConfirmationControlItem[];
+}) {
+  const drafted = rateConfirmations.filter(
+    (item) => item.statusKey === "DRAFTED",
+  ).length;
+  const sent = rateConfirmations.filter((item) => item.statusKey === "SENT").length;
+  const signed = rateConfirmations.filter(
+    (item) => item.statusKey === "SIGNED",
+  ).length;
+  const missingDocument = rateConfirmations.filter(
+    (item) => !item.documentFileName,
+  ).length;
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+      <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50">
+            <FileCheck2 className="h-4 w-4 text-emerald-700" />
+          </div>
+          <div>
+            <p className="text-sm font-black text-slate-800">
+              Rate confirmation control
+            </p>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+              Track carrier rate confirmations from the central document desk.
+              Draft and send from the load Documents tab; carriers sign through
+              the carrier portal.
+            </p>
+          </div>
+        </div>
+        <div className="grid w-full gap-2 text-center sm:grid-cols-4 lg:min-w-[360px]">
+          <RateConStat label="Drafted" value={drafted} />
+          <RateConStat label="Sent" value={sent} />
+          <RateConStat label="Signed" value={signed} />
+          <RateConStat label="Needs doc" value={missingDocument} />
+        </div>
+      </div>
+
+      {rateConfirmations.length ? (
+        <div className="grid gap-3 p-4 xl:grid-cols-2">
+          {rateConfirmations.map((item) => (
+            <article
+              key={item.loadId}
+              className="rounded-lg border border-slate-100 bg-slate-50 p-4"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={item.actionHref}
+                      className="text-sm font-black text-slate-950 hover:text-emerald-700"
+                    >
+                      {item.loadNumber}
+                    </Link>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-bold ${rateConStatusClass(
+                        item.statusKey,
+                      )}`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm font-semibold text-slate-700">
+                    {item.shipper} · {item.carrier}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {item.lane}
+                  </p>
+                </div>
+                <p className="text-sm font-black text-slate-900">
+                  {item.carrierRate}
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <RateConField label="Sent" value={item.sentAt} />
+                <RateConField label="Signed" value={item.signedAt} />
+                <RateConField
+                  label="Document"
+                  value={item.documentFileName ?? "Draft needed"}
+                />
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={item.actionHref}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700"
+                >
+                  Open load docs
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+                {item.documentDownloadHref ? (
+                  <Link
+                    href={item.documentDownloadHref}
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Open rate con
+                  </Link>
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="px-5 py-8 text-center">
+          <FileText className="mx-auto h-9 w-9 text-slate-300" />
+          <p className="mt-3 text-sm font-black text-slate-700">
+            No rate confirmations are active yet
+          </p>
+          <p className="mt-1 text-sm text-slate-400">
+            Assign a carrier on a load, then draft and send the rate
+            confirmation from that load&apos;s Documents tab.
+          </p>
+          <Link
+            href="/loads"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700"
+          >
+            Open Load Board
+            <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RateConStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-slate-100 bg-white px-3 py-2 shadow-sm">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-black text-slate-950">{value}</p>
+    </div>
+  );
+}
+
+function RateConField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white px-3 py-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 truncate text-xs font-bold text-slate-700" title={value}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function rateConStatusClass(statusKey: string) {
+  if (statusKey === "SIGNED") {
+    return "bg-emerald-100 text-emerald-800";
+  }
+
+  if (statusKey === "SENT") {
+    return "bg-sky-100 text-sky-800";
+  }
+
+  if (statusKey === "DRAFTED") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  return "bg-slate-100 text-slate-600";
 }
 
 function MetricCard({

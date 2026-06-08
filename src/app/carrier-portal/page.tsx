@@ -48,6 +48,24 @@ export default async function CarrierPortalPage() {
     take: 10,
   });
 
+  const rateConfirmationLoads = await prisma.load.findMany({
+    where: {
+      carrierId,
+      rateConfirmationStatus: { in: ["DRAFTED", "SENT", "SIGNED"] },
+    },
+    include: {
+      shipper: { select: { companyName: true } },
+      documents: {
+        where: { type: "RATE_CONFIRMATION" },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { id: true, fileName: true },
+      },
+    },
+    orderBy: [{ rateConfirmationSentAt: "desc" }, { updatedAt: "desc" }],
+    take: 12,
+  });
+
   // Their recent documents
   const documents = await prisma.document.findMany({
     where: { carrierId },
@@ -89,6 +107,141 @@ export default async function CarrierPortalPage() {
           </div>
           <Link href="/carrier-login" className="text-sm underline">Switch account</Link>
         </div>
+
+        <section className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-950">
+                Rate Confirmations
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Review the broker-issued rate confirmation, then sign here so
+                the broker can move the load forward.
+              </p>
+            </div>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">
+              {rateConfirmationLoads.length} active
+            </span>
+          </div>
+
+          {rateConfirmationLoads.length ? (
+            <div className="mt-4 grid gap-4">
+              {rateConfirmationLoads.map((load) => {
+                const document = load.documents[0];
+                const signed = load.rateConfirmationStatus === "SIGNED";
+
+                return (
+                  <article
+                    key={load.id}
+                    className="rounded-lg border border-slate-200 bg-white p-4"
+                  >
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-bold text-slate-950">
+                            {formatLoadNumber(load.loadNumber)}
+                          </p>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-bold ${rateConfirmationStatusClass(
+                              load.rateConfirmationStatus,
+                            )}`}
+                          >
+                            {formatStatus(load.rateConfirmationStatus)}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-700">
+                          {load.shipper.companyName} • {load.originCity} →{" "}
+                          {load.destinationCity}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Carrier rate:{" "}
+                          {load.carrierRate
+                            ? formatCurrency(Number(load.carrierRate))
+                            : "Rate pending"}{" "}
+                          • Sent{" "}
+                          {load.rateConfirmationSentAt
+                            ? formatDateTime(load.rateConfirmationSentAt)
+                            : "not yet"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {document
+                            ? document.fileName
+                            : "The broker still needs to generate the rate confirmation document."}
+                        </p>
+                      </div>
+                      {document ? (
+                        <Link
+                          href={`/api/loads/${load.id}/rate-confirmation/print`}
+                          target="_blank"
+                          className="w-fit rounded bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700"
+                        >
+                          Open rate con
+                        </Link>
+                      ) : null}
+                    </div>
+
+                    {signed ? (
+                      <p className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+                        Signed{" "}
+                        {load.rateConfirmationSignedAt
+                          ? formatDateTime(load.rateConfirmationSignedAt)
+                          : "and returned to the broker"}.
+                      </p>
+                    ) : document ? (
+                      <form
+                        action={`/api/carrier-portal/rate-confirmations/${load.id}/sign`}
+                        method="post"
+                        className="mt-4 grid gap-3 border-t border-slate-100 pt-4 text-sm"
+                      >
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="grid gap-1 font-semibold text-slate-700">
+                            Signer name
+                            <input
+                              name="signerName"
+                              required
+                              placeholder="Full name"
+                              className="rounded border border-slate-200 p-2 font-normal"
+                            />
+                          </label>
+                          <label className="grid gap-1 font-semibold text-slate-700">
+                            Title
+                            <input
+                              name="signerTitle"
+                              required
+                              placeholder="Dispatcher, owner, etc."
+                              className="rounded border border-slate-200 p-2 font-normal"
+                            />
+                          </label>
+                        </div>
+                        <label className="flex gap-2 rounded-md bg-slate-50 p-3 text-xs font-semibold leading-5 text-slate-600">
+                          <input
+                            type="checkbox"
+                            name="signatureConsent"
+                            value="on"
+                            required
+                            className="mt-1"
+                          />
+                          I confirm I am authorized to sign for this carrier
+                          and accept the rate confirmation terms for this load.
+                        </label>
+                        <button
+                          type="submit"
+                          className="w-fit rounded bg-emerald-600 px-4 py-2 font-bold text-white hover:bg-emerald-700"
+                        >
+                          Sign rate confirmation
+                        </button>
+                      </form>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-4 rounded-md bg-white px-4 py-3 text-sm text-slate-600">
+              No rate confirmations are waiting for your carrier account.
+            </p>
+          )}
+        </section>
 
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           {/* Document Submission */}
@@ -219,4 +372,45 @@ export default async function CarrierPortalPage() {
       </div>
     </main>
   );
+}
+
+function formatLoadNumber(loadNumber: number | null) {
+  return `LD-${String(loadNumber ?? "").padStart(4, "0")}`;
+}
+
+function formatStatus(status: string) {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatDateTime(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(value);
+}
+
+function rateConfirmationStatusClass(status: string) {
+  if (status === "SIGNED") {
+    return "bg-emerald-100 text-emerald-800";
+  }
+
+  if (status === "SENT") {
+    return "bg-sky-100 text-sky-800";
+  }
+
+  return "bg-amber-100 text-amber-800";
 }

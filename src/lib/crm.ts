@@ -104,6 +104,21 @@ export type DocumentCenterView = LoadDocumentView & {
   shipper: string;
   uploadedBy: string;
 };
+export type RateConfirmationControlView = {
+  loadId: string;
+  loadNumber: string;
+  shipper: string;
+  carrier: string;
+  lane: string;
+  status: string;
+  statusKey: string;
+  sentAt: string;
+  signedAt: string;
+  carrierRate: string;
+  documentFileName: string | null;
+  documentDownloadHref: string | null;
+  actionHref: string;
+};
 export type IntegrationLogView = {
   id: string;
   provider: string;
@@ -2673,6 +2688,68 @@ export async function getDocumentCenterViews(): Promise<DocumentCenterView[]> {
   }
 }
 
+export async function getRateConfirmationControlViews(): Promise<
+  RateConfirmationControlView[]
+> {
+  if (!hasDatabaseUrl() || !prisma) {
+    return [];
+  }
+
+  try {
+    const loads = await prisma.load.findMany({
+      where: {
+        OR: [
+          { rateConfirmationStatus: { not: "NOT_STARTED" } },
+          { carrierId: { not: null } },
+          { documents: { some: { type: "RATE_CONFIRMATION" } } },
+        ],
+      },
+      include: {
+        shipper: { select: { companyName: true } },
+        carrier: { select: { companyName: true } },
+        documents: {
+          where: { type: "RATE_CONFIRMATION" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    });
+
+    return loads.map((load) => {
+      const latestDocument = load.documents[0]
+        ? mapDocumentSummary(load.documents[0])
+        : null;
+
+      return {
+        loadId: load.id,
+        loadNumber: `LD-${String(load.loadNumber).padStart(4, "0")}`,
+        shipper: load.shipper.companyName,
+        carrier: load.carrier?.companyName ?? "Carrier not assigned",
+        lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
+        status: titleCaseEnum(load.rateConfirmationStatus),
+        statusKey: load.rateConfirmationStatus,
+        sentAt: load.rateConfirmationSentAt
+          ? formatFollowUp(load.rateConfirmationSentAt)
+          : "Not sent",
+        signedAt: load.rateConfirmationSignedAt
+          ? formatFollowUp(load.rateConfirmationSignedAt)
+          : "Not signed",
+        carrierRate:
+          load.carrierRate === null || load.carrierRate === undefined
+            ? "Carrier rate needed"
+            : formatMoney(Number(load.carrierRate)),
+        documentFileName: latestDocument?.fileName ?? null,
+        documentDownloadHref: latestDocument?.downloadHref ?? null,
+        actionHref: `/loads/${load.id}?tab=documents`,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 export async function getRecentAiAgentRunViews(): Promise<AiAgentRunView[]> {
   if (!hasDatabaseUrl() || !prisma) {
     return getSampleAiAgentRunViews();
@@ -3231,6 +3308,14 @@ function formatDate(date: Date) {
 
 function formatDateInput(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 function formatFollowUp(date: Date) {

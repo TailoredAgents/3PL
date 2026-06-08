@@ -191,7 +191,7 @@ export default async function DashboardPage() {
             <Link
               key={card.label}
               href={card.href}
-              className={`group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/10 ${accent.border}`}
+              className={`group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/10 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20 dark:hover:border-slate-700 dark:hover:bg-slate-900 ${accent.border}`}
             >
               <div className="p-5">
                 <div className="flex items-start justify-between gap-4">
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -258,7 +258,7 @@ export default async function DashboardPage() {
                         {priority.value}
                       </p>
                     </div>
-                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-white/70 shadow-sm">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-white/70 shadow-sm dark:bg-slate-950/60 dark:shadow-black/20">
                       <Icon className="h-4 w-4" />
                     </span>
                   </div>
@@ -273,7 +273,7 @@ export default async function DashboardPage() {
 
         <article
           id="ai"
-          className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5"
+          className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -317,7 +317,7 @@ export default async function DashboardPage() {
                 />
               ))
             ) : (
-              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-950/60 dark:text-slate-400">
                 No daily brief actions are currently flagged.
               </p>
             )}
@@ -326,10 +326,10 @@ export default async function DashboardPage() {
       </section>
 
       {staleAlerts.length > 0 && (
-        <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm">
+        <section className="rounded-lg border border-red-200 bg-red-50 p-5 shadow-sm dark:border-red-500/50 dark:bg-red-950/20 dark:shadow-lg dark:shadow-red-950/10">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 dark:bg-red-500/15">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </div>
               <div>
@@ -354,7 +354,7 @@ export default async function DashboardPage() {
               <Link
                 key={alert.id}
                 href={`/loads/${alert.id}`}
-                className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-md border border-red-200 bg-white px-4 py-3 hover:-translate-y-0.5 hover:shadow-md"
+                className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-md border border-red-200 bg-white px-4 py-3 hover:-translate-y-0.5 hover:shadow-md dark:border-red-500/40 dark:bg-slate-950/70 dark:hover:border-red-400/70 dark:hover:bg-red-950/20"
               >
                 <div className="grid gap-1 sm:grid-cols-[auto_1fr_1fr_1fr] sm:items-center sm:gap-4">
                   <div className="flex items-center gap-2">
@@ -380,7 +380,7 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+      <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -416,7 +416,7 @@ export default async function DashboardPage() {
                     {opportunity.entity}
                   </p>
                 </div>
-                <div className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-white/70">
+                <div className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-white/70 dark:bg-slate-950/60">
                   <Target className="h-4 w-4" />
                 </div>
               </div>
@@ -432,7 +432,7 @@ export default async function DashboardPage() {
 
       {/* Pipeline health + schedule */}
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -448,7 +448,7 @@ export default async function DashboardPage() {
             {metrics.leadPipeline.map((stage) => {
               const pct = Math.round((stage.count / maxPipelineCount) * 100);
               return (
-                <div key={stage.stage} className="rounded-md bg-slate-50 px-4 py-3">
+                <div key={stage.stage} className="rounded-md bg-slate-50 px-4 py-3 dark:bg-slate-950/45">
                   <div className="flex items-center justify-between gap-4">
                     <p className="text-sm font-semibold text-slate-800">
                       {stage.stage}
@@ -469,7 +469,7 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <article className="rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <article className="rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
           <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -488,7 +488,7 @@ export default async function DashboardPage() {
               </span>
             </div>
           </div>
-          <div className="grid gap-0 lg:grid-cols-2 lg:divide-x lg:divide-slate-100">
+          <div className="grid gap-0 lg:grid-cols-2 lg:divide-x lg:divide-slate-100 dark:lg:divide-slate-800">
             <div className="p-6">
               <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                 <Truck className="h-3.5 w-3.5 text-emerald-500" />
@@ -501,12 +501,12 @@ export default async function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-950/45 dark:text-slate-400">
                   No pickups scheduled today.
                 </p>
               )}
             </div>
-            <div className="border-t border-slate-100 p-6 lg:border-t-0">
+            <div className="border-t border-slate-100 p-6 dark:border-slate-800 lg:border-t-0">
               <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                 <Package className="h-3.5 w-3.5 text-emerald-500" />
                 Deliveries
@@ -518,7 +518,7 @@ export default async function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-950/45 dark:text-slate-400">
                   No deliveries scheduled today.
                 </p>
               )}
@@ -528,7 +528,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* Agent run log */}
-      <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+      <section className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
@@ -549,7 +549,7 @@ export default async function DashboardPage() {
               <Link
                 key={run.id}
                 href={getAgentRunHref(run.relatedEntityType, run.relatedEntityId)}
-                className="grid gap-4 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md lg:grid-cols-[220px_1fr_auto]"
+                className="grid gap-4 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/45 dark:hover:border-emerald-700 dark:hover:bg-slate-950 lg:grid-cols-[220px_1fr_auto]"
               >
                 <div>
                   <p className="font-semibold">{run.agentName}</p>
@@ -576,7 +576,7 @@ export default async function DashboardPage() {
               </Link>
             ))
           ) : (
-            <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-950/45 dark:text-slate-400">
               No agent runs yet — open a lead, quote, load, or carrier to run an agent.
             </p>
           )}
@@ -586,7 +586,7 @@ export default async function DashboardPage() {
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <article
           id="queues"
-          className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5"
+          className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20"
         >
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
             Open work queues
@@ -601,9 +601,9 @@ export default async function DashboardPage() {
                 <Link
                   key={queue.href}
                   href={queue.href}
-                  className="flex items-start gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+                  className="flex items-start gap-3 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/45 dark:hover:border-emerald-700 dark:hover:bg-slate-950"
                 >
-                  <div className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-md bg-white shadow-sm">
+                  <div className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-md bg-white shadow-sm dark:bg-slate-900 dark:shadow-black/20">
                     <Icon className="h-4 w-4 text-slate-600" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -619,7 +619,7 @@ export default async function DashboardPage() {
               );
             })}
           </div>
-          <div className="mt-4 rounded-md border border-amber-100 bg-amber-50 p-4">
+          <div className="mt-4 rounded-md border border-amber-100 bg-amber-50 p-4 dark:border-amber-500/40 dark:bg-amber-950/20">
             <div className="flex gap-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-amber-600" />
               <div>
@@ -635,7 +635,7 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5">
+        <article className="rounded-lg border border-slate-100 bg-white p-6 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
             Operating discipline
           </p>
@@ -652,7 +652,7 @@ export default async function DashboardPage() {
             ].map((item, i) => (
               <div
                 key={item}
-                className="flex items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
+                className="flex items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/45"
               >
                 <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
                   {i + 1}
@@ -677,7 +677,7 @@ function DailyBriefActionCard({
   return (
     <Link
       href={action.href}
-      className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+      className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/45 dark:hover:border-emerald-700 dark:hover:bg-slate-950"
     >
       <div className="flex items-start gap-3">
         <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
@@ -717,11 +717,11 @@ function priorityToneClass(
   tone: "amber" | "emerald" | "red" | "sky" | "slate",
 ) {
   const map = {
-    amber: "border-amber-100 bg-amber-50 text-amber-950",
-    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950",
-    red: "border-red-100 bg-red-50 text-red-950",
-    sky: "border-sky-100 bg-sky-50 text-sky-950",
-    slate: "border-slate-100 bg-slate-50 text-slate-800",
+    amber: "border-amber-100 bg-amber-50 text-amber-950 dark:border-amber-500/45 dark:bg-amber-950/20 dark:text-amber-100",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950 dark:border-emerald-500/45 dark:bg-emerald-950/25 dark:text-emerald-100",
+    red: "border-red-100 bg-red-50 text-red-950 dark:border-red-500/50 dark:bg-red-950/25 dark:text-red-100",
+    sky: "border-sky-100 bg-sky-50 text-sky-950 dark:border-sky-500/45 dark:bg-sky-950/25 dark:text-sky-100",
+    slate: "border-slate-100 bg-slate-50 text-slate-800 dark:border-slate-800 dark:bg-slate-950/45 dark:text-slate-200",
   };
 
   return map[tone];
@@ -731,7 +731,7 @@ function ScheduleRow({ item }: { item: TodayScheduleItem }) {
   return (
     <Link
       href={`/loads/${item.id}`}
-      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/45 dark:hover:border-emerald-700 dark:hover:bg-slate-950"
     >
       <div>
         <div className="flex flex-wrap items-center gap-2">
@@ -770,11 +770,11 @@ function salesOpportunityToneClass(
   tone: "amber" | "emerald" | "red" | "sky" | "violet",
 ) {
   const map = {
-    amber: "border-amber-100 bg-amber-50 text-amber-950",
-    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950",
-    red: "border-red-100 bg-red-50 text-red-950",
-    sky: "border-sky-100 bg-sky-50 text-sky-950",
-    violet: "border-violet-100 bg-violet-50 text-violet-950",
+    amber: "border-amber-100 bg-amber-50 text-amber-950 dark:border-amber-500/45 dark:bg-amber-950/20 dark:text-amber-100",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-950 dark:border-emerald-500/45 dark:bg-emerald-950/25 dark:text-emerald-100",
+    red: "border-red-100 bg-red-50 text-red-950 dark:border-red-500/50 dark:bg-red-950/25 dark:text-red-100",
+    sky: "border-sky-100 bg-sky-50 text-sky-950 dark:border-sky-500/45 dark:bg-sky-950/25 dark:text-sky-100",
+    violet: "border-violet-100 bg-violet-50 text-violet-950 dark:border-violet-500/45 dark:bg-violet-950/25 dark:text-violet-100",
   };
 
   return map[tone];

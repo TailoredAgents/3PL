@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import {
+  AlertTriangle,
   ArrowLeft,
   Bot,
   CheckCircle2,
+  ClipboardCheck,
   FileText,
   PhoneCall,
 } from "lucide-react";
@@ -30,6 +33,17 @@ export default async function CallDetailPage({
     notFound();
   }
 
+  const quoteReady =
+    call.transcriptStatus === "Completed" &&
+    call.extractionStatus !== "Not Started" &&
+    Boolean(call.aiSummary || call.quoteRequestId);
+  const blockers = [
+    call.transcriptStatus !== "Completed" ? "transcript" : null,
+    call.extractionStatus === "Not Started" ? "AI extraction" : null,
+    call.missingQuestions.length ? "missing shipment questions" : null,
+    !call.aiSummary && !call.quoteRequestId ? "quote draft review" : null,
+  ].filter(Boolean);
+
   return (
     <InternalShell
       active="Communications"
@@ -46,6 +60,55 @@ export default async function CallDetailPage({
         Back to call queue
       </Link>
 
+      <section
+        className={`rounded-lg border p-5 shadow-sm ${
+          quoteReady
+            ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+            : "border-amber-200 bg-amber-50 text-amber-950"
+        }`}
+      >
+        <div className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-center">
+          <div className="flex gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+              {quoteReady ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                <AlertTriangle className="h-5 w-5" />
+              )}
+            </span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] opacity-70">
+                Intake readiness
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight">
+                {quoteReady
+                  ? "Call is ready for quote review"
+                  : "Finish intake before quoting"}
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 opacity-80">
+                {quoteReady
+                  ? "Transcript and AI intake work are far enough along for a broker to review the quote draft."
+                  : `Resolve ${blockers.join(", ")} before creating a customer-facing quote request from this call.`}
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-2 rounded-lg border border-white/70 bg-white/70 p-3 text-slate-700">
+            <CallReadinessItem
+              label="Transcript"
+              value={call.transcriptStatus}
+            />
+            <CallReadinessItem
+              label="Extraction"
+              value={call.extractionStatus}
+            />
+            <CallReadinessItem
+              label="Quote draft"
+              value={call.quoteRequestId ? "Created" : "Not created"}
+            />
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         {/* Call record */}
         <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
@@ -55,14 +118,14 @@ export default async function CallDetailPage({
           </div>
           <div className="p-5">
             <div className="grid gap-3 text-sm leading-6 text-slate-700 sm:grid-cols-2">
-              <p>From: {call.fromPhone}</p>
-              <p>To: {call.toPhone}</p>
-              <p>Contact: {call.contact}</p>
-              <p>Received: {call.created}</p>
-              <p>Recording: {call.recordingStatus}</p>
-              <p>Duration: {call.recordingDuration}</p>
-              <p>Transcript: {call.transcriptStatus}</p>
-              <p>Extraction: {call.extractionStatus}</p>
+              <CallFact label="From" value={call.fromPhone} />
+              <CallFact label="To" value={call.toPhone} />
+              <CallFact label="Contact" value={call.contact} />
+              <CallFact label="Received" value={call.created} />
+              <CallFact label="Recording" value={call.recordingStatus} />
+              <CallFact label="Duration" value={call.recordingDuration} />
+              <CallFact label="Transcript" value={call.transcriptStatus} />
+              <CallFact label="Extraction" value={call.extractionStatus} />
             </div>
             {call.recordingUrl ? (
               <p className="mt-4 break-all rounded-md bg-slate-50 p-3 text-sm text-slate-600">
@@ -114,7 +177,7 @@ export default async function CallDetailPage({
           {/* AI extraction */}
           <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
             <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
-              <Bot className="h-4 w-4 text-slate-400" />
+              <Bot className="h-4 w-4 text-emerald-600" />
               <p className="text-sm font-semibold text-slate-700">AI extraction</p>
             </div>
             <div className="p-5">
@@ -149,7 +212,7 @@ export default async function CallDetailPage({
       {/* Review quote draft */}
       <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
         <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
-          <CheckCircle2 className="h-4 w-4 text-slate-400" />
+          <ClipboardCheck className="h-4 w-4 text-emerald-600" />
           <p className="text-sm font-semibold text-slate-700">Review quote draft</p>
         </div>
         <div className="p-5">
@@ -175,5 +238,33 @@ export default async function CallDetailPage({
         </div>
       </article>
     </InternalShell>
+  );
+}
+
+function CallReadinessItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
+      <span className="text-sm font-bold text-slate-950">{value}</span>
+    </div>
+  );
+}
+
+function CallFact({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="rounded-md bg-slate-50 px-3 py-2">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 font-semibold text-slate-800">{value}</p>
+    </div>
   );
 }

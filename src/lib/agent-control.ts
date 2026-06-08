@@ -44,6 +44,18 @@ const policies: Record<BrokerageAgentName, AgentAutomationPolicy> = {
       "Marketplace posting",
     ],
   },
+  "Rate Confirmation Agent": {
+    riskLevel: "high",
+    approvalRequired: true,
+    actionSummary:
+      "Checks rate confirmation readiness and can draft the PDF only after approval.",
+    gatedActions: [
+      "Rate confirmation PDF generation",
+      "Carrier email send",
+      "Carrier signature acceptance",
+      "Carrier rate confirmation status changes",
+    ],
+  },
   "Load Tracking Agent": {
     riskLevel: "medium",
     approvalRequired: true,

@@ -34,6 +34,8 @@ export async function enrichAgentContext(
         return enrichQuotePricing(entityId, entityType, baseContext);
       case "Carrier Coverage Agent":
         return enrichCarrierCoverage(entityId, baseContext);
+      case "Rate Confirmation Agent":
+        return enrichRateConfirmation(entityId, baseContext);
       case "Load Tracking Agent":
         return enrichLoadTracking(entityId, baseContext);
       case "Billing Readiness Agent":
@@ -48,6 +50,108 @@ export async function enrichAgentContext(
   } catch {
     return { base: baseContext, enrichment: {}, dataAvailability: { error: "enrichment_failed" } };
   }
+}
+
+// ─── Rate Confirmation Agent ───────────────────────────────────────────────
+
+async function enrichRateConfirmation(
+  loadId: string,
+  base: unknown,
+): Promise<EnrichedAgentContext> {
+  const enrichment: Record<string, unknown> = {};
+  const dataAvailability: Record<string, boolean | string> = {};
+
+  if (!hasDatabaseUrl() || !prisma) {
+    return { base, enrichment, dataAvailability };
+  }
+
+  try {
+    const load = await prisma.load.findUnique({
+      where: { id: loadId },
+      include: {
+        shipper: { select: { companyName: true } },
+        carrier: {
+          select: {
+            companyName: true,
+            contactName: true,
+            email: true,
+            complianceStatus: true,
+            blockedReason: true,
+          },
+        },
+        documents: {
+          where: { type: "RATE_CONFIRMATION" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            fileName: true,
+            mimeType: true,
+            fileUrl: true,
+            extractedText: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    if (!load) {
+      dataAvailability.rateConfirmationReadiness = "load_not_found";
+      return { base, enrichment, dataAvailability };
+    }
+
+    const latestDocument = load.documents[0];
+    const draftBlockers = [
+      !load.carrier ? "Assign a carrier" : null,
+      load.carrier && load.carrier.complianceStatus !== "APPROVED"
+        ? "Approve carrier compliance"
+        : null,
+      load.carrier?.blockedReason
+        ? `Resolve carrier block: ${load.carrier.blockedReason}`
+        : null,
+      !load.carrierRate ? "Enter carrier rate" : null,
+    ].filter(Boolean);
+    const sendBlockers = [
+      ...draftBlockers,
+      !latestDocument?.extractedText ? "Generate rate confirmation PDF" : null,
+      !load.carrier?.email ? "Add carrier dispatch email" : null,
+      !load.pickupDate ? "Enter pickup date" : null,
+      !load.deliveryDate ? "Enter delivery date" : null,
+      !load.originAddress ? "Enter pickup address" : null,
+      !load.destinationAddress ? "Enter delivery address" : null,
+    ].filter(Boolean);
+
+    enrichment.rateConfirmationReadiness = {
+      loadNumber: `LD-${String(load.loadNumber).padStart(4, "0")}`,
+      shipper: load.shipper.companyName,
+      carrier: load.carrier?.companyName ?? null,
+      carrierContact: load.carrier?.contactName ?? null,
+      carrierEmail: load.carrier?.email ?? null,
+      carrierComplianceStatus: load.carrier?.complianceStatus ?? null,
+      lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
+      carrierRate: load.carrierRate ? Number(load.carrierRate) : null,
+      rateConfirmationStatus: load.rateConfirmationStatus,
+      rateConfirmationSentAt: load.rateConfirmationSentAt?.toISOString() ?? null,
+      rateConfirmationSignedAt:
+        load.rateConfirmationSignedAt?.toISOString() ?? null,
+      hasPdfDocument: Boolean(latestDocument?.extractedText),
+      documentFileName: latestDocument?.fileName ?? null,
+      documentMimeType: latestDocument?.mimeType ?? null,
+      documentUrl: latestDocument?.fileUrl ?? null,
+      draftReady: draftBlockers.length === 0,
+      sendReady: sendBlockers.length === 0,
+      draftBlockers,
+      sendBlockers,
+      approvalEffect:
+        draftBlockers.length === 0 && !latestDocument?.extractedText
+          ? "Approving this run can draft the PDF. It will not send carrier email."
+          : "Approval records broker review. Carrier email remains manual.",
+    };
+    dataAvailability.rateConfirmationReadiness = true;
+  } catch {
+    dataAvailability.rateConfirmationReadiness = "failed";
+  }
+
+  return { base, enrichment, dataAvailability };
 }
 
 // ─── Sales Follow-Up Agent ─────────────────────────────────────────────────

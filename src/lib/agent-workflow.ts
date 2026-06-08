@@ -21,6 +21,7 @@ import { logAudit } from "@/lib/audit";
 import { runBrokerageAgent } from "@/lib/grok";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { getCurrentInternalUser } from "@/lib/current-user";
+import { generateRateConfirmationDocument } from "@/lib/rate-confirmation";
 import { getAgentMode, getAgentPromptTemplate } from "@/lib/settings";
 
 export type AgentEntityType = "Lead" | "QuoteRequest" | "Load" | "Carrier";
@@ -225,6 +226,7 @@ export async function approveAgentRun(runId: string, reviewNotes?: string) {
     },
     getAgentResultFromOutput(run.outputJson),
   );
+  await maybeApplyApprovedAgentRun(run);
   await logAudit({
     action: "AI_AGENT_APPROVED",
     entityType: "AiAgentRun",
@@ -345,11 +347,62 @@ export function revalidateAgentEntityPaths(entityType: string, id: string) {
   if (entityType === "Load") {
     revalidatePath("/loads");
     revalidatePath(`/loads/${id}`);
+    revalidatePath("/documents");
+    revalidatePath("/carrier-portal");
   }
 
   if (entityType === "Carrier") {
     revalidatePath("/carriers");
     revalidatePath(`/carriers/${id}`);
+  }
+}
+
+async function maybeApplyApprovedAgentRun(run: {
+  agentName: string;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+}) {
+  if (
+    run.agentName !== "Rate Confirmation Agent" ||
+    run.relatedEntityType !== "Load" ||
+    !run.relatedEntityId ||
+    !hasDatabaseUrl() ||
+    !prisma
+  ) {
+    return;
+  }
+
+  const load = await prisma.load.findUnique({
+    where: { id: run.relatedEntityId },
+    select: {
+      id: true,
+      loadNumber: true,
+      documents: {
+        where: { type: "RATE_CONFIRMATION" },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+
+  if (!load || load.documents.length) {
+    return;
+  }
+
+  try {
+    await generateRateConfirmationDocument(load.id);
+  } catch (error) {
+    await prisma.shipmentEvent.create({
+      data: {
+        loadId: load.id,
+        type: "LOCATION_UPDATE",
+        message:
+          error instanceof Error
+            ? `Rate Confirmation Agent approved, but PDF draft was blocked: ${error.message}`
+            : "Rate Confirmation Agent approved, but PDF draft was blocked.",
+        occurredAt: new Date(),
+      },
+    });
   }
 }
 

@@ -2,6 +2,7 @@ export const brokerageAgentNames = [
   "Sales Follow-Up Agent",
   "Quote Pricing Agent",
   "Carrier Coverage Agent",
+  "Rate Confirmation Agent",
   "Load Tracking Agent",
   "Billing Readiness Agent",
   "Carrier Compliance Agent",
@@ -73,6 +74,24 @@ export const defaultBrokerageAgentTemplates: BrokerageAgentTemplate[] = [
       "and explain what action is needed to find coverage.",
     placeholderNextAction:
       "Contact the top-ranked compliant carrier, confirm availability and rate, then accept the best offer.",
+  },
+  {
+    agentName: "Rate Confirmation Agent",
+    systemPrompt:
+      "You are a freight brokerage rate confirmation controller. " +
+      "Rate confirmations are legal and financial carrier documents, so you must preserve the human approval gate. " +
+      "You receive a load record plus rate confirmation readiness data in context.enrichment: draft blockers, send blockers, carrier compliance, document status, PDF status, and signing status. " +
+      "Do not claim that the rate confirmation has been sent, signed, or accepted unless the provided context says so. " +
+      "Return concise JSON with summary, confidence, and nextAction.",
+    task:
+      "Review whether this load is ready to draft and send a carrier rate confirmation. " +
+      "Check carrier assignment, carrier approval, carrier rate, pickup/delivery dates, pickup/delivery addresses, carrier dispatch email, PDF document status, sent status, and signed status. " +
+      "If blockers exist, list the exact missing items and recommend the next broker action. " +
+      "If draft-ready but no PDF exists, recommend approving this agent run to draft the PDF. " +
+      "If a PDF exists and all send checks pass, recommend broker review and manual send. " +
+      "Never recommend autonomous send for unapproved or incomplete loads.",
+    placeholderNextAction:
+      "Review carrier, rate, dates, addresses, and dispatch email; approve the agent only when the broker wants the PDF drafted.",
   },
   {
     agentName: "Load Tracking Agent",

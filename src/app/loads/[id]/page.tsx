@@ -951,6 +951,32 @@ function RateConfirmationWorkspace({
           </div>
         </section>
 
+        <section className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Bot className="h-4 w-4 text-emerald-600" />
+              <div>
+                <p className="text-sm font-semibold text-slate-800">
+                  Rate confirmation agent
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Checks readiness and prepares a broker-reviewed recommendation.
+                  Approval can draft the PDF, but sending stays manual.
+                </p>
+              </div>
+            </div>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+              Approve first
+            </span>
+          </div>
+          <AiAgentRunForm
+            relatedEntityType="Load"
+            relatedEntityId={load.id}
+            defaultAgent="Rate Confirmation Agent"
+            agentOptions={["Rate Confirmation Agent"]}
+          />
+        </section>
+
         <section className="grid gap-3 md:grid-cols-4">
           <RateConStatusStep
             label="Draft"

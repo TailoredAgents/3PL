@@ -141,7 +141,7 @@ export function CommunicationsWorkspace({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 xl:grid xl:h-[calc(100vh-16rem)] xl:min-h-[640px] xl:max-h-[820px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/25 xl:grid xl:h-[calc(100vh-16rem)] xl:min-h-[640px] xl:max-h-[820px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
       {/* Left — inbox */}
       <aside className="grid max-h-[380px] grid-rows-[auto_minmax(0,1fr)] border-b border-slate-200 bg-slate-50/80 xl:max-h-none xl:min-h-0 xl:border-b-0 xl:border-r">
         <div className="border-b border-slate-200 bg-white px-4 py-3">
@@ -165,10 +165,10 @@ export function CommunicationsWorkspace({
               type="button"
               onClick={() => setSelectedThreadId(thread.id)}
               className={cn(
-                "w-full rounded-lg border p-3 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md",
+                "w-full rounded-lg border p-3 text-left transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:hover:border-emerald-700 dark:hover:bg-slate-950",
                 selectedThread.id === thread.id
-                  ? "border-slate-900 bg-white shadow-md shadow-slate-950/10 ring-1 ring-slate-900/5"
-                  : "border-slate-100 bg-slate-50",
+                  ? "border-slate-900 bg-white shadow-md shadow-slate-950/10 ring-1 ring-slate-900/5 dark:border-emerald-500 dark:bg-slate-950 dark:ring-emerald-500/20"
+                  : "border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-900",
               )}
             >
               <div className="flex items-start justify-between gap-2">
@@ -242,7 +242,7 @@ export function CommunicationsWorkspace({
           </div>
         </div>
 
-        <div className="min-h-0 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f2_100%)] p-5">
+        <div className="min-h-0 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#eef5f2_100%)] p-5 dark:bg-[linear-gradient(180deg,#0f172a_0%,#111827_100%)]">
           {selectedThread.messages.length ? (
             [...selectedThread.messages].reverse().map((message) => (
               <div
@@ -253,7 +253,7 @@ export function CommunicationsWorkspace({
                     ? "ml-auto border-emerald-100 bg-emerald-50"
                     : message.direction === "Inbound"
                       ? "border-sky-100 bg-sky-50"
-                      : "border-slate-200 bg-white",
+                    : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950",
                 )}
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -309,8 +309,8 @@ export function CommunicationsWorkspace({
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold",
                     composerMode === tab.id
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700",
+                      ? "border-slate-900 bg-slate-900 text-white dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-emerald-600 dark:hover:text-emerald-300",
                   )}
                 >
                   <tab.icon className="h-3.5 w-3.5" />
@@ -520,7 +520,7 @@ function DraftButton({
       type="button"
       disabled={loading}
       onClick={onClick}
-      className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
     >
       <Bot className="h-3.5 w-3.5" />
       {loading ? "Drafting..." : label}

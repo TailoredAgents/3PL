@@ -9,7 +9,7 @@ type SubmitState = {
 };
 
 const fieldClass =
-  "rounded-md border border-slate-200 bg-white px-3 py-2.5 font-normal text-slate-950 shadow-sm outline-none focus:border-emerald-500 focus:shadow-md focus:shadow-emerald-950/5";
+  "rounded-md border border-slate-200 bg-white px-3 py-2.5 font-normal text-slate-950 shadow-sm outline-none focus:border-emerald-500 focus:shadow-md focus:shadow-emerald-950/5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-400 dark:focus:shadow-emerald-950/20";
 
 async function submitForm(endpoint: string, form: HTMLFormElement) {
   const formData = new FormData(form);
@@ -80,7 +80,7 @@ export function SavingsAuditForm() {
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Company
           <input
             required
@@ -89,7 +89,7 @@ export function SavingsAuditForm() {
             placeholder="Acme Manufacturing"
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Contact
           <input
             required
@@ -100,7 +100,7 @@ export function SavingsAuditForm() {
         </label>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Email
           <input
             required
@@ -110,7 +110,7 @@ export function SavingsAuditForm() {
             placeholder="jordan@company.com"
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Phone
           <input
             required
@@ -120,7 +120,7 @@ export function SavingsAuditForm() {
           />
         </label>
       </div>
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
         Common lanes
         <textarea
           required
@@ -131,7 +131,7 @@ export function SavingsAuditForm() {
         />
       </label>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Equipment
           <select
             required
@@ -146,7 +146,7 @@ export function SavingsAuditForm() {
             <option>Other</option>
           </select>
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Monthly volume
           <input
             name="monthlyVolume"
@@ -155,7 +155,7 @@ export function SavingsAuditForm() {
           />
         </label>
       </div>
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
         Old invoices or rate confirmations
         <input
           required
@@ -163,7 +163,7 @@ export function SavingsAuditForm() {
           name="documents"
           multiple
           accept=".pdf,.png,.jpg,.jpeg"
-          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-white hover:border-emerald-300"
+          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-white hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:file:bg-slate-100 dark:file:text-slate-950 dark:hover:border-emerald-500"
         />
       </label>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -208,7 +208,7 @@ export function QuoteForm() {
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Company
           <input
             required
@@ -217,7 +217,7 @@ export function QuoteForm() {
             placeholder="Acme Manufacturing"
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Email
           <input
             required
@@ -229,7 +229,7 @@ export function QuoteForm() {
         </label>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Origin
           <input
             required
@@ -238,7 +238,7 @@ export function QuoteForm() {
             placeholder="Atlanta, GA"
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Destination
           <input
             required
@@ -249,7 +249,7 @@ export function QuoteForm() {
         </label>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Pickup date
           <input
             type="date"
@@ -257,7 +257,7 @@ export function QuoteForm() {
             className={fieldClass}
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Equipment
           <select
             required
@@ -271,7 +271,7 @@ export function QuoteForm() {
             <option>Power only</option>
           </select>
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
           Weight
           <input
             name="weight"
@@ -281,7 +281,7 @@ export function QuoteForm() {
           />
         </label>
       </div>
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
         Freight details
         <textarea
           name="details"

@@ -20,7 +20,7 @@ export function InternalAccount({
   const shellClass =
     tone === "dark"
       ? "border-white/10 bg-white/[0.04] text-slate-300 shadow-lg shadow-black/15"
-      : "border-slate-200 bg-white text-slate-700 shadow-md shadow-slate-950/5";
+      : "border-slate-200 bg-white text-slate-700 shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:shadow-black/20";
 
   if (!clerkEnabled) {
     return (

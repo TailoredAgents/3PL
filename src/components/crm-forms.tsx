@@ -116,7 +116,7 @@ function useCrmSubmit(endpoint: string, method = "POST") {
 }
 
 const inputClass =
-  "rounded-md border border-slate-200 bg-white px-3 py-2.5 font-normal text-slate-950 shadow-sm outline-none ring-0 focus:border-emerald-500 focus:shadow-md focus:shadow-emerald-950/5";
+  "rounded-md border border-slate-200 bg-white px-3 py-2.5 font-normal text-slate-950 shadow-sm outline-none ring-0 focus:border-emerald-500 focus:shadow-md focus:shadow-emerald-950/5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-400 dark:focus:shadow-emerald-950/20";
 
 type QuoteFieldDefaults = Record<string, string | number | boolean | undefined>;
 
@@ -165,14 +165,14 @@ export function ContactImportForm() {
 
   return (
     <form className="grid gap-3" onSubmit={onSubmit}>
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
         CSV file
         <input
           required
           name="csv"
           type="file"
           accept=".csv"
-          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-white hover:border-emerald-300"
+          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-white hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:file:bg-slate-100 dark:file:text-slate-950 dark:hover:border-emerald-500"
         />
       </label>
       <p className="text-sm leading-6 text-slate-600">
@@ -1094,13 +1094,13 @@ export function DocumentCreateForm({
         <Field name="fileName" label="Document name" required />
       </div>
       <Field name="fileUrl" label="Document URL" placeholder="Optional if uploading a file" />
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
         Upload file
         <input
           name="file"
           type="file"
           accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.csv,.xlsx"
-          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-white hover:border-emerald-300"
+          className="rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-normal shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-white hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:file:bg-slate-100 dark:file:text-slate-950 dark:hover:border-emerald-500"
         />
       </label>
       <Textarea name="extractedText" label="Notes / extracted text" />
@@ -1115,7 +1115,7 @@ function ShipperSelect({
   shipperOptions: { id: string; companyName: string }[];
 }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-800">
+    <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
       Customer scope
       <select name="shipperId" className={inputClass} defaultValue="">
         <option value="">Any customer</option>
@@ -2138,7 +2138,7 @@ function Field({
   defaultValue?: string;
 }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-800">
+    <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
       {label}
       <input
         name={name}
@@ -2166,7 +2166,7 @@ function Textarea({
   rows?: number;
 }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-800">
+    <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
       {label}
       <textarea
         name={name}
@@ -2189,7 +2189,7 @@ function Checkbox({
   defaultChecked?: boolean;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm">
+    <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
       <input
         name={name}
         type="checkbox"
@@ -2224,7 +2224,7 @@ function Select({
   required?: boolean;
 }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-800">
+    <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
       {label}
       <select name={name} className={inputClass} defaultValue={defaultValue} required={required}>
         {options.map((option) => (
@@ -2249,7 +2249,7 @@ function UserSelect({
   defaultValue?: string;
 }) {
   return (
-    <label className="grid gap-2 text-sm font-semibold text-slate-800">
+    <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
       {label}
       <select name={name} className={inputClass} defaultValue={defaultValue}>
         <option value="">Unassigned</option>

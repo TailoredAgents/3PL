@@ -349,9 +349,19 @@ html.dark .bg-emerald-100 {
   background-color: #064e3b;
 }
 
+html.dark .bg-lime-50,
+html.dark .bg-lime-100 {
+  background-color: #1a2e05;
+}
+
 html.dark .border-emerald-100,
 html.dark .border-emerald-200 {
   border-color: #047857;
+}
+
+html.dark .border-lime-100,
+html.dark .border-lime-200 {
+  border-color: #4d7c0f;
 }
 
 html.dark .text-emerald-950,
@@ -363,6 +373,12 @@ html.dark .text-emerald-800 {
 html.dark .text-emerald-700,
 html.dark .text-emerald-600 {
   color: #34d399;
+}
+
+html.dark .text-lime-900,
+html.dark .text-lime-800,
+html.dark .text-lime-700 {
+  color: #d9f99d;
 }
 
 html.dark .bg-amber-50,
@@ -453,12 +469,4 @@ html.dark .text-purple-900,
 html.dark .text-purple-800,
 html.dark .text-purple-700 {
   color: #ddd6fe;
-}
-
-html.dark aside .bg-white {
-  background-color: #f8fafc;
-}
-
-html.dark aside .text-slate-950 {
-  color: #020617;
 }

@@ -49,7 +49,7 @@ export async function InternalShell({
       <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-slate-800/80 bg-[#070b16] p-4 text-white shadow-2xl shadow-slate-950/30 lg:flex">
         <div className="mb-5 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-white text-sm font-black text-slate-950">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-white text-sm font-black text-slate-950 dark:!bg-white dark:!text-slate-950">
               DAO
             </span>
             <span className="min-w-0">
@@ -83,7 +83,7 @@ export async function InternalShell({
                       className={cn(
                         "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-slate-300 hover:bg-white/[0.07] hover:text-white",
                         isActive &&
-                          "bg-white text-slate-950 shadow-lg shadow-black/25 hover:bg-white hover:text-slate-950",
+                          "bg-white text-slate-950 shadow-lg shadow-black/25 hover:bg-white hover:text-slate-950 dark:!bg-white dark:!text-slate-950 dark:hover:!bg-white dark:hover:!text-slate-950",
                       )}
                     >
                       <span
@@ -95,7 +95,7 @@ export async function InternalShell({
                       <span
                         className={cn(
                           "flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.04] text-slate-400 group-hover:bg-white/10 group-hover:text-white",
-                          isActive && "bg-slate-950 text-white",
+                          isActive && "bg-slate-950 text-white dark:!bg-slate-950 dark:!text-white",
                         )}
                       >
                         <Icon className="h-4 w-4" />

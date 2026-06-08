@@ -264,7 +264,7 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
   const nextAction = getNextLoadAction(load);
 
   return (
-    <tr className={cn("align-top hover:bg-emerald-50/40", riskLevel.rowClass)}>
+    <tr className={cn("align-top hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20", riskLevel.rowClass)}>
       {/* Load */}
       <Td>
         <div className="min-w-[160px]">
@@ -446,7 +446,7 @@ function LoadBoardMobileRow({ load }: { load: LoadView }) {
   const nextAction = getNextLoadAction(load);
 
   return (
-    <article className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+    <article className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/70">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -509,11 +509,11 @@ function LoadBoardMobileRow({ load }: { load: LoadView }) {
         >
           {marketplaceStatus.label}
         </span>
-        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-950 dark:text-slate-200">
           {load.customerUpdateStatus ?? "Not needed"}
         </span>
       </div>
-      <div className="mt-4 rounded-md border border-slate-200 bg-white p-3">
+      <div className="mt-4 rounded-md border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950/70">
         <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
           Next action
         </p>
@@ -553,7 +553,7 @@ function QuickActions({
       {nextAction.cta !== "Open" && (
         <Link
           href={`/loads/${load.id}`}
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-emerald-600 dark:hover:text-emerald-300"
         >
           Open load
         </Link>
@@ -612,7 +612,7 @@ function Td({ children }: { children: ReactNode }) {
 
 function MobileFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-white p-3">
+    <div className="rounded-md bg-white p-3 dark:bg-slate-950/70">
       <p className="text-xs font-bold uppercase text-slate-400">{label}</p>
       <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
     </div>

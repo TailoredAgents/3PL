@@ -42,13 +42,13 @@ export function InternalLoginForm({ nextPath }: { nextPath: string }) {
         router.refresh();
       }}
     >
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <label className="grid gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
         Password
         <input
           required
           type="password"
           name="password"
-          className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900"
+          className="rounded-md border border-slate-300 px-3 py-2 font-normal outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-emerald-400"
         />
       </label>
       {state.status === "error" ? (

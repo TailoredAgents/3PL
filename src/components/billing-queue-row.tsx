@@ -94,7 +94,7 @@ export function BillingQueueTableRow({ load }: { load: BillingLoad }) {
   }
 
   return (
-    <tr className="align-top hover:bg-emerald-50/40">
+    <tr className="align-top hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20">
       <Td>
         <Link
           href={`/loads/${load.id}?tab=billing`}

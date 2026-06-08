@@ -25,7 +25,7 @@ export function ThemeToggle({ tone = "dark" }: { tone?: "dark" | "light" }) {
         "grid grid-cols-3 gap-1 rounded-md border p-1",
         tone === "dark"
           ? "border-white/10 bg-white/[0.04]"
-          : "border-slate-200 bg-white shadow-md shadow-slate-950/5",
+          : "border-slate-200 bg-white shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20",
       )}
     >
       {options.map((option) => {
@@ -43,11 +43,11 @@ export function ThemeToggle({ tone = "dark" }: { tone?: "dark" | "light" }) {
               "inline-flex h-8 items-center justify-center rounded text-xs font-bold",
               tone === "dark"
                 ? "text-slate-400 hover:bg-white/10 hover:text-white"
-                : "text-slate-500 hover:bg-slate-100 hover:text-slate-950",
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50",
               active &&
                 (tone === "dark"
                   ? "bg-white text-slate-950 shadow-sm"
-                  : "bg-slate-950 text-white shadow-sm"),
+                  : "bg-slate-950 text-white shadow-sm dark:bg-emerald-500 dark:text-slate-950"),
             )}
           >
             <Icon className="h-3.5 w-3.5" />

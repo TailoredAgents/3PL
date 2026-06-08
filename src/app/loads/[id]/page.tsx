@@ -4,12 +4,16 @@ import type { ComponentType } from "react";
 import {
   Bot,
   CalendarDays,
+  CheckCircle2,
   CircleDollarSign,
   ClipboardCheck,
+  Clock,
   FileText,
+  Mail,
   MapPinned,
   Package,
   ReceiptText,
+  Send,
   ShieldCheck,
   Truck,
   AlertTriangle,
@@ -36,7 +40,12 @@ import {
   LoadCommissionAttributionForm,
 } from "@/components/crm-forms";
 import { InternalShell } from "@/components/internal-shell";
-import { getLoadDetailView, getUserOptions, type LoadDetailView } from "@/lib/crm";
+import {
+  getLoadDetailView,
+  getUserOptions,
+  type LoadDetailView,
+  type LoadDocumentView,
+} from "@/lib/crm";
 import { toCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -682,35 +691,10 @@ export default async function LoadDetailPage({
       {tab === "documents" && (
         <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="grid gap-6">
-            <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-              <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
-                <FileText className="h-4 w-4 text-slate-400" />
-                <p className="text-sm font-semibold text-slate-700">Rate confirmation</p>
-              </div>
-              <div className="p-5">
-                <div className="rounded-md bg-slate-50 p-4 text-sm leading-6 text-slate-700">
-                  <p>Status: {load.rateConfirmationStatus ?? "Not started"}</p>
-                  <p>Sent: {load.rateConfirmationSentAt ?? "Not sent"}</p>
-                  <p>Signed: {load.rateConfirmationSignedAt ?? "Not signed"}</p>
-                  {latestRateConfirmation?.downloadHref ? (
-                    <p>
-                      Document:{" "}
-                      <DocumentLink
-                        href={latestRateConfirmation.downloadHref}
-                        label={latestRateConfirmation.fileName}
-                      />
-                    </p>
-                  ) : null}
-                </div>
-                <div className="mt-4 grid gap-4">
-                  <RateConfirmationGenerateForm loadId={load.id} />
-                  <RateConfirmationForm
-                    loadId={load.id}
-                    currentStatus={load.rateConfirmationStatus ?? "Not started"}
-                  />
-                </div>
-              </div>
-            </article>
+            <RateConfirmationWorkspace
+              load={load}
+              latestRateConfirmation={latestRateConfirmation}
+            />
 
             <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
               <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
@@ -902,6 +886,357 @@ function DocumentLink({ href, label }: { href: string; label: string }) {
     >
       {label}
     </a>
+  );
+}
+
+function RateConfirmationWorkspace({
+  load,
+  latestRateConfirmation,
+}: {
+  load: LoadDetailView;
+  latestRateConfirmation?: LoadDocumentView;
+}) {
+  const readiness = getRateConfirmationReadiness(load, latestRateConfirmation);
+  const sentOrSigned = ["Sent", "Signed"].includes(
+    load.rateConfirmationStatus ?? "",
+  );
+
+  return (
+    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-emerald-600" />
+          <div>
+            <p className="text-sm font-semibold text-slate-800">
+              Rate confirmation command
+            </p>
+            <p className="text-xs text-slate-500">
+              Draft, verify, send, and track carrier signature readiness.
+            </p>
+          </div>
+        </div>
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-bold ${readiness.badgeClass}`}
+        >
+          {readiness.badge}
+        </span>
+      </div>
+
+      <div className="grid gap-5 p-5">
+        <section className={`rounded-lg border p-5 ${readiness.panelClass}`}>
+          <div className="flex gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+              {readiness.readyToSend ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                <AlertTriangle className="h-5 w-5" />
+              )}
+            </span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] opacity-70">
+                Dispatch readiness
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight">
+                {readiness.headline}
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 opacity-80">
+                {readiness.detail}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-3 md:grid-cols-4">
+          <RateConStatusStep
+            label="Draft"
+            detail={
+              latestRateConfirmation
+                ? latestRateConfirmation.fileName
+                : "No draft generated"
+            }
+            complete={readiness.hasDraft}
+            icon={FileText}
+          />
+          <RateConStatusStep
+            label="Send"
+            detail={load.rateConfirmationSentAt ?? "Not sent"}
+            complete={sentOrSigned}
+            icon={Send}
+          />
+          <RateConStatusStep
+            label="Signature"
+            detail={load.rateConfirmationSignedAt ?? "Not signed"}
+            complete={load.rateConfirmationStatus === "Signed"}
+            icon={ClipboardCheck}
+          />
+          <RateConStatusStep
+            label="Carrier"
+            detail={load.carrier}
+            complete={load.carrier !== "Carrier needed"}
+            icon={Truck}
+          />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+              Send package
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <RateConFact label="Carrier" value={load.carrier} icon={Truck} />
+              <RateConFact
+                label="Compliance"
+                value={load.carrierComplianceStatus ?? "Not reviewed"}
+                icon={ShieldCheck}
+              />
+              <RateConFact
+                label="Dispatch email"
+                value={load.carrierEmail || "Email needed"}
+                icon={Mail}
+              />
+              <RateConFact
+                label="Carrier rate"
+                value={load.carrierRate ? toCurrency(load.carrierRate) : "Needed"}
+                icon={CircleDollarSign}
+              />
+              <RateConFact
+                label="Pickup"
+                value={`${load.pickup} ${load.pickupWindow ?? ""}`.trim()}
+                icon={CalendarDays}
+              />
+              <RateConFact
+                label="Delivery"
+                value={`${load.delivery} ${load.deliveryWindow ?? ""}`.trim()}
+                icon={CalendarDays}
+              />
+            </div>
+            {latestRateConfirmation?.downloadHref ? (
+              <div className="mt-4 rounded-md bg-white px-3 py-2 text-sm">
+                <span className="font-semibold text-slate-900">Document: </span>
+                <DocumentLink
+                  href={latestRateConfirmation.downloadHref}
+                  label={latestRateConfirmation.fileName}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="rounded-lg border border-slate-100 bg-white p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+              Readiness checks
+            </p>
+            <div className="mt-4 grid gap-2">
+              {readiness.checks.map((check) => (
+                <RateConCheckItem key={check.label} {...check} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-emerald-600" />
+              <p className="text-sm font-semibold text-slate-800">
+                Draft rate confirmation
+              </p>
+            </div>
+            <RateConfirmationGenerateForm loadId={load.id} />
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              Drafting requires an approved carrier and a carrier rate. Sending
+              should wait until the send package above is clean.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-slate-500" />
+              <p className="text-sm font-semibold text-slate-800">
+                Update send / signature status
+              </p>
+            </div>
+            <RateConfirmationForm
+              loadId={load.id}
+              currentStatus={load.rateConfirmationStatus ?? "Not started"}
+            />
+          </div>
+        </section>
+      </div>
+    </article>
+  );
+}
+
+function getRateConfirmationReadiness(
+  load: LoadDetailView,
+  latestRateConfirmation?: LoadDocumentView,
+) {
+  const hasDraft =
+    Boolean(latestRateConfirmation) ||
+    ["Drafted", "Sent", "Signed"].includes(load.rateConfirmationStatus ?? "");
+  const draftChecks = [
+    {
+      label: "Carrier assigned",
+      complete: load.carrier !== "Carrier needed",
+      detail: load.carrier,
+    },
+    {
+      label: "Carrier approved",
+      complete: load.carrierComplianceStatus === "Approved",
+      detail: load.carrierComplianceStatus ?? "Not reviewed",
+    },
+    {
+      label: "Carrier rate entered",
+      complete: load.carrierRate > 0,
+      detail: load.carrierRate ? toCurrency(load.carrierRate) : "Rate needed",
+    },
+  ];
+  const checks = [
+    ...draftChecks,
+    {
+      label: "Draft generated",
+      complete: hasDraft,
+      detail: latestRateConfirmation?.fileName ?? "Draft needed",
+    },
+    {
+      label: "Carrier email",
+      complete: Boolean(load.carrierEmail),
+      detail: load.carrierEmail || "Email needed",
+    },
+    {
+      label: "Pickup and delivery dates",
+      complete: load.pickup !== "Not set" && load.delivery !== "Not set",
+      detail: `${load.pickup} -> ${load.delivery}`,
+    },
+    {
+      label: "Pickup and delivery addresses",
+      complete:
+        load.originAddress !== "Pickup address needed" &&
+        load.destinationAddress !== "Delivery address needed",
+      detail: "Required before carrier dispatch",
+    },
+  ];
+  const blockers = checks.filter((check) => !check.complete);
+  const readyToDraft = draftChecks.every((check) => check.complete);
+  const readyToSend = checks.every((check) => check.complete);
+
+  if (readyToSend) {
+    return {
+      checks,
+      hasDraft,
+      readyToSend,
+      headline: "Ready to send to carrier",
+      detail:
+        "The carrier, rate, document, dispatch email, dates, and addresses are ready for the send/sign workflow.",
+      badge: "Ready",
+      badgeClass: "bg-emerald-100 text-emerald-800",
+      panelClass: "border-emerald-200 bg-emerald-50 text-emerald-950",
+    };
+  }
+
+  if (readyToDraft) {
+    return {
+      checks,
+      hasDraft,
+      readyToSend,
+      headline: hasDraft ? "Draft ready, send package incomplete" : "Ready to draft",
+      detail: hasDraft
+        ? `${blockers.length} send-readiness checks need attention before this should go to the carrier.`
+        : "The carrier and carrier rate are ready. Draft the rate confirmation, then finish the remaining send checks.",
+      badge: `${blockers.length} blockers`,
+      badgeClass: "bg-amber-100 text-amber-800",
+      panelClass: "border-amber-200 bg-amber-50 text-amber-950",
+    };
+  }
+
+  return {
+    checks,
+    hasDraft,
+    readyToSend,
+    headline: "Carrier dispatch is not ready",
+    detail: `${blockers.length} required checks are blocking the rate confirmation workflow.`,
+    badge: `${blockers.length} blockers`,
+    badgeClass: "bg-red-100 text-red-800",
+    panelClass: "border-red-200 bg-red-50 text-red-950",
+  };
+}
+
+function RateConStatusStep({
+  label,
+  detail,
+  complete,
+  icon: Icon,
+}: {
+  label: string;
+  detail: string;
+  complete: boolean;
+  icon: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div
+      className={`rounded-lg border p-4 ${
+        complete
+          ? "border-emerald-100 bg-emerald-50 text-emerald-950"
+          : "border-slate-100 bg-slate-50 text-slate-700"
+      }`}
+    >
+      <Icon
+        className={`h-4 w-4 ${complete ? "text-emerald-600" : "text-slate-400"}`}
+      />
+      <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] opacity-70">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-semibold leading-5">{detail}</p>
+    </div>
+  );
+}
+
+function RateConFact({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="rounded-md bg-white p-3">
+      <Icon className="h-4 w-4 text-emerald-600" />
+      <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function RateConCheckItem({
+  label,
+  complete,
+  detail,
+}: {
+  label: string;
+  complete: boolean;
+  detail: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-md bg-slate-50 px-3 py-2">
+      <div>
+        <p className="text-sm font-semibold text-slate-900">{label}</p>
+        <p className="mt-0.5 text-xs text-slate-500">{detail}</p>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
+          complete
+            ? "bg-emerald-100 text-emerald-700"
+            : "bg-amber-100 text-amber-700"
+        }`}
+      >
+        {complete ? "Done" : "Needed"}
+      </span>
+    </div>
   );
 }
 

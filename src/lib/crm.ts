@@ -200,6 +200,10 @@ export type LoadView = {
   customerOwnerUserId?: string | null;
   customerOwnerName: string;
   carrier: string;
+  carrierContactName?: string;
+  carrierEmail?: string;
+  carrierPhone?: string;
+  carrierComplianceStatus?: string;
   lane: string;
   originAddress?: string;
   destinationAddress?: string;
@@ -3457,7 +3461,13 @@ function mapLoad(load: {
   managingUser?: { id: string; name: string } | null;
   customerOwnerUserId?: string | null;
   customerOwner?: { id: string; name: string } | null;
-  carrier?: { companyName: string } | null;
+  carrier?: {
+    companyName: string;
+    contactName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    complianceStatus?: string;
+  } | null;
   originCity: string;
   originState: string;
   originAddress?: string | null;
@@ -3681,6 +3691,12 @@ function mapLoad(load: {
     customerOwnerUserId: customerOwner?.id ?? null,
     customerOwnerName: customerOwner?.name ?? "Unassigned client owner",
     carrier: load.carrier?.companyName ?? "Carrier needed",
+    carrierContactName: load.carrier?.contactName ?? "No dispatch contact",
+    carrierEmail: load.carrier?.email ?? "",
+    carrierPhone: load.carrier?.phone ?? "",
+    carrierComplianceStatus: load.carrier?.complianceStatus
+      ? titleCaseEnum(load.carrier.complianceStatus)
+      : "Not reviewed",
     lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
     originAddress: load.originAddress ?? "Pickup address needed",
     destinationAddress: load.destinationAddress ?? "Delivery address needed",

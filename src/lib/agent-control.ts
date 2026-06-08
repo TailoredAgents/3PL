@@ -56,6 +56,19 @@ const policies: Record<BrokerageAgentName, AgentAutomationPolicy> = {
       "Carrier rate confirmation status changes",
     ],
   },
+  "Carrier Dispatch Agent": {
+    riskLevel: "high",
+    approvalRequired: true,
+    actionSummary:
+      "Checks carrier dispatch readiness; pickup release remains manual.",
+    gatedActions: [
+      "Carrier dispatch release",
+      "Pickup instruction sends",
+      "Customer status updates",
+      "Load status changes",
+      "Exception closure",
+    ],
+  },
   "Load Tracking Agent": {
     riskLevel: "medium",
     approvalRequired: true,

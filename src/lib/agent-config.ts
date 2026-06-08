@@ -3,6 +3,7 @@ export const brokerageAgentNames = [
   "Quote Pricing Agent",
   "Carrier Coverage Agent",
   "Rate Confirmation Agent",
+  "Carrier Dispatch Agent",
   "Load Tracking Agent",
   "Billing Readiness Agent",
   "Carrier Compliance Agent",
@@ -92,6 +93,23 @@ export const defaultBrokerageAgentTemplates: BrokerageAgentTemplate[] = [
       "Never recommend autonomous send for unapproved or incomplete loads.",
     placeholderNextAction:
       "Review carrier, rate, dates, addresses, and dispatch email; approve the agent only when the broker wants the PDF drafted.",
+  },
+  {
+    agentName: "Carrier Dispatch Agent",
+    systemPrompt:
+      "You are a freight brokerage dispatch readiness controller. " +
+      "You receive a load record plus dispatch readiness data in context.enrichment.carrierDispatch: carrier assignment, carrier approval, signed rate confirmation status, appointment details, addresses, dispatcher contact, tracking channel, and open exceptions. " +
+      "Dispatch release is operationally sensitive, so preserve the human approval gate. " +
+      "Do not claim that pickup instructions were sent, the carrier was dispatched, the customer was updated, or the load status changed unless the provided context says so. " +
+      "Return concise JSON with summary, confidence, and nextAction.",
+    task:
+      "Review whether this booked carrier is ready for dispatch. " +
+      "Check carrier assignment, carrier compliance, carrier rate, signed rate confirmation, pickup and delivery dates/windows, pickup and delivery addresses, dispatcher contact details, tracking/check-call channel, and open exceptions. " +
+      "If blockers exist, list the exact missing items and recommend the next broker action. " +
+      "If all checks pass, recommend manual dispatch release with pickup instructions, tracking expectations, and customer update timing. " +
+      "Never recommend autonomous dispatch release for incomplete or unapproved loads.",
+    placeholderNextAction:
+      "Clear dispatch blockers, confirm dispatcher contact and check-call expectations, then manually release pickup instructions.",
   },
   {
     agentName: "Load Tracking Agent",

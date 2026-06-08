@@ -36,6 +36,8 @@ export async function enrichAgentContext(
         return enrichCarrierCoverage(entityId, baseContext);
       case "Rate Confirmation Agent":
         return enrichRateConfirmation(entityId, baseContext);
+      case "Carrier Dispatch Agent":
+        return enrichCarrierDispatch(entityId, baseContext);
       case "Load Tracking Agent":
         return enrichLoadTracking(entityId, baseContext);
       case "Billing Readiness Agent":
@@ -149,6 +151,161 @@ async function enrichRateConfirmation(
     dataAvailability.rateConfirmationReadiness = true;
   } catch {
     dataAvailability.rateConfirmationReadiness = "failed";
+  }
+
+  return { base, enrichment, dataAvailability };
+}
+
+// ─── Carrier Dispatch Agent ────────────────────────────────────────────────
+
+async function enrichCarrierDispatch(
+  loadId: string,
+  base: unknown,
+): Promise<EnrichedAgentContext> {
+  const enrichment: Record<string, unknown> = {};
+  const dataAvailability: Record<string, boolean | string> = {};
+
+  if (!hasDatabaseUrl() || !prisma) {
+    return { base, enrichment, dataAvailability };
+  }
+
+  try {
+    const load = await prisma.load.findUnique({
+      where: { id: loadId },
+      include: {
+        shipper: { select: { companyName: true } },
+        carrier: {
+          select: {
+            companyName: true,
+            contactName: true,
+            email: true,
+            phone: true,
+            complianceStatus: true,
+            blockedReason: true,
+          },
+        },
+        documents: {
+          where: { type: "RATE_CONFIRMATION" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            fileName: true,
+            fileUrl: true,
+            extractedText: true,
+            createdAt: true,
+          },
+        },
+        events: {
+          orderBy: { occurredAt: "desc" },
+          take: 5,
+          select: {
+            type: true,
+            message: true,
+            location: true,
+            occurredAt: true,
+          },
+        },
+        exceptions: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            type: true,
+            status: true,
+            notes: true,
+            createdAt: true,
+            resolvedAt: true,
+          },
+        },
+      },
+    });
+
+    if (!load) {
+      dataAvailability.carrierDispatch = "load_not_found";
+      return { base, enrichment, dataAvailability };
+    }
+
+    const latestRateConfirmation = load.documents[0];
+    const openExceptions = load.exceptions.filter(
+      (exception) => exception.status !== "RESOLVED",
+    );
+    const hasDispatchContact = Boolean(load.carrier?.email || load.carrier?.phone);
+    const trackingChannelAvailable = Boolean(load.pickupDate && hasDispatchContact);
+    const blockers = [
+      !load.carrier ? "Assign a carrier" : null,
+      load.carrier && load.carrier.complianceStatus !== "APPROVED"
+        ? "Approve carrier compliance"
+        : null,
+      load.carrier?.blockedReason
+        ? `Resolve carrier block: ${load.carrier.blockedReason}`
+        : null,
+      !load.carrierRate ? "Enter carrier rate" : null,
+      load.rateConfirmationStatus !== "SIGNED"
+        ? "Collect signed rate confirmation"
+        : null,
+      !load.pickupDate ? "Enter pickup date" : null,
+      !load.pickupWindow ? "Confirm pickup window or appointment" : null,
+      !load.deliveryDate ? "Enter delivery date" : null,
+      !load.deliveryWindow ? "Confirm delivery window or appointment" : null,
+      !load.originAddress ? "Enter pickup address" : null,
+      !load.destinationAddress ? "Enter delivery address" : null,
+      !load.carrier?.contactName ? "Add dispatcher contact name" : null,
+      !hasDispatchContact ? "Add dispatcher phone or email" : null,
+      !trackingChannelAvailable
+        ? "Confirm tracking/check-call channel before pickup"
+        : null,
+      openExceptions.length
+        ? `Resolve ${openExceptions.length} open exception(s)`
+        : null,
+    ].filter((blocker): blocker is string => Boolean(blocker));
+
+    enrichment.carrierDispatch = {
+      loadNumber: `LD-${String(load.loadNumber).padStart(4, "0")}`,
+      shipper: load.shipper.companyName,
+      carrier: load.carrier?.companyName ?? null,
+      carrierContactName: load.carrier?.contactName ?? null,
+      carrierEmail: load.carrier?.email ?? null,
+      carrierPhone: load.carrier?.phone ?? null,
+      carrierComplianceStatus: load.carrier?.complianceStatus ?? null,
+      carrierBlockedReason: load.carrier?.blockedReason ?? null,
+      lane: `${load.originCity}, ${load.originState} -> ${load.destinationCity}, ${load.destinationState}`,
+      equipment: load.equipmentType,
+      pickupDate: load.pickupDate?.toISOString() ?? null,
+      pickupWindow: load.pickupWindow ?? null,
+      pickupAddress: load.originAddress ?? null,
+      deliveryDate: load.deliveryDate?.toISOString() ?? null,
+      deliveryWindow: load.deliveryWindow ?? null,
+      deliveryAddress: load.destinationAddress ?? null,
+      carrierRate: load.carrierRate ? Number(load.carrierRate) : null,
+      customerRate: load.customerRate ? Number(load.customerRate) : null,
+      rateConfirmationStatus: load.rateConfirmationStatus,
+      rateConfirmationSentAt: load.rateConfirmationSentAt?.toISOString() ?? null,
+      rateConfirmationSignedAt:
+        load.rateConfirmationSignedAt?.toISOString() ?? null,
+      hasRateConfirmationPdf: Boolean(latestRateConfirmation?.extractedText),
+      rateConfirmationFileName: latestRateConfirmation?.fileName ?? null,
+      rateConfirmationUrl: latestRateConfirmation?.fileUrl ?? null,
+      trackingChannelAvailable,
+      dispatchReady: blockers.length === 0,
+      blockers,
+      openExceptions: openExceptions.map((exception) => ({
+        type: exception.type,
+        status: exception.status,
+        notes: exception.notes,
+        createdAt: exception.createdAt.toISOString(),
+      })),
+      recentEvents: load.events.map((event) => ({
+        type: event.type,
+        message: event.message,
+        location: event.location,
+        occurredAt: event.occurredAt.toISOString(),
+      })),
+      approvalEffect:
+        blockers.length === 0
+          ? "Approval records broker dispatch review. It does not release pickup instructions, send customer updates, or change load status."
+          : "Approval records broker review only. Clear blockers before dispatch release.",
+    };
+    dataAvailability.carrierDispatch = true;
+  } catch {
+    dataAvailability.carrierDispatch = "failed";
   }
 
   return { base, enrichment, dataAvailability };

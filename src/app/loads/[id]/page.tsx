@@ -165,6 +165,7 @@ export default async function LoadDetailPage({
                 </div>
 
                 <FreightRequirements load={load} />
+                <DispatchReadinessPanel load={load} />
 
                 {load.risk && (
                   <div className="mt-5 rounded-md border border-amber-100 bg-amber-50 p-4">
@@ -274,15 +275,16 @@ export default async function LoadDetailPage({
                 </div>
                 <div className="p-5">
                   <p className="mb-3 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-800">
-                    Use agents for tracking risk, carrier coverage, and billing
-                    readiness. The primary operational action remains in the
-                    command strip above.
+                    Use agents for dispatch readiness, tracking risk, carrier
+                    coverage, and billing readiness. Carrier dispatch release
+                    remains a broker-approved action.
                   </p>
                   <AiAgentRunForm
                     relatedEntityType="Load"
                     relatedEntityId={load.id}
-                    defaultAgent="Load Tracking Agent"
+                    defaultAgent="Carrier Dispatch Agent"
                     agentOptions={[
+                      "Carrier Dispatch Agent",
                       "Load Tracking Agent",
                       "Carrier Coverage Agent",
                       "Billing Readiness Agent",
@@ -1235,6 +1237,157 @@ function getRateConfirmationReadiness(
     badgeClass: "bg-red-100 text-red-800",
     panelClass: "border-red-200 bg-red-50 text-red-950",
   };
+}
+
+function getDispatchReadiness(load: LoadDetailView) {
+  const openExceptions = load.exceptions.filter(
+    (exception) => exception.status !== "Resolved",
+  );
+  const checks = [
+    {
+      label: "Carrier assigned",
+      complete: load.carrier !== "Carrier needed",
+      detail: load.carrier,
+    },
+    {
+      label: "Carrier approved",
+      complete: load.carrierComplianceStatus === "Approved",
+      detail: load.carrierComplianceStatus ?? "Not reviewed",
+    },
+    {
+      label: "Carrier rate entered",
+      complete: load.carrierRate > 0,
+      detail: load.carrierRate ? toCurrency(load.carrierRate) : "Rate needed",
+    },
+    {
+      label: "Rate confirmation signed",
+      complete: load.rateConfirmationStatus === "Signed",
+      detail: load.rateConfirmationSignedAt ?? "Signature needed",
+    },
+    {
+      label: "Pickup appointment",
+      complete: load.pickup !== "Not set" && load.pickupWindow !== "Window needed",
+      detail: `${load.pickup} ${load.pickupWindow ?? ""}`.trim(),
+    },
+    {
+      label: "Delivery appointment",
+      complete:
+        load.delivery !== "Not set" && load.deliveryWindow !== "Window needed",
+      detail: `${load.delivery} ${load.deliveryWindow ?? ""}`.trim(),
+    },
+    {
+      label: "Pickup and delivery addresses",
+      complete:
+        load.originAddress !== "Pickup address needed" &&
+        load.destinationAddress !== "Delivery address needed",
+      detail: "Needed before pickup instructions are released",
+    },
+    {
+      label: "Dispatcher contact",
+      complete:
+        Boolean(load.carrierEmail || load.carrierPhone) &&
+        load.carrierContactName !== "No dispatch contact",
+      detail:
+        load.carrierContactName && load.carrierContactName !== "No dispatch contact"
+          ? `${load.carrierContactName} · ${load.carrierPhone || load.carrierEmail || "Contact method needed"}`
+          : load.carrierPhone || load.carrierEmail || "Dispatch contact needed",
+    },
+    {
+      label: "Tracking/check-call channel",
+      complete: Boolean(load.carrierPhone || load.carrierEmail),
+      detail: load.carrierPhone
+        ? `Call/SMS ${load.carrierPhone}`
+        : load.carrierEmail || "Phone or email needed",
+    },
+    {
+      label: "Open exceptions",
+      complete: openExceptions.length === 0,
+      detail: openExceptions.length
+        ? `${openExceptions.length} exception(s) must be resolved`
+        : "No open exceptions",
+    },
+  ];
+  const blockers = checks.filter((check) => !check.complete);
+  const ready = blockers.length === 0;
+
+  return {
+    checks,
+    ready,
+    headline: ready ? "Ready for manual dispatch release" : "Dispatch not ready",
+    detail: ready
+      ? "Carrier, rate con, appointments, addresses, dispatcher contact, and exception checks are clean."
+      : `${blockers.length} dispatch checks need attention before pickup instructions should be released.`,
+    badge: ready ? "Ready" : `${blockers.length} blockers`,
+    badgeClass: ready
+      ? "bg-emerald-100 text-emerald-800"
+      : "bg-amber-100 text-amber-800",
+    panelClass: ready
+      ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+      : "border-amber-200 bg-amber-50 text-amber-950",
+  };
+}
+
+function DispatchReadinessPanel({ load }: { load: LoadDetailView }) {
+  const readiness = getDispatchReadiness(load);
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-md border border-slate-100 bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <Send className="h-3.5 w-3.5 text-slate-400" />
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+            Dispatch readiness
+          </p>
+        </div>
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-bold ${readiness.badgeClass}`}
+        >
+          {readiness.badge}
+        </span>
+      </div>
+      <div className={`border-b px-4 py-3 ${readiness.panelClass}`}>
+        <p className="text-sm font-black">{readiness.headline}</p>
+        <p className="mt-1 text-xs leading-5 opacity-80">{readiness.detail}</p>
+      </div>
+      <div className="grid gap-2 p-4 md:grid-cols-2">
+        {readiness.checks.map((check) => (
+          <DispatchCheckItem key={check.label} {...check} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DispatchCheckItem({
+  label,
+  complete,
+  detail,
+}: {
+  label: string;
+  complete: boolean;
+  detail: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-md bg-slate-50 px-3 py-2">
+      <div className="min-w-0">
+        <p className={complete ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-500"}>
+          {label}
+        </p>
+        <p className="mt-0.5 break-words text-xs leading-5 text-slate-500">
+          {detail}
+        </p>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
+          complete
+            ? "bg-emerald-100 text-emerald-700"
+            : "bg-amber-100 text-amber-700"
+        }`}
+      >
+        {complete ? "Done" : "Needed"}
+      </span>
+    </div>
+  );
 }
 
 function parseRateConfirmationSignature(text: string | null | undefined) {

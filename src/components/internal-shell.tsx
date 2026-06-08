@@ -45,7 +45,7 @@ export async function InternalShell({
   const visibleNavItems = visibleNavGroups.flatMap((group) => group.items);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef3f8_46%,#e3eaf2_100%)] text-slate-950">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef3f8_46%,#e3eaf2_100%)] text-slate-950 dark:bg-[linear-gradient(180deg,#020617_0%,#0f172a_46%,#111827_100%)] dark:text-slate-100">
       <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-slate-800/80 bg-[#070b16] p-4 text-white shadow-2xl shadow-slate-950/30 lg:flex">
         <div className="mb-5 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/20">
           <Link href="/dashboard" className="flex items-center gap-3">
@@ -120,10 +120,10 @@ export async function InternalShell({
       </aside>
 
       <section className="min-w-0 lg:pl-72">
-        <div className="border-b border-slate-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
+        <div className="border-b border-slate-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
           <div className="flex items-center justify-between gap-4">
             <Link href="/dashboard" className="flex min-w-0 items-center gap-2 text-sm font-bold">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-[11px] text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-[11px] text-white dark:bg-white dark:text-slate-950">
                 DAO
               </span>
               <span className="truncate">{platformName}</span>
@@ -147,23 +147,23 @@ export async function InternalShell({
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
               Theme
             </p>
             <ThemeToggle tone="light" />
           </div>
           <nav
             aria-label="Mobile internal navigation"
-            className="mt-3 flex gap-2 overflow-x-auto pb-1 text-sm font-medium text-slate-600"
+            className="mt-3 flex gap-2 overflow-x-auto pb-1 text-sm font-medium text-slate-600 dark:text-slate-300"
           >
             {visibleNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex-none rounded-md border border-slate-200 bg-white px-3 py-1.5 shadow-sm",
+                  "flex-none rounded-md border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900",
                   item.label === active &&
-                    "border-slate-950 bg-slate-950 text-white shadow-slate-950/15",
+                    "border-slate-950 bg-slate-950 text-white shadow-slate-950/15 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950",
                 )}
               >
                 {item.label}
@@ -172,7 +172,7 @@ export async function InternalShell({
           </nav>
         </div>
 
-        <header className="border-b border-slate-200/80 bg-white/90 px-4 py-6 shadow-sm shadow-slate-950/5 backdrop-blur sm:px-6 lg:px-8">
+        <header className="border-b border-slate-200/80 bg-white/90 px-4 py-6 shadow-sm shadow-slate-950/5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-[1600px] flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -184,10 +184,10 @@ export async function InternalShell({
                   Workspace
                 </span>
               </div>
-              <h1 className="mt-3 text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">
+              <h1 className="mt-3 text-3xl font-bold tracking-normal text-slate-950 dark:text-slate-50 sm:text-4xl">
                 {title}
               </h1>
-              <p className="mt-2 max-w-4xl text-base leading-7 text-slate-600">
+              <p className="mt-2 max-w-4xl text-base leading-7 text-slate-600 dark:text-slate-300">
                 {description}
               </p>
             </div>

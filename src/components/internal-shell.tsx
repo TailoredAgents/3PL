@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Activity, ExternalLink } from "lucide-react";
 
 import { InternalAccount } from "@/components/internal-account";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { isClerkAuthConfigured } from "@/lib/auth";
 import { getCurrentInternalUser } from "@/lib/current-user";
 import { internalNavGroups, platformName } from "@/lib/data";
@@ -107,7 +108,8 @@ export async function InternalShell({
             </div>
           ))}
         </nav>
-        <div className="mt-4 shrink-0">
+        <div className="mt-4 grid shrink-0 gap-2">
+          <ThemeToggle />
           <InternalAccount
             clerkEnabled={clerkEnabled}
             fallbackLabel="Password gate active"
@@ -143,6 +145,12 @@ export async function InternalShell({
                 tone="light"
               />
             </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+              Theme
+            </p>
+            <ThemeToggle tone="light" />
           </div>
           <nav
             aria-label="Mobile internal navigation"

@@ -114,6 +114,8 @@ export type RateConfirmationControlView = {
   statusKey: string;
   sentAt: string;
   signedAt: string;
+  signedBy: string;
+  signerTitle: string;
   carrierRate: string;
   documentFileName: string | null;
   documentDownloadHref: string | null;
@@ -2721,6 +2723,9 @@ export async function getRateConfirmationControlViews(): Promise<
       const latestDocument = load.documents[0]
         ? mapDocumentSummary(load.documents[0])
         : null;
+      const signature = parseRateConfirmationSignature(
+        latestDocument?.extractedText,
+      );
 
       return {
         loadId: load.id,
@@ -2736,6 +2741,8 @@ export async function getRateConfirmationControlViews(): Promise<
         signedAt: load.rateConfirmationSignedAt
           ? formatFollowUp(load.rateConfirmationSignedAt)
           : "Not signed",
+        signedBy: signature.signerName ?? "Not signed",
+        signerTitle: signature.signerTitle ?? "No signature title",
         carrierRate:
           load.carrierRate === null || load.carrierRate === undefined
             ? "Carrier rate needed"
@@ -2748,6 +2755,16 @@ export async function getRateConfirmationControlViews(): Promise<
   } catch {
     return [];
   }
+}
+
+function parseRateConfirmationSignature(text: string | null | undefined) {
+  const signerName = text?.match(/^Signer:\s*(.+)$/m)?.[1]?.trim() ?? null;
+  const signerTitle = text?.match(/^Title:\s*(.+)$/m)?.[1]?.trim() ?? null;
+
+  return {
+    signerName,
+    signerTitle,
+  };
 }
 
 export async function getRecentAiAgentRunViews(): Promise<AiAgentRunView[]> {

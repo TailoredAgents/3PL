@@ -5,7 +5,12 @@ import { carrierAuthCookie } from "@/lib/auth";
 import { verifyPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 
-export default async function CarrierPortalPage() {
+export default async function CarrierPortalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rateConSigned?: string }>;
+}) {
+  const { rateConSigned } = await searchParams;
   const cookieStore = await cookies();
   const carrierId = verifyPortalSessionToken(
     "carrier",
@@ -107,6 +112,13 @@ export default async function CarrierPortalPage() {
           </div>
           <Link href="/carrier-login" className="text-sm underline">Switch account</Link>
         </div>
+
+        {rateConSigned === "1" ? (
+          <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            Rate confirmation signed and returned to the broker. You can open
+            the signed PDF from the load below.
+          </div>
+        ) : null}
 
         <section className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">

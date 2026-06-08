@@ -67,7 +67,7 @@ export async function POST(
   }
 
   if (load.rateConfirmationStatus === "SIGNED") {
-    return Response.redirect(new URL("/carrier-portal", request.url));
+    return Response.redirect(new URL("/carrier-portal?rateConSigned=1", request.url));
   }
 
   if (!["DRAFTED", "SENT"].includes(load.rateConfirmationStatus)) {
@@ -144,7 +144,7 @@ export async function POST(
   revalidatePath("/tracking");
   revalidatePath("/dashboard");
 
-  return Response.redirect(new URL("/carrier-portal", request.url));
+  return Response.redirect(new URL("/carrier-portal?rateConSigned=1", request.url));
 }
 
 function appendCarrierSignature(

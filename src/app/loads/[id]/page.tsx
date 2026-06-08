@@ -899,6 +899,9 @@ function RateConfirmationWorkspace({
 }) {
   const readiness = getRateConfirmationReadiness(load, latestRateConfirmation);
   const sendDraft = buildRateConfirmationSendDraft(load);
+  const signature = parseRateConfirmationSignature(
+    latestRateConfirmation?.extractedText,
+  );
   const sentOrSigned = ["Sent", "Signed"].includes(
     load.rateConfirmationStatus ?? "",
   );
@@ -978,6 +981,31 @@ function RateConfirmationWorkspace({
             icon={Truck}
           />
         </section>
+
+        {load.rateConfirmationStatus === "Signed" ? (
+          <section className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-emerald-950">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-70">
+                  Carrier signature
+                </p>
+                <h3 className="mt-1 text-lg font-bold">
+                  Signed by {signature.signerName ?? "carrier portal signer"}
+                </h3>
+                <p className="mt-1 text-sm font-semibold opacity-80">
+                  {signature.signerTitle ?? "Title not captured"} ·{" "}
+                  {load.rateConfirmationSignedAt ?? "Signed timestamp pending"}
+                </p>
+              </div>
+              {latestRateConfirmation?.downloadHref ? (
+                <DocumentLink
+                  href={latestRateConfirmation.downloadHref}
+                  label="Open signed PDF"
+                />
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
           <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
@@ -1180,6 +1208,13 @@ function getRateConfirmationReadiness(
     badge: `${blockers.length} blockers`,
     badgeClass: "bg-red-100 text-red-800",
     panelClass: "border-red-200 bg-red-50 text-red-950",
+  };
+}
+
+function parseRateConfirmationSignature(text: string | null | undefined) {
+  return {
+    signerName: text?.match(/^Signer:\s*(.+)$/m)?.[1]?.trim() ?? null,
+    signerTitle: text?.match(/^Title:\s*(.+)$/m)?.[1]?.trim() ?? null,
   };
 }
 

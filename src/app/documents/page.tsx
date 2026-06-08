@@ -428,9 +428,17 @@ function RateConfirmationControl({
                 </p>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <RateConField label="Sent" value={item.sentAt} />
-                <RateConField label="Signed" value={item.signedAt} />
+                <RateConField label="Signed at" value={item.signedAt} />
+                <RateConField
+                  label="Signed by"
+                  value={
+                    item.signedBy === "Not signed"
+                      ? item.signedBy
+                      : `${item.signedBy} · ${item.signerTitle}`
+                  }
+                />
                 <RateConField
                   label="Document"
                   value={item.documentFileName ?? "Draft needed"}

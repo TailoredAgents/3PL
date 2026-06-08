@@ -27,6 +27,13 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  min-width: 0;
 }
 
 * {
@@ -68,6 +75,7 @@ input,
 select,
 textarea {
   background-color: #ffffff;
+  max-width: 100%;
 }
 
 input::placeholder,
@@ -86,6 +94,21 @@ textarea {
     color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+}
+
+button,
+a {
+  overflow-wrap: anywhere;
+}
+
+p,
+span,
+dd,
+dt,
+li,
+td,
+th {
+  overflow-wrap: anywhere;
 }
 
 :focus-visible {

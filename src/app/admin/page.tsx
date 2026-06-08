@@ -208,8 +208,8 @@ export default async function AdminControlsPage() {
               </div>
             ) : null}
             <AdminUserForm />
-            <div className="overflow-hidden rounded-lg border border-slate-100">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto rounded-lg border border-slate-100">
+              <table className="min-w-[640px] text-left text-sm">
                 <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-400">
                   <tr>
                     <th className="px-4 py-3">User</th>
@@ -335,8 +335,8 @@ export default async function AdminControlsPage() {
               <PoolTile label="Austin pool" value={view.commission.houseOwnerPool} />
               <PoolTile label="Company" value={view.commission.companyPool} />
             </div>
-            <div className="overflow-hidden rounded-lg border border-slate-100">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto rounded-lg border border-slate-100">
+              <table className="min-w-[720px] text-left text-sm">
                 <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-400">
                   <tr>
                     <th className="px-4 py-3">Person</th>

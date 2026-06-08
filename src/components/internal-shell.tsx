@@ -117,20 +117,20 @@ export async function InternalShell({
         </div>
       </aside>
 
-      <section className="lg:pl-72">
+      <section className="min-w-0 lg:pl-72">
         <div className="border-b border-slate-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/dashboard" className="flex items-center gap-2 text-sm font-bold">
+            <Link href="/dashboard" className="flex min-w-0 items-center gap-2 text-sm font-bold">
               <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-[11px] text-white">
                 DAO
               </span>
-              <span>{platformName}</span>
+              <span className="truncate">{platformName}</span>
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 shrink-0 items-center gap-2">
               {action ? (
                 <Link
                   href={action.href}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-slate-950/15 hover:bg-slate-800"
+                  className="inline-flex max-w-[44vw] items-center justify-center gap-2 truncate rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-slate-950/15 hover:bg-slate-800"
                 >
                   {action.label}
                 </Link>

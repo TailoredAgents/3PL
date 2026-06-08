@@ -143,7 +143,7 @@ export function CommunicationsWorkspace({
   return (
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-950/5 xl:grid xl:h-[calc(100vh-16rem)] xl:min-h-[640px] xl:max-h-[820px] xl:grid-cols-[310px_minmax(0,1fr)_320px]">
       {/* Left — inbox */}
-      <aside className="border-b border-slate-200 bg-slate-50/80 xl:grid xl:min-h-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:border-b-0 xl:border-r">
+      <aside className="grid max-h-[380px] grid-rows-[auto_minmax(0,1fr)] border-b border-slate-200 bg-slate-50/80 xl:max-h-none xl:min-h-0 xl:border-b-0 xl:border-r">
         <div className="border-b border-slate-200 bg-white px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -200,7 +200,7 @@ export function CommunicationsWorkspace({
       </aside>
 
       {/* Center — conversation */}
-      <article className="grid min-h-[620px] grid-rows-[auto_auto_minmax(220px,0.8fr)_auto] xl:min-h-0">
+      <article className="grid h-[calc(100vh-8rem)] min-h-[560px] max-h-[760px] grid-rows-[auto_auto_minmax(160px,1fr)_auto] xl:h-auto xl:min-h-0 xl:max-h-none xl:grid-rows-[auto_auto_minmax(220px,0.8fr)_auto]">
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3">
           <div>
             <div className="flex items-center gap-2">

@@ -11,6 +11,7 @@ import {
   ListChecks,
   RefreshCcw,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
 
@@ -67,6 +68,12 @@ export default async function AgentsPage() {
     { label: "Approved", value: commandCenter.metrics.completed, icon: CheckCircle2 },
     { label: "Avg confidence", value: commandCenter.metrics.averageConfidence, icon: Sparkles },
   ];
+  const customizedPromptCount = promptTemplates.filter((template) => template.isCustomized).length;
+  const reviewQueueCount =
+    commandCenter.approvalQueue.length +
+    commandCenter.failedRuns.length +
+    documentAutomation.reviewCount +
+    documentAutomation.failedCount;
 
   return (
     <InternalShell
@@ -94,6 +101,67 @@ export default async function AgentsPage() {
             </div>
           </article>
         ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
+        <article className="rounded-lg border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-emerald-700 shadow-sm">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
+                Automation posture
+              </p>
+              <h2 className="mt-1 text-xl font-black text-slate-950">
+                Review-first controls are protecting customer, carrier, and money actions.
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-emerald-900">
+                Conversation notes can run autonomously, while pricing, compliance, marketplace,
+                booking, billing, and outbound contact decisions remain visible for human review.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+              <SlidersHorizontal className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                Control snapshot
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <ControlSnapshot label="Needs review" value={reviewQueueCount.toString()} />
+                <ControlSnapshot
+                  label="Prompt library"
+                  value={`${customizedPromptCount}/${promptTemplates.length}`}
+                  detail="custom"
+                />
+                <ControlSnapshot
+                  label="Recent runs"
+                  value={commandCenter.recentRuns.length.toString()}
+                />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href="/settings"
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-emerald-200 hover:text-emerald-700"
+                >
+                  Agent modes <ExternalLink className="h-3 w-3" />
+                </Link>
+                <Link
+                  href="/integrations"
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-emerald-200 hover:text-emerald-700"
+                >
+                  Provider health <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </article>
       </section>
 
       {/* Generated daily brief */}
@@ -388,43 +456,66 @@ export default async function AgentsPage() {
 
       {/* Prompt templates */}
       <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
-          <div className="flex items-center gap-2">
-            <Bot className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Prompt templates</p>
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900">Agent prompt library</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Prompt text stays collapsed until an owner/admin needs to edit a specific agent.
+              </p>
+            </div>
           </div>
-          <span className="text-xs text-slate-400">Controls future Grok agent runs</span>
+          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
+            {customizedPromptCount} custom / {promptTemplates.length} total
+          </span>
         </div>
         {canManagePrompts ? (
           <div className="grid gap-3 p-4 xl:grid-cols-2">
             {promptTemplates.map((template) => (
               <details
                 key={template.agentName}
-                className="group overflow-hidden rounded-md border border-slate-100 bg-slate-50 open:bg-white open:shadow-sm"
+                className="group overflow-hidden rounded-lg border border-slate-100 bg-slate-50 open:bg-white open:shadow-sm"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 hover:bg-slate-50">
-                  <div>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 hover:bg-white">
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-900">{template.agentName}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{template.task}</p>
-                  </div>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    template.isCustomized
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-slate-200 text-slate-600"
-                  }`}>
-                    {template.isCustomized ? "Custom" : "Default"}
-                  </span>
-                </summary>
-                <div className="border-t border-slate-100 p-4">
-                  <div className="mb-3 rounded-md border border-slate-100 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
-                    <p className="font-semibold text-slate-800">
+                    <p className="mt-1 text-xs font-semibold text-slate-400">
                       Version {template.version} · {template.updated}
                     </p>
-                    <p>
-                      {template.changedBy
-                        ? `Changed by ${template.changedBy}`
-                        : "No saved prompt history yet."}
-                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      template.isCustomized
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-slate-200 text-slate-600"
+                    }`}>
+                      {template.isCustomized ? "Custom" : "Default"}
+                    </span>
+                    <span className="text-xs font-bold text-emerald-700 group-open:hidden">
+                      Edit
+                    </span>
+                    <span className="hidden text-xs font-bold text-slate-400 group-open:inline">
+                      Close
+                    </span>
+                  </div>
+                </summary>
+                <div className="border-t border-slate-100 p-4">
+                  <div className="mb-3 grid gap-3 lg:grid-cols-[1fr_0.75fr]">
+                    <div className="rounded-md border border-slate-100 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                      <p className="font-semibold text-slate-800">Agent task</p>
+                      <p className="mt-1">{template.task}</p>
+                    </div>
+                    <div className="rounded-md border border-slate-100 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                      <p className="font-semibold text-slate-800">Change history</p>
+                      <p className="mt-1">
+                        {template.changedBy
+                          ? `Changed by ${template.changedBy}`
+                          : "No saved prompt history yet."}
+                      </p>
+                    </div>
                   </div>
                   <AgentPromptTemplateForm
                     agentName={template.agentName}
@@ -508,6 +599,26 @@ function AutomationMetric({ label, value }: { label: string; value: number }) {
         {label}
       </p>
       <p className="mt-1 text-2xl font-bold text-slate-950">{value}</p>
+    </div>
+  );
+}
+
+function ControlSnapshot({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-3">
+      <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-black text-slate-950">{value}</p>
+      {detail ? <p className="mt-1 text-xs font-semibold text-slate-400">{detail}</p> : null}
     </div>
   );
 }

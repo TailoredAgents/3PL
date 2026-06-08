@@ -21,6 +21,8 @@ export async function POST(
 
     revalidatePath("/loads");
     revalidatePath(`/loads/${id}`);
+    revalidatePath("/documents");
+    revalidatePath("/carrier-portal");
     revalidatePath("/dashboard");
 
     return Response.json({

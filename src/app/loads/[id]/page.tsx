@@ -1192,7 +1192,7 @@ function buildRateConfirmationSendDraft(load: LoadDetailView) {
   const body = [
     greeting,
     "",
-    `Please review the attached/linked rate confirmation for ${load.loadNumber}.`,
+    `Please review the linked rate confirmation PDF for ${load.loadNumber}.`,
     "",
     `Carrier: ${load.carrier}`,
     `Lane: ${load.lane}`,
@@ -1201,7 +1201,7 @@ function buildRateConfirmationSendDraft(load: LoadDetailView) {
     `Equipment: ${load.equipment}`,
     `Carrier rate: ${load.carrierRate ? toCurrency(load.carrierRate) : "Rate needed"}`,
     "",
-    "Please review, sign, and reply with the signed confirmation. Report any pickup, delivery, accessorial, or tracking issue before dispatch.",
+    "Please review and sign through the carrier portal link in this email. Report any pickup, delivery, accessorial, or tracking issue before dispatch.",
     "",
     "Thank you,",
     "DAO Logistics",

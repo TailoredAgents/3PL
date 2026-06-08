@@ -4,6 +4,7 @@ import { getCurrentInternalUser } from "@/lib/current-user";
 import type { SendEmailResult } from "@/lib/email";
 import { sendTransactionalEmail } from "@/lib/email";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { buildRateConfirmationPdf } from "@/lib/rate-confirmation";
 import { formValue } from "@/lib/server-utils";
 import { buildPublicUrl } from "@/lib/twilio-voice";
 import { rateConfirmationSendSchema } from "@/lib/validation";
@@ -59,6 +60,9 @@ export async function POST(
       : null,
     !load.carrierRate ? "enter the carrier rate" : null,
     !rateConfirmation ? "draft the rate confirmation" : null,
+    rateConfirmation && !rateConfirmation.extractedText
+      ? "generate the rate confirmation content"
+      : null,
     !load.pickupDate ? "enter the pickup date" : null,
     !load.deliveryDate ? "enter the delivery date" : null,
     !load.originAddress ? "enter the pickup address" : null,
@@ -80,12 +84,12 @@ export async function POST(
     ? `LD-${String(load.loadNumber).padStart(4, "0")}`
     : "LD-????";
   const documentUrl = buildPublicUrl(
-    `/api/loads/${load.id}/rate-confirmation/print`,
+    `/api/loads/${load.id}/rate-confirmation/pdf`,
   );
   const carrierPortalUrl = buildPublicUrl(
     `/carrier-login?next=${encodeURIComponent("/carrier-portal")}`,
   );
-  const text = `${input.body.trim()}\n\nReview / print rate confirmation:\n${documentUrl}\n\nSign in to review and sign in the carrier portal:\n${carrierPortalUrl}`;
+  const text = `${input.body.trim()}\n\nReview / download rate confirmation PDF:\n${documentUrl}\n\nSign in to review and sign in the carrier portal:\n${carrierPortalUrl}`;
   const emailResult: SendEmailResult = await sendTransactionalEmail({
     to: input.toEmail,
     subject: input.subject,
@@ -100,6 +104,7 @@ export async function POST(
         : "Rate confirmation email failed.",
   }));
   const now = new Date();
+  const pdfBytes = buildRateConfirmationPdf(rateConfirmation.extractedText ?? "");
   const providerOutcome = emailResult.sent
     ? `Sent via ${emailResult.provider}${
         emailResult.providerId ? ` (${emailResult.providerId})` : ""
@@ -113,6 +118,15 @@ export async function POST(
         : `Rate confirmation send failed for ${input.toEmail}.`;
 
   await prisma.$transaction([
+    prisma.document.update({
+      where: { id: rateConfirmation.id },
+      data: {
+        fileName: `rate-confirmation-${loadLabel}.pdf`,
+        fileUrl: `/api/loads/${load.id}/rate-confirmation/pdf`,
+        mimeType: "application/pdf",
+        fileSize: pdfBytes.length,
+      },
+    }),
     ...(emailResult.sent
       ? [
           prisma.load.update({
@@ -149,6 +163,8 @@ export async function POST(
 
   revalidatePath("/loads");
   revalidatePath(`/loads/${id}`);
+  revalidatePath("/documents");
+  revalidatePath("/carrier-portal");
   revalidatePath("/email");
   revalidatePath("/communications");
   revalidatePath("/dashboard");

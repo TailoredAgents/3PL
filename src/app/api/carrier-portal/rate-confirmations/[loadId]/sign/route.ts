@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { carrierAuthCookie } from "@/lib/auth";
 import { verifyPortalSessionToken } from "@/lib/auth-portal";
 import { hasDatabaseUrl, prisma } from "@/lib/prisma";
+import { buildRateConfirmationPdf } from "@/lib/rate-confirmation";
 import { formValue } from "@/lib/server-utils";
 
 export async function POST(
@@ -91,14 +92,20 @@ export async function POST(
     signerTitle,
     carrier: load.carrier?.companyName ?? "Carrier",
     signedAt: now,
+    ipAddress: getRequestIp(request),
+    userAgent: request.headers.get("user-agent"),
   });
+  const signedPdf = buildRateConfirmationPdf(signedText);
 
   await prisma.$transaction([
     prisma.document.update({
       where: { id: rateConfirmation.id },
       data: {
+        fileName: `rate-confirmation-${formatLoadNumber(load.loadNumber)}-signed.pdf`,
+        fileUrl: `/api/loads/${load.id}/rate-confirmation/pdf`,
+        mimeType: "application/pdf",
         extractedText: signedText,
-        fileSize: Buffer.byteLength(signedText),
+        fileSize: signedPdf.length,
       },
     }),
     prisma.load.update({
@@ -147,6 +154,8 @@ function appendCarrierSignature(
     signerTitle: string;
     carrier: string;
     signedAt: Date;
+    ipAddress: string | null;
+    userAgent: string | null;
   },
 ) {
   return [
@@ -157,8 +166,18 @@ function appendCarrierSignature(
     `Signer: ${input.signerName}`,
     `Title: ${input.signerTitle}`,
     `Signed at: ${formatDateTime(input.signedAt)}`,
+    `IP address: ${input.ipAddress ?? "Not captured"}`,
+    `User agent: ${input.userAgent ?? "Not captured"}`,
     "Authorization: Carrier accepted the rate confirmation terms through the carrier portal.",
   ].join("\n");
+}
+
+function getRequestIp(request: Request) {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    null
+  );
 }
 
 function formatLoadNumber(loadNumber: number | null) {

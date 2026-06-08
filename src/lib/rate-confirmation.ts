@@ -63,8 +63,9 @@ export async function generateRateConfirmationDocument(loadId: string) {
     deliveryWindow: load.deliveryWindow,
     carrierRate: Number(load.carrierRate),
   });
-  const fileName = `rate-confirmation-${load.id}.html`;
-  const fileUrl = `/api/loads/${load.id}/rate-confirmation/print`;
+  const fileName = `rate-confirmation-${formatLoadNumber(load.loadNumber)}.pdf`;
+  const fileUrl = `/api/loads/${load.id}/rate-confirmation/pdf`;
+  const pdfBytes = buildRateConfirmationPdf(content);
   const now = new Date();
   const document = await prisma.$transaction(async (tx) => {
     const createdDocument = await tx.document.create({
@@ -76,8 +77,8 @@ export async function generateRateConfirmationDocument(loadId: string) {
         extractionStatus: DocumentExtractionStatus.COMPLETED,
         fileName,
         fileUrl,
-        mimeType: "text/html",
-        fileSize: Buffer.byteLength(content),
+        mimeType: "application/pdf",
+        fileSize: pdfBytes.length,
         extractedText: content,
       },
     });
@@ -144,6 +145,40 @@ export async function getPrintableRateConfirmation(loadId: string) {
       carrier: load.carrier?.companyName ?? "Carrier",
       content: document.extractedText,
     }),
+  };
+}
+
+export async function getRateConfirmationPdf(loadId: string) {
+  if (!prisma) {
+    throw new Error("Database is not configured.");
+  }
+
+  const load = await prisma.load.findUnique({
+    where: { id: loadId },
+    include: {
+      shipper: true,
+      carrier: true,
+      documents: {
+        where: { type: "RATE_CONFIRMATION" },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  if (!load) {
+    throw new Error("Load not found.");
+  }
+
+  const document = load.documents[0];
+
+  if (!document?.extractedText) {
+    throw new Error("Generate a rate confirmation before opening the PDF.");
+  }
+
+  return {
+    title: getPdfFileName(document.fileName, load.loadNumber),
+    pdf: buildRateConfirmationPdf(document.extractedText),
   };
 }
 
@@ -226,6 +261,135 @@ function buildRateConfirmationContent(input: {
   ].join("\n");
 }
 
+export function buildRateConfirmationPdf(content: string) {
+  const lines = paginatePdfLines(wrapPdfText(content));
+  const objects: Array<{ id: number; content: string }> = [
+    { id: 1, content: "<< /Type /Catalog /Pages 2 0 R >>" },
+  ];
+  const pageObjectIds = lines.map((_page, index) => 4 + index * 2);
+  const fontObjectId = 3;
+
+  objects.push({
+    id: 2,
+    content: `<< /Type /Pages /Kids [${pageObjectIds
+      .map((id) => `${id} 0 R`)
+      .join(" ")}] /Count ${pageObjectIds.length} >>`,
+  });
+  objects.push({
+    id: fontObjectId,
+    content: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  });
+
+  lines.forEach((pageLines, index) => {
+    const pageObjectId = pageObjectIds[index];
+    const contentObjectId = pageObjectId + 1;
+    const stream = buildPdfTextStream(pageLines);
+
+    objects.push({
+      id: pageObjectId,
+      content: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontObjectId} 0 R >> >> /Contents ${contentObjectId} 0 R >>`,
+    });
+    objects.push({
+      id: contentObjectId,
+      content: `<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`,
+    });
+  });
+
+  objects.sort((a, b) => a.id - b.id);
+
+  let output = "%PDF-1.4\n";
+  const offsets: number[] = [0];
+
+  for (const object of objects) {
+    offsets[object.id] = Buffer.byteLength(output);
+    output += `${object.id} 0 obj\n${object.content}\nendobj\n`;
+  }
+
+  const xrefOffset = Buffer.byteLength(output);
+  output += `xref\n0 ${objects.length + 1}\n`;
+  output += "0000000000 65535 f \n";
+
+  for (let id = 1; id <= objects.length; id += 1) {
+    output += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+  }
+
+  output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+
+  return Buffer.from(output, "ascii");
+}
+
+function wrapPdfText(content: string) {
+  const maxLength = 88;
+
+  return content
+    .split("\n")
+    .flatMap((line) => {
+      const normalized = normalizePdfText(line);
+
+      if (!normalized.trim()) {
+        return [""];
+      }
+
+      const wrapped: string[] = [];
+      let current = "";
+
+      for (const word of normalized.split(/\s+/)) {
+        const next = current ? `${current} ${word}` : word;
+
+        if (next.length > maxLength && current) {
+          wrapped.push(current);
+          current = word;
+        } else {
+          current = next;
+        }
+      }
+
+      if (current) {
+        wrapped.push(current);
+      }
+
+      return wrapped;
+    });
+}
+
+function paginatePdfLines(lines: string[]) {
+  const linesPerPage = 49;
+  const pages: string[][] = [];
+
+  for (let index = 0; index < lines.length; index += linesPerPage) {
+    pages.push(lines.slice(index, index + linesPerPage));
+  }
+
+  return pages.length ? pages : [["Rate confirmation"]];
+}
+
+function buildPdfTextStream(lines: string[]) {
+  return [
+    "BT",
+    "/F1 10 Tf",
+    "50 742 Td",
+    "14 TL",
+    ...lines.map((line) => `(${escapePdfText(line)}) Tj T*`),
+    "ET",
+  ].join("\n");
+}
+
+function normalizePdfText(value: string) {
+  return value
+    .replaceAll("→", "->")
+    .replaceAll("•", "-")
+    .replaceAll("—", "-")
+    .replaceAll("–", "-")
+    .replaceAll("’", "'")
+    .replaceAll("“", '"')
+    .replaceAll("”", '"')
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "");
+}
+
+function escapePdfText(value: string) {
+  return normalizePdfText(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+}
+
 function renderRateConfirmationHtml(input: {
   title: string;
   loadId: string;
@@ -295,6 +459,18 @@ function formatDate(value: Date) {
     day: "numeric",
     year: "numeric",
   }).format(value);
+}
+
+function formatLoadNumber(loadNumber: number | null) {
+  return `LD-${String(loadNumber ?? "").padStart(4, "0")}`;
+}
+
+function getPdfFileName(fileName: string, loadNumber: number | null) {
+  if (fileName.toLowerCase().endsWith(".pdf")) {
+    return fileName;
+  }
+
+  return `rate-confirmation-${formatLoadNumber(loadNumber)}.pdf`;
 }
 
 function formatDateTime(value: Date) {

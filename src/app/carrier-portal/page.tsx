@@ -171,11 +171,11 @@ export default async function CarrierPortalPage() {
                       </div>
                       {document ? (
                         <Link
-                          href={`/api/loads/${load.id}/rate-confirmation/print`}
+                          href={`/api/loads/${load.id}/rate-confirmation/pdf`}
                           target="_blank"
                           className="w-fit rounded bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700"
                         >
-                          Open rate con
+                          Open PDF
                         </Link>
                       ) : null}
                     </div>

@@ -4,6 +4,7 @@ import type { ComponentType, ReactNode } from "react";
 import {
   ArrowLeft,
   Building2,
+  CheckCircle2,
   ClipboardList,
   Download,
   FileText,
@@ -28,10 +29,24 @@ import { toCurrency } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 const CARD_ACCENTS = [
-  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
-  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
-  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+  {
+    border: "border-l-[3px] border-l-sky-400",
+    icon: "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200",
+  },
+  {
+    border: "border-l-[3px] border-l-emerald-400",
+    icon: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200",
+  },
+  {
+    border: "border-l-[3px] border-l-violet-400",
+    icon: "bg-violet-50 text-violet-700 dark:bg-violet-400/15 dark:text-violet-200",
+  },
 ] as const;
+
+const panelClass =
+  "overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25";
+const panelHeaderClass =
+  "border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/40";
 
 export default async function ShipperDetailPage({
   params,
@@ -50,6 +65,40 @@ export default async function ShipperDetailPage({
     { icon: MapPinned, label: "Quote requests", value: shipper.quoteRequests.length.toString() },
     { icon: Truck, label: "Loads", value: shipper.loads.length.toString() },
   ];
+  const hasPrimaryContact = shipper.primaryContact !== "No contact";
+  const hasEmail = shipper.email !== "No email";
+  const hasPhone = shipper.phone !== "No phone";
+  const hasLaneContext =
+    shipper.lanes.length > 0 &&
+    !shipper.lanes.some((lane) => lane.toLowerCase().includes("needed"));
+  const hasUsefulNotes = Boolean(shipper.notes && shipper.notes !== "No notes yet.");
+  const readinessItems = [
+    {
+      label: "Primary contact",
+      value: hasPrimaryContact ? shipper.primaryContact : "Needed before outreach",
+      ready: hasPrimaryContact,
+    },
+    {
+      label: "Contact channels",
+      value:
+        hasEmail || hasPhone
+          ? [shipper.email, shipper.phone]
+              .filter((item) => !item.startsWith("No "))
+              .join(" / ")
+          : "Email or phone needed",
+      ready: hasEmail || hasPhone,
+    },
+    {
+      label: "Lane context",
+      value: hasLaneContext ? `${shipper.lanes.length} known` : "Lane details needed",
+      ready: hasLaneContext,
+    },
+    {
+      label: "Account notes",
+      value: hasUsefulNotes ? "Captured" : "No notes yet",
+      ready: hasUsefulNotes,
+    },
+  ];
 
   return (
     <InternalShell
@@ -62,14 +111,14 @@ export default async function ShipperDetailPage({
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/shippers"
-          className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
+          className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-100"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to shipper accounts
         </Link>
         <Link
           href={`/shippers/${shipper.id}/edit`}
-          className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-300 hover:text-emerald-700"
+          className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-600 dark:hover:text-emerald-200"
         >
           <Pencil className="h-4 w-4" />
           Edit shipper
@@ -78,24 +127,24 @@ export default async function ShipperDetailPage({
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         {/* Profile card */}
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center justify-between ${panelHeaderClass}`}>
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">{shipper.company}</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{shipper.company}</p>
             </div>
-            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200">
               {shipper.status}
             </span>
             {Boolean((shipper as Record<string, unknown>).portalEnabled) && (
-              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100">
                 Portal enabled
               </span>
             )}
           </div>
           <div className="p-5">
             <p className="text-xs font-medium text-slate-500">{shipper.industry}</p>
-            <div className="mt-4 grid gap-3 text-sm text-slate-700">
+            <div className="mt-4 grid gap-3 text-sm text-slate-700 dark:text-slate-300">
               <div className="flex gap-3">
                 <UserRound className="h-4 w-4 flex-none text-slate-400" />
                 <span>{shipper.primaryContact}</span>
@@ -110,7 +159,7 @@ export default async function ShipperDetailPage({
               </div>
             </div>
 
-            <div className="mt-5 rounded-md bg-slate-50 p-4">
+            <div className="mt-5 rounded-md bg-slate-50 p-4 dark:bg-slate-950/45 dark:ring-1 dark:ring-white/10">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 <MapPinned className="h-3.5 w-3.5" />
                 Known lanes
@@ -120,7 +169,7 @@ export default async function ShipperDetailPage({
                   shipper.lanes.map((lane) => (
                     <span
                       key={lane}
-                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700"
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                     >
                       {lane}
                     </span>
@@ -132,42 +181,82 @@ export default async function ShipperDetailPage({
             </div>
 
             {shipper.notes && (
-              <div className="mt-4 rounded-md border border-slate-100 bg-slate-50 p-4">
+              <div className="mt-4 rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Account notes</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{shipper.notes}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{shipper.notes}</p>
               </div>
             )}
           </div>
         </article>
 
         {/* Summary metric cards */}
-        <div className="grid content-start gap-4 md:grid-cols-3 xl:grid-cols-1 xl:grid-rows-3">
-          {summaryCards.map((card, i) => (
-            <article
-              key={card.label}
-              className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
-            >
-              <div className="p-5">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
-                  <card.icon className="h-4 w-4" />
+        <aside className="grid content-start gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {summaryCards.map((card, i) => (
+              <article
+                key={card.label}
+                className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25 ${CARD_ACCENTS[i].border}`}
+              >
+                <div className="p-5 xl:p-4">
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
+                    <card.icon className="h-4 w-4" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-400">{card.label}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950 dark:text-slate-50">{card.value}</p>
                 </div>
-                <p className="mt-4 text-sm font-medium text-slate-600">{card.label}</p>
-                <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{card.value}</p>
+              </article>
+            ))}
+          </div>
+
+          <article className={panelClass}>
+            <div className={`flex items-center justify-between ${panelHeaderClass}`}>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Account readiness</p>
               </div>
-            </article>
-          ))}
-        </div>
+              <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {readinessItems.filter((item) => item.ready).length}/{readinessItems.length} ready
+              </span>
+            </div>
+            <div className="grid gap-3 p-5 sm:grid-cols-2">
+              {readinessItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-md border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/45"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                      {item.label}
+                    </p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                        item.ready
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200"
+                          : "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200"
+                      }`}
+                    >
+                      {item.ready ? "Ready" : "Needed"}
+                    </span>
+                  </div>
+                  <p className="mt-2 truncate text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </article>
+        </aside>
       </section>
 
       {/* Contacts */}
       {shipper.contacts.length > 0 && (
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center justify-between ${panelHeaderClass}`}>
             <div className="flex items-center gap-2">
               <UserRound className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">Contacts</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Contacts</p>
             </div>
-            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+            <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {shipper.contacts.length}
             </span>
           </div>
@@ -176,11 +265,11 @@ export default async function ShipperDetailPage({
               <Link
                 key={contact.id}
                 href={`/contacts/${contact.id}`}
-                className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:border-emerald-200 hover:bg-white"
+                className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:border-emerald-200 hover:bg-white dark:border-slate-800 dark:bg-slate-950/45 dark:hover:border-emerald-700 dark:hover:bg-slate-900"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-slate-950">{contact.fullName}</p>
+                    <p className="font-semibold text-slate-950 dark:text-slate-50">{contact.fullName}</p>
                     {contact.title && (
                       <p className="mt-0.5 text-xs text-slate-500">{contact.title}</p>
                     )}
@@ -189,7 +278,7 @@ export default async function ShipperDetailPage({
                     <Star className="h-3.5 w-3.5 flex-none text-emerald-600" />
                   )}
                 </div>
-                <div className="mt-3 grid gap-1 text-xs text-slate-600">
+                <div className="mt-3 grid gap-1 text-xs text-slate-600 dark:text-slate-300">
                   {contact.email && (
                     <span className="flex items-center gap-1.5">
                       <Mail className="h-3 w-3 text-slate-400" />
@@ -210,15 +299,15 @@ export default async function ShipperDetailPage({
       )}
 
       {/* Documents */}
-      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+      <article className={panelClass}>
+        <div className={`flex items-center justify-between ${panelHeaderClass}`}>
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Documents</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Documents</p>
           </div>
           <Link
             href={`/documents`}
-            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200"
           >
             Open document center
           </Link>
@@ -226,8 +315,8 @@ export default async function ShipperDetailPage({
         {shipper.documents.length ? (
           <div className="grid gap-3 p-5 md:grid-cols-2 xl:grid-cols-4">
             {shipper.documents.map((document) => (
-              <div key={document.id} className="rounded-md border border-slate-100 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-950">{document.fileName}</p>
+              <div key={document.id} className="rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
+                <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">{document.fileName}</p>
                 <p className="mt-1 text-xs text-slate-500">
                   {document.type} · {document.storageState}
                 </p>
@@ -235,7 +324,7 @@ export default async function ShipperDetailPage({
                   <Link
                     href={document.downloadHref}
                     target="_blank"
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200"
                   >
                     <Download className="h-3.5 w-3.5" />
                     Download
@@ -253,11 +342,11 @@ export default async function ShipperDetailPage({
 
       {/* Add contact + manage lanes */}
       <section className="grid gap-6 xl:grid-cols-2">
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
+        <article className={panelClass}>
           <details className="group">
-            <summary className="flex cursor-pointer list-none items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+            <summary className={`flex cursor-pointer list-none items-center gap-2 ${panelHeaderClass}`}>
               <UserRound className="h-4 w-4 text-slate-400" />
-              <p className="flex-1 text-sm font-semibold text-slate-700">Add contact</p>
+              <p className="flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">Add contact</p>
               <span className="text-xs text-slate-400 group-open:hidden">Expand</span>
               <span className="hidden text-xs text-slate-400 group-open:inline">Collapse</span>
             </summary>
@@ -267,10 +356,10 @@ export default async function ShipperDetailPage({
           </details>
         </article>
 
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <MapPinned className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-semibold text-slate-700">Manage lanes</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Manage lanes</p>
           </div>
           <div className="p-5">
             <ShipperLanesForm
@@ -293,13 +382,13 @@ export default async function ShipperDetailPage({
               <Link
                 key={lead.id}
                 href={`/leads/${lead.id}`}
-                className="block px-5 py-4 hover:bg-slate-50"
+                className="block px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-950/45"
               >
-                <p className="font-semibold text-slate-900">{lead.contact}</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="font-semibold text-slate-900 dark:text-slate-50">{lead.contact}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {lead.stage} | {lead.nextFollowUp}
                 </p>
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                <p className="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   {lead.pain}
                 </p>
               </Link>
@@ -319,13 +408,13 @@ export default async function ShipperDetailPage({
               <Link
                 key={quote.id}
                 href={`/quote-requests/${quote.id}`}
-                className="block px-5 py-4 hover:bg-slate-50"
+                className="block px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-950/45"
               >
-                <p className="font-semibold text-slate-900">{quote.lane}</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="font-semibold text-slate-900 dark:text-slate-50">{quote.lane}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {quote.status} | {quote.equipment} | {quote.pickup}
                 </p>
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                <p className="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   {quote.details}
                 </p>
               </Link>
@@ -345,13 +434,13 @@ export default async function ShipperDetailPage({
               <Link
                 key={load.id}
                 href={`/loads/${load.id}`}
-                className="block px-5 py-4 hover:bg-slate-50"
+                className="block px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-950/45"
               >
-                <p className="font-semibold text-slate-900">{load.lane}</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="font-semibold text-slate-900 dark:text-slate-50">{load.lane}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {load.status} | {load.carrier}
                 </p>
-                <p className="mt-1.5 text-sm text-slate-600">
+                <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-300">
                   Margin: {toCurrency(load.margin)} ({load.marginPercent}%)
                 </p>
               </Link>
@@ -377,17 +466,17 @@ function RelatedPanel({
   children: ReactNode;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <article className={panelClass}>
+      <div className={`flex items-center justify-between ${panelHeaderClass}`}>
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-slate-400" />
-          <p className="text-sm font-semibold text-slate-700">{title}</p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</p>
         </div>
-        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           {count}
         </span>
       </div>
-      <div className="divide-y divide-slate-100">{children}</div>
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">{children}</div>
     </article>
   );
 }

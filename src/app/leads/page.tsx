@@ -21,11 +21,28 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 const CARD_ACCENTS = [
-  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
-  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
-  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
-  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+  {
+    border: "border-l-[3px] border-l-amber-400",
+    icon: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  },
+  {
+    border: "border-l-[3px] border-l-sky-400",
+    icon: "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200",
+  },
+  {
+    border: "border-l-[3px] border-l-emerald-400",
+    icon: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200",
+  },
+  {
+    border: "border-l-[3px] border-l-violet-400",
+    icon: "bg-violet-50 text-violet-700 dark:bg-violet-400/15 dark:text-violet-200",
+  },
 ] as const;
+
+const panelClass =
+  "overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25";
+const panelHeaderClass =
+  "border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/40";
 
 export default async function LeadsPage() {
   const [leadViews, activityViews] = await Promise.all([
@@ -61,7 +78,7 @@ export default async function LeadsPage() {
         {metrics.map((item, i) => (
           <article
             key={item.label}
-            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
+            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25 ${CARD_ACCENTS[i].border}`}
           >
             <div className="p-5">
               <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
@@ -78,9 +95,9 @@ export default async function LeadsPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
-        <article className="rounded-lg border border-amber-100 bg-amber-50 p-5 text-amber-900 shadow-sm">
+        <article className="rounded-lg border border-amber-100 bg-amber-50 p-5 text-amber-900 shadow-sm dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100 dark:shadow-black/20">
           <div className="flex gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70 dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
               <CalendarClock className="h-5 w-5" />
             </div>
             <div>
@@ -99,9 +116,9 @@ export default async function LeadsPage() {
           </div>
         </article>
 
-        <article className="rounded-lg border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
+        <article className="rounded-lg border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100 dark:shadow-black/20">
           <div className="flex gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70 dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
@@ -118,8 +135,8 @@ export default async function LeadsPage() {
       </section>
 
       {/* Today's calls */}
-      <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+      <section className={panelClass}>
+        <div className={`flex items-center justify-between ${panelHeaderClass}`}>
           <div className="flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-slate-500" />
             <p className="text-sm font-semibold text-slate-700">Today&apos;s calls</p>
@@ -131,7 +148,7 @@ export default async function LeadsPage() {
             <Link
               key={lead.id}
               href={`/leads/${lead.id}`}
-              className="grid gap-2 rounded-md border border-slate-100 bg-slate-50 p-4 hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+              className="grid gap-2 rounded-md border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/50 dark:hover:border-emerald-700 dark:hover:bg-slate-900 dark:hover:shadow-black/25"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold text-slate-900">{lead.company}</p>
@@ -155,12 +172,12 @@ export default async function LeadsPage() {
       </section>
 
       {/* Pipeline kanban */}
-      <section className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+      <section className={panelClass}>
+        <div className={`flex items-center justify-between ${panelHeaderClass}`}>
           <div>
             <p className="text-sm font-semibold text-slate-700">Pipeline board</p>
           </div>
-          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
+          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {leadViews.length} leads
           </span>
         </div>
@@ -175,7 +192,7 @@ export default async function LeadsPage() {
               return (
                 <div
                   key={stage}
-                  className="min-h-[280px] rounded-lg border border-slate-100 bg-slate-50 p-3"
+                  className="min-h-[280px] rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/45"
                 >
                   <div
                     className={cn(
@@ -184,7 +201,7 @@ export default async function LeadsPage() {
                     )}
                   >
                     <p className="text-sm font-bold">{stage}</p>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-600 shadow-sm">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-600 shadow-sm dark:bg-slate-950 dark:text-slate-300 dark:ring-1 dark:ring-slate-800">
                       {stageLeads.length}
                     </span>
                   </div>
@@ -206,10 +223,10 @@ export default async function LeadsPage() {
 
       {/* Create lead + import — equal width */}
       <section className="grid items-start gap-6 xl:grid-cols-2">
-        <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 hover:bg-slate-100/60">
+        <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
+          <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:bg-slate-900">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 dark:bg-emerald-400/15">
                 <UserPlus className="h-4 w-4 text-emerald-700" />
               </div>
               <div>
@@ -222,15 +239,15 @@ export default async function LeadsPage() {
             <span className="text-xs font-semibold text-slate-400 group-open:hidden">Expand</span>
             <span className="hidden text-xs font-semibold text-slate-400 group-open:inline">Collapse</span>
           </summary>
-          <div className="border-t border-slate-200 p-5">
+          <div className="border-t border-slate-200 p-5 dark:border-slate-800">
             <LeadCreateForm />
           </div>
         </details>
 
-        <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 hover:bg-slate-100/60">
+        <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
+          <summary className="flex cursor-pointer list-none items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:bg-slate-900">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-sky-50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-sky-50 dark:bg-sky-400/15">
                 <FileUp className="h-4 w-4 text-sky-700" />
               </div>
               <div>
@@ -243,7 +260,7 @@ export default async function LeadsPage() {
             <span className="text-xs font-semibold text-slate-400 group-open:hidden">Expand</span>
             <span className="hidden text-xs font-semibold text-slate-400 group-open:inline">Collapse</span>
           </summary>
-          <div className="border-t border-slate-200 p-5">
+          <div className="border-t border-slate-200 p-5 dark:border-slate-800">
             <ContactImportForm />
           </div>
         </details>
@@ -251,8 +268,8 @@ export default async function LeadsPage() {
 
       {/* AI assistant + Recent activity */}
       <section className="grid gap-6 xl:grid-cols-2">
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <Bot className="h-4 w-4 text-slate-500" />
             <div>
               <p className="text-sm font-black text-slate-800">AI sales assistant</p>
@@ -266,7 +283,7 @@ export default async function LeadsPage() {
               <Link
                 key={lead.company}
                 href={`/leads/${lead.id}`}
-                className="rounded-md border border-slate-100 bg-slate-50 p-4 hover:border-emerald-200 hover:bg-white"
+                className="rounded-md border border-slate-100 bg-slate-50 p-4 transition hover:border-emerald-200 hover:bg-white dark:border-slate-800 dark:bg-slate-950/50 dark:hover:border-emerald-700 dark:hover:bg-slate-900"
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-slate-900">{lead.company}</p>
@@ -284,8 +301,8 @@ export default async function LeadsPage() {
           </div>
         </article>
 
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <Phone className="h-4 w-4 text-slate-500" />
             <div>
               <p className="text-sm font-black text-slate-800">Recent activity</p>
@@ -298,7 +315,7 @@ export default async function LeadsPage() {
             {activityViews.length ? activityViews.map((activity) => (
               <div
                 key={`${activity.company}-${activity.time}`}
-                className="flex gap-4 rounded-md border border-slate-100 bg-slate-50 p-4"
+                className="flex gap-4 rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50"
               >
                 <div className="mt-2 h-2 w-2 flex-none rounded-full bg-emerald-400" />
                 <div>
@@ -328,25 +345,28 @@ export default async function LeadsPage() {
 
 function stageHeaderClass(stage: string) {
   const styles: Record<string, string> = {
-    New: "border-sky-100 bg-sky-50 text-sky-900",
-    Contacted: "border-cyan-100 bg-cyan-50 text-cyan-900",
-    Qualified: "border-emerald-100 bg-emerald-50 text-emerald-900",
-    Quoted: "border-amber-100 bg-amber-50 text-amber-900",
-    Won: "border-lime-100 bg-lime-50 text-lime-900",
-    Lost: "border-slate-200 bg-slate-100 text-slate-700",
+    New: "border-sky-100 bg-sky-50 text-sky-900 dark:border-sky-500/45 dark:bg-sky-950/35 dark:text-sky-200",
+    Contacted:
+      "border-cyan-100 bg-cyan-50 text-cyan-900 dark:border-cyan-500/45 dark:bg-cyan-950/35 dark:text-cyan-200",
+    Qualified:
+      "border-emerald-100 bg-emerald-50 text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-950/35 dark:text-emerald-200",
+    Quoted:
+      "border-amber-100 bg-amber-50 text-amber-900 dark:border-amber-500/45 dark:bg-amber-950/35 dark:text-amber-200",
+    Won: "border-lime-100 bg-lime-50 text-lime-900 dark:border-lime-500/45 dark:bg-lime-950/35 dark:text-lime-200",
+    Lost: "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
   };
 
-  return styles[stage] ?? "border-slate-100 bg-white text-slate-900";
+  return styles[stage] ?? "border-slate-100 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100";
 }
 
 function stageBadgeClass(stage: string) {
   const map: Record<string, string> = {
-    New: "bg-sky-50 text-sky-800",
-    Contacted: "bg-cyan-50 text-cyan-800",
-    Qualified: "bg-emerald-50 text-emerald-800",
-    Quoted: "bg-amber-50 text-amber-800",
-    Won: "bg-lime-50 text-lime-800",
-    Lost: "bg-slate-100 text-slate-600",
+    New: "bg-sky-50 text-sky-800 dark:bg-sky-400/15 dark:text-sky-200",
+    Contacted: "bg-cyan-50 text-cyan-800 dark:bg-cyan-400/15 dark:text-cyan-200",
+    Qualified: "bg-emerald-50 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200",
+    Quoted: "bg-amber-50 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200",
+    Won: "bg-lime-50 text-lime-800 dark:bg-lime-400/15 dark:text-lime-200",
+    Lost: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
   };
-  return map[stage] ?? "bg-slate-100 text-slate-700";
+  return map[stage] ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
 }

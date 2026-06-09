@@ -33,6 +33,11 @@ const REQUIRED_DOCUMENTS = [
   { type: "BROKER_CARRIER_AGREEMENT", label: "Broker-carrier agreement" },
 ] as const;
 
+const panelClass =
+  "overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25";
+const panelHeaderClass =
+  "border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/40";
+
 type CarrierContact = {
   name?: string;
   phone?: string;
@@ -61,7 +66,8 @@ function getTenderDecision(carrier: CarrierDetailView) {
       label: "Do not tender",
       detail: carrier.blockedReason,
       icon: ShieldAlert,
-      className: "border-red-100 bg-red-50 text-red-900",
+      className:
+        "border-red-100 bg-red-50 text-red-900 dark:border-red-500/45 dark:bg-red-950/30 dark:text-red-100",
       action: "Resolve block before booking",
     };
   }
@@ -71,7 +77,8 @@ function getTenderDecision(carrier: CarrierDetailView) {
       label: "Needs compliance approval",
       detail: "Authority, insurance, fraud, callback, and onboarding documents should be cleared before this carrier is booked.",
       icon: AlertTriangle,
-      className: "border-amber-100 bg-amber-50 text-amber-900",
+      className:
+        "border-amber-100 bg-amber-50 text-amber-900 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100",
       action: "Run compliance review",
     };
   }
@@ -81,7 +88,8 @@ function getTenderDecision(carrier: CarrierDetailView) {
       label: "Approved with onboarding gaps",
       detail: `${missingDocs.length} required document${missingDocs.length === 1 ? "" : "s"} missing${isFilled(carrier.callbackVerifiedAt) ? "" : " · callback verification missing"}.`,
       icon: AlertTriangle,
-      className: "border-amber-100 bg-amber-50 text-amber-900",
+      className:
+        "border-amber-100 bg-amber-50 text-amber-900 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100",
       action: "Complete onboarding",
     };
   }
@@ -90,7 +98,8 @@ function getTenderDecision(carrier: CarrierDetailView) {
     label: "Tender ready",
     detail: "Compliance is approved, required onboarding documents are on file, and callback verification is complete.",
     icon: ShieldCheck,
-    className: "border-emerald-100 bg-emerald-50 text-emerald-900",
+    className:
+      "border-emerald-100 bg-emerald-50 text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100",
     action: "Ready to cover loads",
   };
 }
@@ -149,17 +158,17 @@ export default async function CarrierDetailPage({
     >
       <Link
         href="/carriers"
-        className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
+        className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to carrier desk
       </Link>
 
-      <section className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+      <section className="grid items-start gap-4 xl:grid-cols-[1.25fr_0.75fr]">
         <article className={cn("rounded-lg border p-5 shadow-sm", tenderDecision.className)}>
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70 dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
                 <DecisionIcon className="h-5 w-5" />
               </div>
               <div>
@@ -193,7 +202,7 @@ export default async function CarrierDetailPage({
                 </div>
               </div>
             </div>
-            <div className="rounded-lg bg-white/70 px-4 py-3 text-sm font-black shadow-sm">
+            <div className="rounded-lg bg-white/70 px-4 py-3 text-sm font-black shadow-sm dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
               {tenderDecision.action}
             </div>
           </div>
@@ -207,20 +216,20 @@ export default async function CarrierDetailPage({
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center justify-between ${panelHeaderClass}`}>
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-black text-slate-800">Carrier identity</p>
+              <p className="text-sm font-black text-slate-800 dark:text-slate-200">Carrier identity</p>
             </div>
             <span
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-black",
                 carrier.blockedReason
-                  ? "bg-red-100 text-red-700"
+                  ? "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-200"
                   : carrier.complianceStatus === "Approved"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-amber-50 text-amber-700",
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200"
+                    : "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
               )}
             >
               {carrier.blockedReason ? "Blocked" : carrier.complianceStatus}
@@ -230,13 +239,13 @@ export default async function CarrierDetailPage({
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
               {carrier.mcNumber} · {carrier.dotNumber}
             </p>
-            <div className="mt-4 grid gap-3 text-sm text-slate-700">
+            <div className="mt-4 grid gap-3 text-sm text-slate-700 dark:text-slate-300">
               <ContactLine icon={UserRound} value={carrier.contact} />
               <ContactLine icon={Mail} value={carrier.email} />
               <ContactLine icon={Phone} value={carrier.phone} />
             </div>
 
-            <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
               <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
                 <MapPinned className="h-3.5 w-3.5" />
                 Preferred lanes
@@ -246,7 +255,7 @@ export default async function CarrierDetailPage({
                   carrier.preferredLanes.map((lane) => (
                     <span
                       key={lane}
-                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-700"
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                     >
                       {lane}
                     </span>
@@ -258,18 +267,18 @@ export default async function CarrierDetailPage({
             </div>
 
             {carrier.notes ? (
-              <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
+              <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Carrier notes</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{carrier.notes}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{carrier.notes}</p>
               </div>
             ) : null}
 
             {additionalContacts.length ? (
-              <div className="mt-4 rounded-lg border border-slate-100 bg-white p-4">
+              <div className="mt-4 rounded-lg border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/45">
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
                   Additional contacts
                 </p>
-                <div className="mt-2 grid gap-2 text-sm text-slate-700">
+                <div className="mt-2 grid gap-2 text-sm text-slate-700 dark:text-slate-300">
                   {additionalContacts.map((contact, index) => (
                     <p key={`${contact.name ?? "contact"}-${index}`}>
                       {contact.name ?? "Contact"} · {contact.phone ?? "No phone"} {contact.email ?? ""}
@@ -282,11 +291,11 @@ export default async function CarrierDetailPage({
         </article>
 
         <div className="grid gap-5">
-          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <article className={panelClass}>
+            <div className={`flex items-center justify-between ${panelHeaderClass}`}>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-slate-400" />
-                <p className="text-sm font-black text-slate-800">Compliance checklist</p>
+                <p className="text-sm font-black text-slate-800 dark:text-slate-200">Compliance checklist</p>
               </div>
               <span className="text-xs font-bold text-slate-400">
                 {complianceFieldGaps ? `${complianceFieldGaps} open fields` : "Complete"}
@@ -297,32 +306,39 @@ export default async function CarrierDetailPage({
                 <div
                   key={item.label}
                   className={cn(
-                    "border-b border-slate-100 px-5 py-3",
-                    index % 2 === 0 ? "sm:border-r" : "",
+                    "border-b border-slate-100 px-5 py-3 dark:border-slate-800",
+                    index % 2 === 0 ? "sm:border-r sm:border-r-slate-100 dark:sm:border-r-slate-800" : "",
                   )}
                 >
                   <p className="text-xs font-bold text-slate-400">{item.label}</p>
-                  <p className={cn("mt-0.5 text-sm font-semibold", isFilled(item.value) ? "text-slate-900" : "text-slate-300")}>
+                  <p
+                    className={cn(
+                      "mt-0.5 text-sm font-semibold",
+                      isFilled(item.value)
+                        ? "text-slate-900 dark:text-slate-200"
+                        : "text-slate-300 dark:text-slate-500",
+                    )}
+                  >
                     {isFilled(item.value) ? item.value : "Not set"}
                   </p>
                 </div>
               ))}
             </div>
             {carrier.complianceNotes ? (
-              <div className="border-t border-slate-100 px-5 py-4">
+              <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Compliance notes</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{carrier.complianceNotes}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{carrier.complianceNotes}</p>
               </div>
             ) : null}
           </article>
 
-          <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-md shadow-slate-950/5">
+          <article className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
                   Required onboarding documents
                 </p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
+                <p className="mt-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
                   These should be on file before tendering freight.
                 </p>
               </div>
@@ -339,8 +355,8 @@ export default async function CarrierDetailPage({
                     className={cn(
                       "rounded-lg border px-3 py-3 text-xs font-black",
                       hasDocument
-                        ? "border-emerald-100 bg-emerald-50 text-emerald-800"
-                        : "border-amber-100 bg-amber-50 text-amber-800",
+                        ? "border-emerald-100 bg-emerald-50 text-emerald-800 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100"
+                        : "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100",
                     )}
                   >
                     {required.label}
@@ -356,10 +372,10 @@ export default async function CarrierDetailPage({
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <TrendingUp className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-black text-slate-800">Performance scorecard</p>
+            <p className="text-sm font-black text-slate-800 dark:text-slate-200">Performance scorecard</p>
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-2">
             <ScoreFact label="Loads handled" value={carrier.loads.length.toString()} />
@@ -367,22 +383,26 @@ export default async function CarrierDetailPage({
             <ScoreFact
               label="Issues / blocks"
               value={(carrier.issuesCount ?? 0).toString()}
-              valueClassName={(carrier.issuesCount ?? 0) > 0 ? "text-amber-700" : "text-slate-950"}
+              valueClassName={
+                (carrier.issuesCount ?? 0) > 0
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-slate-950 dark:text-slate-50"
+              }
             />
             <ScoreFact label="Margin handled" value={toCurrency(marginHandled)} />
           </div>
-          <p className="border-t border-slate-100 px-5 py-3 text-xs leading-5 text-slate-500">
+          <p className="border-t border-slate-100 px-5 py-3 text-xs leading-5 text-slate-500 dark:border-slate-800 dark:text-slate-400">
             Scorecard is derived from load status and events. ELD/GPS integrations would make this more precise later.
           </p>
         </article>
 
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <Bot className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-black text-slate-800">Compliance agent</p>
+            <p className="text-sm font-black text-slate-800 dark:text-slate-200">Compliance agent</p>
           </div>
           <div className="grid gap-4 p-5 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-emerald-900">
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100">
               <p className="text-xs font-black uppercase tracking-[0.16em]">AI review target</p>
               <p className="mt-2 text-sm font-semibold leading-6">
                 Use this agent to review authority, insurance, fraud risk, callback verification, and missing onboarding documents.
@@ -398,12 +418,12 @@ export default async function CarrierDetailPage({
         </article>
       </section>
 
-      <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+      <details className={`group ${panelClass}`}>
+        <summary className={`flex cursor-pointer list-none items-center justify-between gap-3 ${panelHeaderClass}`}>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-slate-400" />
             <div>
-              <p className="text-sm font-black text-slate-800">Edit compliance record</p>
+              <p className="text-sm font-black text-slate-800 dark:text-slate-200">Edit compliance record</p>
               <p className="mt-0.5 text-xs font-semibold text-slate-500">
                 Expand only when updating authority, insurance, callback, payment setup, or block status.
               </p>
@@ -437,13 +457,13 @@ function MetricTile({
   value: string;
 }) {
   return (
-    <article className="rounded-lg border border-slate-100 bg-white p-4 shadow-md shadow-slate-950/5">
+    <article className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-slate-600">{label}</p>
-          <p className="mt-2 text-2xl font-black tracking-tight text-slate-950">{value}</p>
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{label}</p>
+          <p className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-slate-50">{value}</p>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-50 text-slate-500">
+        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-50 text-slate-500 dark:bg-slate-950/45 dark:text-slate-400 dark:ring-1 dark:ring-white/5">
           <Icon className="h-4 w-4" />
         </div>
       </div>
@@ -478,9 +498,14 @@ function ScoreFact({
   muted?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+    <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
       <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</p>
-      <p className={cn("mt-2 text-2xl font-black text-slate-950", muted ? "text-slate-400" : valueClassName)}>
+      <p
+        className={cn(
+          "mt-2 text-2xl font-black text-slate-950 dark:text-slate-50",
+          muted ? "text-slate-400 dark:text-slate-500" : valueClassName,
+        )}
+      >
         {value}
       </p>
     </div>
@@ -497,11 +522,11 @@ function ReadinessChip({
   ready: boolean;
 }) {
   return (
-    <div className="rounded-md bg-white/70 px-3 py-2">
+    <div className="rounded-md bg-white/70 px-3 py-2 dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
       <p className="text-[10px] font-black uppercase tracking-[0.12em] opacity-60">
         {label}
       </p>
-      <p className={cn("mt-1 text-sm font-black", ready ? "text-emerald-800" : "text-amber-800")}>
+      <p className={cn("mt-1 text-sm font-black", ready ? "text-emerald-800 dark:text-emerald-200" : "text-amber-800 dark:text-amber-200")}>
         {value}
       </p>
     </div>
@@ -510,21 +535,21 @@ function ReadinessChip({
 
 function CarrierDocumentsSection({ carrier }: { carrier: CarrierDetailView }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <article className={panelClass}>
+      <div className={`flex items-center justify-between ${panelHeaderClass}`}>
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-slate-400" />
-          <p className="text-sm font-black text-slate-800">Carrier documents</p>
+          <p className="text-sm font-black text-slate-800 dark:text-slate-200">Carrier documents</p>
         </div>
-        <Link href="/documents" className="text-xs font-black text-emerald-700 hover:text-emerald-900">
+        <Link href="/documents" className="text-xs font-black text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200">
           Open document center
         </Link>
       </div>
       {carrier.documents.length ? (
         <div className="grid gap-3 p-5">
           {carrier.documents.map((document) => (
-            <div key={document.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-950">{document.fileName}</p>
+            <div key={document.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
+              <p className="text-sm font-semibold text-slate-950 dark:text-slate-50">{document.fileName}</p>
               <p className="mt-1 text-xs text-slate-500">
                 {document.type} · {document.storageState}
               </p>
@@ -532,7 +557,7 @@ function CarrierDocumentsSection({ carrier }: { carrier: CarrierDetailView }) {
                 <Link
                   href={document.downloadHref}
                   target="_blank"
-                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-900"
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200"
                 >
                   <Download className="h-3.5 w-3.5" />
                   Download
@@ -562,11 +587,11 @@ function CarrierPayablesSection({
   const payableLoads = carrier.loads.filter((load) => load.carrierInvoiceNumber);
 
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <article className={panelClass}>
+      <div className={`flex items-center justify-between ${panelHeaderClass}`}>
         <div className="flex items-center gap-2">
           <ReceiptText className="h-4 w-4 text-slate-400" />
-          <p className="text-sm font-black text-slate-800">Carrier payables</p>
+          <p className="text-sm font-black text-slate-800 dark:text-slate-200">Carrier payables</p>
         </div>
         <div className="flex items-center gap-3 text-xs font-bold text-slate-500">
           <span>{outstandingCount} outstanding</span>
@@ -578,25 +603,25 @@ function CarrierPayablesSection({
           payableLoads.map((load) => (
             <div
               key={`payable-${load.id}`}
-              className="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-4 md:grid-cols-[1fr_auto]"
+              className="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45 md:grid-cols-[1fr_auto]"
             >
               <div>
-                <p className="text-sm font-semibold text-slate-900">{load.loadNumber}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{load.loadNumber}</p>
                 <p className="mt-0.5 text-xs text-slate-500">
                   {load.lane} · Inv: {load.carrierInvoiceNumber}
                 </p>
                 {load.carrierPaymentDue ? (
-                  <p className="mt-1 text-xs font-semibold text-amber-700">
+                  <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
                     Due: {load.carrierPaymentDue}
                   </p>
                 ) : null}
               </div>
               <div className="text-right text-sm font-semibold">
-                <p className="text-slate-900">{toCurrency(load.carrierRate)}</p>
+                <p className="text-slate-900 dark:text-slate-50">{toCurrency(load.carrierRate)}</p>
                 {load.carrierPaidAt ? (
-                  <p className="mt-1 text-xs text-emerald-700">Paid {load.carrierPaidAt}</p>
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">Paid {load.carrierPaidAt}</p>
                 ) : (
-                  <p className="mt-1 text-xs text-amber-700">Unpaid</p>
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">Unpaid</p>
                 )}
               </div>
             </div>
@@ -613,29 +638,29 @@ function CarrierPayablesSection({
 
 function RelatedLoadsSection({ carrier }: { carrier: CarrierDetailView }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <article className={panelClass}>
+      <div className={`flex items-center justify-between ${panelHeaderClass}`}>
         <div className="flex items-center gap-2">
           <Package className="h-4 w-4 text-slate-400" />
-          <p className="text-sm font-black text-slate-800">Related loads</p>
+          <p className="text-sm font-black text-slate-800 dark:text-slate-200">Related loads</p>
         </div>
-        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
+        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           {carrier.loads.length}
         </span>
       </div>
       {carrier.loads.length ? (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {carrier.loads.map((load) => (
             <Link
               key={load.id}
               href={`/loads/${load.id}`}
-              className="grid gap-3 px-5 py-4 hover:bg-slate-50 md:grid-cols-[1fr_auto]"
+              className="grid gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-950/45 md:grid-cols-[1fr_auto]"
             >
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-bold text-slate-400">{load.loadNumber}</span>
-                  <p className="text-sm font-semibold text-slate-900">{load.lane}</p>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{load.lane}</p>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     {load.status}
                   </span>
                 </div>
@@ -647,8 +672,8 @@ function RelatedLoadsSection({ carrier }: { carrier: CarrierDetailView }) {
                 ) : null}
               </div>
               <div className="text-sm font-semibold md:text-right">
-                <p className="text-slate-900">{toCurrency(load.customerRate)} sell</p>
-                <p className="mt-0.5 text-xs text-emerald-700">{toCurrency(load.margin)} margin</p>
+                <p className="text-slate-900 dark:text-slate-50">{toCurrency(load.customerRate)} sell</p>
+                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">{toCurrency(load.margin)} margin</p>
               </div>
             </Link>
           ))}

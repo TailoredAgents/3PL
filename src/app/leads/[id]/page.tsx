@@ -29,13 +29,28 @@ import { getLeadDetailView } from "@/lib/crm";
 
 export const dynamic = "force-dynamic";
 
+const panelClass =
+  "overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25";
+const panelHeaderClass =
+  "border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/40";
+
 function stageBadgeClass(stage: string) {
-  if (stage === "Won") return "bg-emerald-100 text-emerald-800";
-  if (stage === "Quoted") return "bg-sky-100 text-sky-800";
-  if (stage === "Qualified") return "bg-violet-100 text-violet-800";
-  if (stage === "Contacted") return "bg-amber-100 text-amber-800";
-  if (stage === "Lost") return "bg-red-100 text-red-800";
-  return "bg-slate-100 text-slate-700";
+  if (stage === "Won") {
+    return "bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200";
+  }
+  if (stage === "Quoted") {
+    return "bg-sky-100 text-sky-800 dark:bg-sky-400/15 dark:text-sky-200";
+  }
+  if (stage === "Qualified") {
+    return "bg-violet-100 text-violet-800 dark:bg-violet-400/15 dark:text-violet-200";
+  }
+  if (stage === "Contacted") {
+    return "bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200";
+  }
+  if (stage === "Lost") {
+    return "bg-red-100 text-red-800 dark:bg-red-400/15 dark:text-red-200";
+  }
+  return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
 }
 
 function hasValue(value: string, emptyValue: string) {
@@ -58,7 +73,8 @@ function getLeadPriority({
       icon: CheckCircle2,
       label: "Customer converted",
       detail: "Keep the account file clean and move accepted freight into quote/load workflows.",
-      tone: "border-emerald-100 bg-emerald-50 text-emerald-900",
+      tone:
+        "border-emerald-100 bg-emerald-50 text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100",
     };
   }
 
@@ -67,7 +83,8 @@ function getLeadPriority({
       icon: CalendarClock,
       label: "Follow-up is scheduled",
       detail: `Next touch is ${nextFollowUp}. Use outreach, log the result, then update stage and next action.`,
-      tone: "border-amber-100 bg-amber-50 text-amber-900",
+      tone:
+        "border-amber-100 bg-amber-50 text-amber-900 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100",
     };
   }
 
@@ -76,7 +93,8 @@ function getLeadPriority({
       icon: UserRound,
       label: "Contact path missing",
       detail: "Add a usable phone number or email before assigning follow-up work to sales or AI agents.",
-      tone: "border-red-100 bg-red-50 text-red-900",
+      tone:
+        "border-red-100 bg-red-50 text-red-900 dark:border-red-500/45 dark:bg-red-950/30 dark:text-red-100",
     };
   }
 
@@ -84,7 +102,8 @@ function getLeadPriority({
     icon: Target,
     label: "Qualify the opportunity",
     detail: "Confirm lane frequency, equipment, urgency, pain, and target timing before quoting.",
-    tone: "border-sky-100 bg-sky-50 text-sky-900",
+    tone:
+      "border-sky-100 bg-sky-50 text-sky-900 dark:border-sky-500/45 dark:bg-sky-950/30 dark:text-sky-100",
   };
 }
 
@@ -125,7 +144,7 @@ export default async function LeadDetailPage({
     >
       <Link
         href="/leads"
-        className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
+        className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to lead pipeline
@@ -135,7 +154,7 @@ export default async function LeadDetailPage({
         <div className="grid gap-5">
           <article className={`rounded-lg border p-5 shadow-sm ${leadPriority.tone}`}>
             <div className="flex gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70 dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
                 <PriorityIcon className="h-5 w-5" />
               </div>
               <div>
@@ -155,8 +174,8 @@ export default async function LeadDetailPage({
             </div>
           </article>
 
-          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <article className={panelClass}>
+          <div className={`flex items-center justify-between ${panelHeaderClass}`}>
             <div className="flex items-center gap-2">
               <UserRound className="h-4 w-4 text-slate-400" />
               <p className="text-sm font-black text-slate-800">{lead.contact}</p>
@@ -193,7 +212,7 @@ export default async function LeadDetailPage({
               </div>
             </div>
 
-            <div className="mt-5 rounded-md border border-slate-100 bg-slate-50 p-4">
+            <div className="mt-5 rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/55">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 <MapPinned className="h-3.5 w-3.5" />
                 Lane & freight context
@@ -206,27 +225,27 @@ export default async function LeadDetailPage({
               </div>
             </div>
 
-            <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50 p-4">
+            <div className="mt-4 rounded-md border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-500/45 dark:bg-emerald-950/35">
               <div className="flex items-center gap-2">
                 <Bot className="h-4 w-4 text-emerald-600" />
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">
                   AI next action
                 </p>
               </div>
-              <p className="mt-2 text-sm leading-6 text-emerald-900">{lead.aiNextAction}</p>
+              <p className="mt-2 text-sm leading-6 text-emerald-900 dark:text-emerald-100">{lead.aiNextAction}</p>
             </div>
           </div>
           </article>
         </div>
 
         <div className="grid gap-6">
-          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <article className={panelClass}>
+            <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
               <Bot className="h-4 w-4 text-slate-400" />
               <p className="text-sm font-black text-slate-800">AI sales support</p>
             </div>
             <div className="grid gap-4 p-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-              <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-emerald-900">
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-950/35 dark:text-emerald-100">
                 <p className="text-xs font-black uppercase tracking-[0.16em]">Agent target</p>
                 <p className="mt-2 text-sm font-semibold leading-6">
                   Use sales follow-up for relationship touches or quote pricing when the lane is ready to price.
@@ -241,29 +260,35 @@ export default async function LeadDetailPage({
             </div>
           </article>
 
-          <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <article className={panelClass}>
+            <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
               <Send className="h-4 w-4 text-slate-400" />
               <p className="text-sm font-black text-slate-800">Outreach workspace</p>
             </div>
-            <div className="grid gap-4 p-5 xl:grid-cols-3">
-              <LeadClickToCallForm leadId={lead.id} defaultPhone={outreachPhone} />
-              <LeadSmsForm
-                leadId={lead.id}
-                defaultPhone={outreachPhone}
-                defaultMessage={defaultSmsMessage}
-              />
-              <LeadEmailForm
-                leadId={lead.id}
-                defaultEmail={outreachEmail}
-                defaultSubject={`Following up with ${lead.company}`}
-                defaultBody={defaultEmailBody}
-              />
+            <div className="grid gap-4 p-5 xl:grid-cols-2">
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
+                <LeadClickToCallForm leadId={lead.id} defaultPhone={outreachPhone} />
+              </div>
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
+                <LeadSmsForm
+                  leadId={lead.id}
+                  defaultPhone={outreachPhone}
+                  defaultMessage={defaultSmsMessage}
+                />
+              </div>
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45 xl:col-span-2">
+                <LeadEmailForm
+                  leadId={lead.id}
+                  defaultEmail={outreachEmail}
+                  defaultSubject={`Following up with ${lead.company}`}
+                  defaultBody={defaultEmailBody}
+                />
+              </div>
             </div>
           </article>
 
-          <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+          <details className={`group ${panelClass}`}>
+            <summary className={`flex cursor-pointer list-none items-center justify-between gap-3 ${panelHeaderClass} px-5 py-4`}>
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-slate-400" />
                 <div>
@@ -281,8 +306,8 @@ export default async function LeadDetailPage({
             </div>
           </details>
 
-          <details className="group overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+          <details className={`group ${panelClass}`}>
+            <summary className={`flex cursor-pointer list-none items-center justify-between gap-3 ${panelHeaderClass} px-5 py-4`}>
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-slate-400" />
                 <div>
@@ -302,18 +327,18 @@ export default async function LeadDetailPage({
         </div>
       </section>
 
-      <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+      <article className={panelClass}>
+        <div className={`flex items-center justify-between ${panelHeaderClass}`}>
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-slate-400" />
             <p className="text-sm font-black text-slate-800">Activity timeline</p>
           </div>
-          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {lead.activities.length}
           </span>
         </div>
         {lead.activities.length ? (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {lead.activities.map((activity) => (
               <div
                 key={`${activity.type}-${activity.time}-${activity.detail}`}
@@ -348,11 +373,11 @@ function ReadinessChip({
   ready: boolean;
 }) {
   return (
-    <div className="rounded-md bg-white/70 px-3 py-2">
+    <div className="rounded-md bg-white/70 px-3 py-2 dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
       <p className="text-[10px] font-black uppercase tracking-[0.12em] opacity-60">
         {label}
       </p>
-      <p className={`mt-1 text-sm font-black ${ready ? "text-emerald-800" : "text-amber-800"}`}>
+      <p className={`mt-1 text-sm font-black ${ready ? "text-emerald-800 dark:text-emerald-200" : "text-amber-800 dark:text-amber-200"}`}>
         {value}
       </p>
     </div>

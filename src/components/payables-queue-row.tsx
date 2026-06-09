@@ -40,11 +40,11 @@ type CarrierInvoiceItem = {
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  Received: "bg-sky-50 text-sky-800",
-  Matched: "bg-slate-100 text-slate-700",
-  Approved: "bg-emerald-50 text-emerald-800",
-  Paid: "bg-lime-50 text-lime-800",
-  Disputed: "bg-red-50 text-red-800",
+  Received: "bg-sky-50 text-sky-800 dark:bg-sky-400/15 dark:text-sky-200",
+  Matched: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  Approved: "bg-emerald-50 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200",
+  Paid: "bg-lime-50 text-lime-800 dark:bg-lime-400/15 dark:text-lime-200",
+  Disputed: "bg-red-50 text-red-800 dark:bg-red-400/15 dark:text-red-200",
 };
 
 export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
@@ -79,27 +79,27 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
   }
 
   return (
-    <tr className="align-top hover:bg-slate-50">
+    <tr className="align-top hover:bg-slate-50 dark:hover:bg-slate-950/45">
       <Td>
-        <p className="font-semibold text-slate-900">{invoice.carrierName}</p>
+        <p className="font-semibold text-slate-900 dark:text-slate-50">{invoice.carrierName}</p>
         <p className="mt-0.5 text-xs text-slate-500">{invoice.loadNumber}</p>
         {invoice.invoiceNumber && (
           <p className="mt-0.5 text-xs text-slate-400">Inv# {invoice.invoiceNumber}</p>
         )}
       </Td>
       <Td>
-        <p className="font-medium text-slate-800">{invoice.lane}</p>
+        <p className="font-medium text-slate-800 dark:text-slate-200">{invoice.lane}</p>
         <p className="mt-0.5 text-xs text-slate-500">Del {invoice.delivery}</p>
       </Td>
       <Td>
-        <p className="font-bold text-slate-900">{toCurrency(invoice.amount)}</p>
+        <p className="font-bold text-slate-900 dark:text-slate-50">{toCurrency(invoice.amount)}</p>
         {invoice.agreedRate != null && (
           <p className="mt-0.5 text-xs text-slate-500">
             Agreed {toCurrency(invoice.agreedRate)}
           </p>
         )}
         {variance != null && variance !== 0 && (
-          <p className={cn("mt-0.5 text-xs font-semibold", variance > 0 ? "text-red-600" : "text-emerald-600")}>
+          <p className={cn("mt-0.5 text-xs font-semibold", variance > 0 ? "text-red-600 dark:text-red-300" : "text-emerald-600 dark:text-emerald-300")}>
             {variance > 0 ? "+" : ""}{toCurrency(variance)} vs rate con
           </p>
         )}
@@ -107,7 +107,7 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
         <DocumentLink label="Rate con" href={invoice.rateConfirmationDocument?.downloadHref} />
       </Td>
       <Td>
-        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_CLASS[invoice.status] ?? "bg-slate-100 text-slate-700")}>
+        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_CLASS[invoice.status] ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300")}>
           {invoice.status}
         </span>
         {invoice.approvedByName || invoice.approvalOwner ? (
@@ -117,27 +117,27 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
           <p className="mt-0.5 text-[10px] text-slate-500">Paid by: {invoice.paidByName}</p>
         ) : null}
         {invoice.disputeReason ? (
-          <p className="mt-0.5 text-[10px] font-semibold text-red-600">Disputed: {invoice.disputeReason}</p>
+          <p className="mt-0.5 text-[10px] font-semibold text-red-600 dark:text-red-300">Disputed: {invoice.disputeReason}</p>
         ) : null}
       </Td>
       <Td>
         {invoice.paidAt ? (
-          <p className="text-xs font-semibold text-emerald-700">Paid {invoice.paidAt}</p>
+          <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Paid {invoice.paidAt}</p>
         ) : invoice.dueDate ? (
-          <p className={cn("text-xs font-semibold", invoice.isOverdue ? "text-red-600" : "text-slate-600")}>
+          <p className={cn("text-xs font-semibold", invoice.isOverdue ? "text-red-600 dark:text-red-300" : "text-slate-600 dark:text-slate-300")}>
             {invoice.isOverdue ? "Overdue · " : "Due "}{invoice.dueDate}
           </p>
         ) : (
           <p className="text-xs text-slate-400">No due date</p>
         )}
         {invoice.paymentBatch ? (
-          <p className="mt-0.5 text-[10px] text-emerald-700">Batch: {invoice.paymentBatch}</p>
+          <p className="mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-300">Batch: {invoice.paymentBatch}</p>
         ) : null}
       </Td>
       <Td>
         <div className="flex flex-col gap-1.5">
           {done ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
               <CheckCheck className="h-3 w-3" /> Saved
             </span>
           ) : invoice.status === "Received" || invoice.status === "Matched" ? (
@@ -153,7 +153,7 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
             <button
               onClick={() => updateStatus("PAID", "ACH")}
               disabled={submitting}
-              className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-slate-950 dark:ring-1 dark:ring-slate-700 dark:hover:bg-slate-900"
             >
               {submitting ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCheck className="h-3 w-3" />}
               Mark paid
@@ -163,19 +163,19 @@ export function PayablesTableRow({ invoice }: { invoice: CarrierInvoiceItem }) {
             <button
               onClick={() => updateStatus("DISPUTED")}
               disabled={submitting}
-              className="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-500/45 dark:text-red-300 dark:hover:bg-red-950/30"
             >
               Dispute
             </button>
           )}
           <Link
             href={`/loads/${invoice.loadId}?tab=billing`}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-emerald-700"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300"
           >
             Load <ArrowRight className="h-3 w-3" />
           </Link>
           {error ? (
-            <p className="max-w-[150px] text-[10px] font-semibold leading-4 text-red-700">
+            <p className="max-w-[150px] text-[10px] font-semibold leading-4 text-red-700 dark:text-red-300">
               {error}
             </p>
           ) : null}
@@ -214,28 +214,28 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
   }
 
   return (
-    <div className="rounded-md border border-slate-100 bg-slate-50 p-4">
+    <div className="rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-semibold text-slate-900">{invoice.carrierName}</p>
+          <p className="font-semibold text-slate-900 dark:text-slate-50">{invoice.carrierName}</p>
           <p className="mt-0.5 text-xs text-slate-500">{invoice.loadNumber} · {invoice.lane}</p>
         </div>
-        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_CLASS[invoice.status] ?? "bg-slate-100 text-slate-700")}>
+        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_CLASS[invoice.status] ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300")}>
           {invoice.status}
         </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div>
           <p className="text-xs text-slate-500">Amount</p>
-          <p className="font-bold text-slate-900">{toCurrency(invoice.amount)}</p>
+          <p className="font-bold text-slate-900 dark:text-slate-50">{toCurrency(invoice.amount)}</p>
         </div>
         <div>
           <p className="text-xs text-slate-500">Due</p>
-          <p className={cn("font-semibold", invoice.isOverdue ? "text-red-600" : "text-slate-700")}>
+          <p className={cn("font-semibold", invoice.isOverdue ? "text-red-600 dark:text-red-300" : "text-slate-700 dark:text-slate-300")}>
             {invoice.paidAt ? `Paid ${invoice.paidAt}` : invoice.dueDate ?? "—"}
           </p>
           {invoice.paymentBatch ? (
-            <p className="text-[10px] text-emerald-700">Batch: {invoice.paymentBatch}</p>
+            <p className="text-[10px] text-emerald-700 dark:text-emerald-300">Batch: {invoice.paymentBatch}</p>
           ) : null}
         </div>
       </div>
@@ -245,7 +245,7 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
       </div>
       <div className="mt-3 flex gap-2">
         {done ? (
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
             <CheckCheck className="h-3 w-3" /> Saved
           </span>
         ) : invoice.status === "Received" || invoice.status === "Matched" ? (
@@ -261,7 +261,7 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
           <button
             onClick={() => updateStatus("PAID", "ACH")}
             disabled={submitting}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-slate-900 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-slate-900 px-3 py-2 text-xs font-bold text-white disabled:opacity-60 dark:bg-slate-950 dark:ring-1 dark:ring-slate-700"
           >
             {submitting ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
             Mark paid
@@ -269,7 +269,7 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
         ) : null}
         <Link
           href={`/loads/${invoice.loadId}?tab=billing`}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
         >
           Open load <ArrowRight className="h-3 w-3" />
         </Link>
@@ -283,7 +283,7 @@ export function PayablesMobileRow({ invoice }: { invoice: CarrierInvoiceItem }) 
         </p>
       ) : null}
       {error ? (
-        <p className="mt-2 text-xs font-semibold leading-5 text-red-700">
+        <p className="mt-2 text-xs font-semibold leading-5 text-red-700 dark:text-red-300">
           {error}
         </p>
       ) : null}
@@ -310,7 +310,7 @@ function DocumentLink({
     <Link
       href={href}
       target="_blank"
-      className="mt-1 inline-flex text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+      className="mt-1 inline-flex text-xs font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200"
     >
       {label}
     </Link>

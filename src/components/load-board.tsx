@@ -81,10 +81,10 @@ export function LoadBoard({ loads }: LoadBoardProps) {
               type="button"
               onClick={() => setFilter(metric.filter)}
               className={cn(
-                "rounded-lg border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+                "rounded-lg border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:shadow-black/20 dark:hover:shadow-black/30",
                 active
-                  ? "border-slate-950 bg-slate-950 shadow-md"
-                  : "border-slate-200 bg-white hover:border-slate-300",
+                  ? "border-slate-950 bg-slate-950 shadow-md dark:border-slate-700 dark:bg-slate-950"
+                  : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-slate-700",
               )}
             >
               <div className="flex items-center justify-between gap-3">
@@ -124,7 +124,7 @@ export function LoadBoard({ loads }: LoadBoardProps) {
         })}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/20">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="grid gap-3 md:grid-cols-[minmax(240px,1fr)_190px_170px] xl:min-w-[760px]">
             <label className="relative block">
@@ -133,15 +133,15 @@ export function LoadBoard({ loads }: LoadBoardProps) {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search load, shipper, carrier, lane, ref"
-                className="h-11 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium text-slate-950 outline-none focus:border-emerald-400 focus:bg-white"
+                className="h-11 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium text-slate-950 outline-none focus:border-emerald-400 focus:bg-white dark:border-slate-800 dark:bg-slate-950/65 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:bg-slate-950"
               />
             </label>
-            <label className="flex h-11 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3">
+            <label className="flex h-11 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 dark:border-slate-800 dark:bg-slate-950/65">
               <Package className="h-4 w-4 text-slate-400" />
               <select
                 value={equipment}
                 onChange={(event) => setEquipment(event.target.value)}
-                className="w-full bg-transparent text-sm font-semibold text-slate-800 outline-none"
+                className="w-full bg-transparent text-sm font-semibold text-slate-800 outline-none dark:text-slate-100"
               >
                 <option value="all">All equipment</option>
                 {equipmentOptions.map((option) => (
@@ -151,12 +151,12 @@ export function LoadBoard({ loads }: LoadBoardProps) {
                 ))}
               </select>
             </label>
-            <label className="flex h-11 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3">
+            <label className="flex h-11 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 dark:border-slate-800 dark:bg-slate-950/65">
               <ArrowUpDown className="h-4 w-4 text-slate-400" />
               <select
                 value={sortKey}
                 onChange={(event) => setSortKey(event.target.value as SortKey)}
-                className="w-full bg-transparent text-sm font-semibold text-slate-800 outline-none"
+                className="w-full bg-transparent text-sm font-semibold text-slate-800 outline-none dark:text-slate-100"
               >
                 <option value="pickup">Sort: Pickup date</option>
                 <option value="margin">Sort: Margin</option>
@@ -166,20 +166,20 @@ export function LoadBoard({ loads }: LoadBoardProps) {
             </label>
           </div>
 
-          <details className="rounded-md border border-slate-200 bg-slate-50">
-            <summary className="flex cursor-pointer list-none items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-800">
+          <details className="rounded-md border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/65">
+            <summary className="flex cursor-pointer list-none items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
               <Plus className="h-4 w-4" />
               Create load
             </summary>
-            <div className="border-t border-slate-200 bg-white p-4 xl:w-[620px]">
+            <div className="border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 xl:w-[620px]">
               <LoadCreateForm />
             </div>
           </details>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md shadow-slate-950/5">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/40">
           <div>
             <p className="text-sm font-bold text-slate-900">
               {boardRows.length} {boardRows.length === 1 ? "load" : "loads"}
@@ -206,7 +206,7 @@ export function LoadBoard({ loads }: LoadBoardProps) {
 
         <div className="hidden overflow-x-auto xl:block">
           <table className="min-w-[1300px] text-left text-sm">
-            <thead className="border-b border-slate-100 bg-white text-xs font-semibold text-slate-400">
+            <thead className="border-b border-slate-100 bg-white text-xs font-semibold text-slate-400 dark:border-slate-800 dark:bg-slate-950/55">
               <tr>
                 <Th>Load</Th>
                 <Th>Status</Th>
@@ -220,7 +220,7 @@ export function LoadBoard({ loads }: LoadBoardProps) {
                 <Th>Next action</Th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {boardRows.map((load) => (
                 <LoadBoardTableRow key={load.id} load={load} />
               ))}
@@ -235,7 +235,7 @@ export function LoadBoard({ loads }: LoadBoardProps) {
         </div>
 
         {!boardRows.length ? (
-          <div className="border-t border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+          <div className="border-t border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950/40">
             <ClipboardList className="mx-auto h-8 w-8 text-slate-300" />
             <p className="mt-3 font-semibold text-slate-700">
               No loads match this board view
@@ -264,7 +264,12 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
   const nextAction = getNextLoadAction(load);
 
   return (
-    <tr className={cn("align-top hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20", riskLevel.rowClass)}>
+    <tr
+      className={cn(
+        "align-top hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20",
+        riskLevel.rowClass,
+      )}
+    >
       {/* Load */}
       <Td>
         <div className="min-w-[160px]">
@@ -279,7 +284,7 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
               Ref {load.customerReference}
             </p>
           )}
-          <p className="mt-2 w-fit rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
+          <p className="mt-2 w-fit rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {load.loadNumber}
           </p>
           <p className="mt-2 text-xs font-medium text-slate-500">
@@ -391,8 +396,8 @@ function LoadBoardTableRow({ load }: { load: LoadView }) {
             className={cn(
               "rounded-full px-2 py-0.5 text-xs font-bold",
               load.customerUpdateStatus === "Needed"
-                ? "bg-amber-50 text-amber-700"
-                : "bg-slate-100 text-slate-600",
+                ? "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
             )}
           >
             {load.customerUpdateStatus ?? "Not needed"}
@@ -545,7 +550,7 @@ function QuickActions({
       </div>
       <Link
         href={nextAction.href}
-        className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
+        className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:bg-slate-950 dark:ring-1 dark:ring-slate-800 dark:hover:bg-slate-800"
       >
         {nextAction.cta}
         <ExternalLink className="h-3.5 w-3.5" />
@@ -701,7 +706,8 @@ function getNextLoadAction(load: LoadView): NextLoadAction {
       detail: "Find capacity, vet the carrier, and secure coverage.",
       cta: "Cover load",
       href: `/loads/${load.id}?tab=coverage`,
-      className: "border-red-100 bg-red-50 text-red-800",
+      className:
+        "border-red-100 bg-red-50 text-red-800 dark:border-red-500/45 dark:bg-red-950/35 dark:text-red-100",
       textClass: "text-red-700",
     };
   }
@@ -711,7 +717,8 @@ function getNextLoadAction(load: LoadView): NextLoadAction {
       detail: "Log a shipper update before they ask for status.",
       cta: "Update",
       href: `/loads/${load.id}?tab=tracking`,
-      className: "border-amber-100 bg-amber-50 text-amber-800",
+      className:
+        "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-500/45 dark:bg-amber-950/35 dark:text-amber-100",
       textClass: "text-amber-700",
     };
   }
@@ -721,7 +728,8 @@ function getNextLoadAction(load: LoadView): NextLoadAction {
       detail: "Send or collect the signed carrier rate confirmation.",
       cta: "Rate con",
       href: `/loads/${load.id}?tab=coverage`,
-      className: "border-amber-100 bg-amber-50 text-amber-800",
+      className:
+        "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-500/45 dark:bg-amber-950/35 dark:text-amber-100",
       textClass: "text-amber-700",
     };
   }
@@ -731,7 +739,8 @@ function getNextLoadAction(load: LoadView): NextLoadAction {
       detail: "Upload or request proof of delivery before billing.",
       cta: "Docs",
       href: `/loads/${load.id}?tab=documents`,
-      className: "border-amber-100 bg-amber-50 text-amber-800",
+      className:
+        "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-500/45 dark:bg-amber-950/35 dark:text-amber-100",
       textClass: "text-amber-700",
     };
   }
@@ -741,7 +750,8 @@ function getNextLoadAction(load: LoadView): NextLoadAction {
       detail: "Move the load into customer billing.",
       cta: "Invoice",
       href: `/loads/${load.id}?tab=billing`,
-      className: "border-emerald-100 bg-emerald-50 text-emerald-800",
+      className:
+        "border-emerald-100 bg-emerald-50 text-emerald-800 dark:border-emerald-500/45 dark:bg-emerald-950/35 dark:text-emerald-100",
       textClass: "text-emerald-700",
     };
   }
@@ -751,7 +761,8 @@ function getNextLoadAction(load: LoadView): NextLoadAction {
     detail: "Keep tracking, customer updates, and documents current.",
     cta: "Open",
     href: `/loads/${load.id}`,
-    className: "border-slate-100 bg-slate-50 text-slate-700",
+    className:
+      "border-slate-100 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950/65 dark:text-slate-200",
     textClass: "text-slate-700",
   };
 }
@@ -809,12 +820,12 @@ function getCoverageLabel(load: LoadView) {
 
 function getCoverageClass(load: LoadView) {
   if (load.carrier !== "Carrier needed")
-    return "bg-emerald-50 text-emerald-700";
+    return "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200";
   if (load.carrierQuotes.some((q) => q.status === "Received"))
-    return "bg-sky-50 text-sky-700";
+    return "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200";
   if (load.carrierCandidates.length)
-    return "bg-amber-50 text-amber-700";
-  return "bg-red-50 text-red-700";
+    return "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200";
+  return "bg-red-50 text-red-700 dark:bg-red-400/15 dark:text-red-200";
 }
 
 function getMarketplaceStatus(load: LoadView) {
@@ -825,27 +836,27 @@ function getMarketplaceStatus(load: LoadView) {
     return {
       label: "Not posted",
       detail: "Internal only",
-      className: "bg-slate-100 text-slate-600",
+      className: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
     };
   }
   if (latestPost.status === "Success") {
     return {
       label: "Posted",
       detail: `${latestPost.provider} ${latestPost.created}`,
-      className: "bg-emerald-50 text-emerald-700",
+      className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200",
     };
   }
   if (latestPost.status === "Failed") {
     return {
       label: "Post failed",
       detail: latestPost.provider,
-      className: "bg-red-50 text-red-700",
+      className: "bg-red-50 text-red-700 dark:bg-red-400/15 dark:text-red-200",
     };
   }
   return {
     label: latestPost.status,
     detail: latestPost.provider,
-    className: "bg-amber-50 text-amber-700",
+    className: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
   };
 }
 
@@ -854,36 +865,36 @@ function getLoadRiskLevel(load: LoadView) {
     return {
       level: 3,
       label: "No carrier",
-      rowClass: "bg-red-50/30",
+      rowClass: "bg-red-50/30 dark:bg-red-950/20",
       iconClass: "text-red-500",
-      badgeClass: "bg-red-50 text-red-700",
+      badgeClass: "bg-red-50 text-red-700 dark:bg-red-400/15 dark:text-red-200",
     };
   }
   if (load.customerUpdateStatus === "Needed") {
     return {
       level: 2,
       label: "Update due",
-      rowClass: "bg-amber-50/40",
+      rowClass: "bg-amber-50/40 dark:bg-amber-950/20",
       iconClass: "text-amber-500",
-      badgeClass: "bg-amber-50 text-amber-700",
+      badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
     };
   }
   if (load.rateConfirmationStatus !== "Signed") {
     return {
       level: 2,
       label: "Rate conf",
-      rowClass: "bg-amber-50/30",
+      rowClass: "bg-amber-50/30 dark:bg-amber-950/20",
       iconClass: "text-amber-500",
-      badgeClass: "bg-amber-50 text-amber-700",
+      badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
     };
   }
   if (load.billingReadiness === "Needs POD") {
     return {
       level: 2,
       label: "POD needed",
-      rowClass: "bg-amber-50/30",
+      rowClass: "bg-amber-50/30 dark:bg-amber-950/20",
       iconClass: "text-amber-500",
-      badgeClass: "bg-amber-50 text-amber-700",
+      badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
     };
   }
   if (load.marginPercent < 12) {
@@ -892,7 +903,7 @@ function getLoadRiskLevel(load: LoadView) {
       label: "Low margin",
       rowClass: "",
       iconClass: "text-slate-400",
-      badgeClass: "bg-slate-100 text-slate-700",
+      badgeClass: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
     };
   }
   return {
@@ -900,16 +911,16 @@ function getLoadRiskLevel(load: LoadView) {
     label: "On track",
     rowClass: "",
     iconClass: "text-emerald-500",
-    badgeClass: "bg-emerald-50 text-emerald-700",
+    badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200",
   };
 }
 
 function getStatusClass(status: string) {
   if (["Delivered", "Pod Received", "Invoiced", "Paid"].includes(status)) {
-    return "bg-emerald-50 text-emerald-700";
+    return "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200";
   }
   if (["Picked Up", "In Transit", "Booked"].includes(status)) {
-    return "bg-sky-50 text-sky-700";
+    return "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200";
   }
-  return "bg-amber-50 text-amber-700";
+  return "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200";
 }

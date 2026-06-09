@@ -26,11 +26,28 @@ export const dynamic = "force-dynamic";
 type Tone = "amber" | "emerald" | "red" | "sky";
 
 const CARD_ACCENTS = [
-  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
-  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
-  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
-  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
+  {
+    border: "border-l-[3px] border-l-violet-400",
+    icon: "bg-violet-50 text-violet-700 dark:bg-violet-400/15 dark:text-violet-200",
+  },
+  {
+    border: "border-l-[3px] border-l-emerald-400",
+    icon: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200",
+  },
+  {
+    border: "border-l-[3px] border-l-sky-400",
+    icon: "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200",
+  },
+  {
+    border: "border-l-[3px] border-l-amber-400",
+    icon: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  },
 ] as const;
+
+const panelClass =
+  "overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25";
+const panelHeaderClass =
+  "border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-800 dark:bg-slate-950/40";
 
 function getAnalyticsCommand(laneIntelligence: AnalyticsData["laneIntelligence"]) {
   const topOpportunity = laneIntelligence.opportunities[0];
@@ -122,10 +139,10 @@ export default async function AnalyticsPage() {
       title="Analytics"
       description="Executive view of revenue, margin, lane performance, carrier usage, quote quality, and sales funnel health."
     >
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_1.9fr]">
+      <section className="grid items-start gap-4 xl:grid-cols-[1.1fr_1.9fr]">
         <article className={`rounded-lg border p-5 shadow-sm ${opportunityToneClass(command.tone)}`}>
           <div className="flex gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/70 dark:bg-slate-950/35 dark:ring-1 dark:ring-white/10">
               <CommandIcon className="h-5 w-5" />
             </div>
             <div>
@@ -156,13 +173,13 @@ export default async function AnalyticsPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.9fr)]">
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex flex-col gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <article className={panelClass}>
+          <div className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between ${panelHeaderClass}`}>
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-slate-400" />
-              <p className="text-sm font-black text-slate-800">Lane intelligence</p>
+              <p className="text-sm font-black text-slate-800 dark:text-slate-200">Lane intelligence</p>
             </div>
-            <span className="w-fit rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+            <span className="w-fit rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {laneIntelligence.totalLanes} tracked lanes
             </span>
           </div>
@@ -177,10 +194,10 @@ export default async function AnalyticsPage() {
           )}
         </article>
 
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <AlertTriangle className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-black text-slate-800">Revenue opportunities</p>
+            <p className="text-sm font-black text-slate-800 dark:text-slate-200">Revenue opportunities</p>
           </div>
           {laneIntelligence.opportunities.length ? (
             <div className="grid gap-3 p-5">
@@ -202,27 +219,27 @@ export default async function AnalyticsPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <BarChart3 className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-black text-slate-800">Top lanes by volume</p>
+            <p className="text-sm font-black text-slate-800 dark:text-slate-200">Top lanes by volume</p>
           </div>
           {topLanes.length ? (
             <div className="grid gap-3 p-5">
               {topLanes.map((lane) => (
-                <div key={`${lane.origin}-${lane.destination}`} className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <div key={`${lane.origin}-${lane.destination}`} className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-slate-950">{lane.origin} → {lane.destination}</p>
+                      <p className="font-semibold text-slate-950 dark:text-slate-50">{lane.origin} → {lane.destination}</p>
                       <p className="mt-1 text-xs font-semibold text-slate-500">
                         {lane.count} loads · {formatCurrency(lane.avgGrossProfit)} avg GP
                       </p>
                     </div>
-                    <span className="text-sm font-black text-emerald-700">
+                    <span className="text-sm font-black text-emerald-700 dark:text-emerald-300">
                       {lane.count}
                     </span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white">
+                  <div className="h-2 overflow-hidden rounded-full bg-white dark:bg-slate-800">
                     <div
                       className="h-full rounded-full bg-sky-400"
                       style={{ width: `${(lane.count / maxLaneCount) * 100}%` }}
@@ -236,30 +253,30 @@ export default async function AnalyticsPage() {
           )}
         </article>
 
-        <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-          <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-5 py-3">
+        <article className={panelClass}>
+          <div className={`flex items-center gap-2 ${panelHeaderClass}`}>
             <Truck className="h-4 w-4 text-slate-400" />
-            <p className="text-sm font-black text-slate-800">Top carriers by gross profit</p>
+            <p className="text-sm font-black text-slate-800 dark:text-slate-200">Top carriers by gross profit</p>
           </div>
           {topCarriers.length ? (
             <div className="grid gap-2 p-5">
               {topCarriers.map((carrier, index) => (
                 <div
                   key={carrier.name}
-                  className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3"
+                  className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/45"
                 >
                   <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                    index === 0 ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-600"
+                    index === 0 ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950" : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                   }`}>
                     {index + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{carrier.name}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{carrier.name}</p>
                     <p className="text-xs text-slate-500">
                       {carrier.loads} load{carrier.loads !== 1 ? "s" : ""}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-emerald-700">
+                  <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
                     {formatCurrency(carrier.totalGrossProfit)} GP
                   </span>
                 </div>
@@ -278,7 +295,7 @@ export default async function AnalyticsPage() {
           summary={`${laneRuleManagement.templates.length} templates`}
         >
           <details>
-            <summary className="cursor-pointer text-sm font-semibold text-emerald-700">
+            <summary className="cursor-pointer text-sm font-semibold text-emerald-700 dark:text-emerald-300">
               Add recurring-lane template
             </summary>
             <div className="mt-4">
@@ -288,17 +305,17 @@ export default async function AnalyticsPage() {
           {laneRuleManagement.templates.length ? (
             <div className="grid gap-3">
               {laneRuleManagement.templates.slice(0, 4).map((template) => (
-                <div key={template.id} className="rounded-md border border-slate-100 bg-slate-50 p-4">
+                <div key={template.id} className="rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-bold text-slate-900">{template.name}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-50">{template.name}</p>
                       <p className="mt-1 text-xs text-slate-500">{template.shipper} · {template.lane} · {template.equipmentType}</p>
                     </div>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-700">
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-900 dark:text-slate-300">
                       {template.targetMarginPercent ?? "No"}% target
                     </span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-600">
+                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                     Buy {template.targetCarrierCost === null ? "TBD" : formatCurrency(template.targetCarrierCost)}
                     {" / "}
                     Sell {template.customerRate === null ? "TBD" : formatCurrency(template.customerRate)}
@@ -318,7 +335,7 @@ export default async function AnalyticsPage() {
           summary={`${laneRuleManagement.rules.length} rules`}
         >
           <details>
-            <summary className="cursor-pointer text-sm font-semibold text-emerald-700">
+            <summary className="cursor-pointer text-sm font-semibold text-emerald-700 dark:text-emerald-300">
               Add margin rule
             </summary>
             <div className="mt-4">
@@ -328,18 +345,18 @@ export default async function AnalyticsPage() {
           {laneRuleManagement.rules.length ? (
             <div className="grid gap-3">
               {laneRuleManagement.rules.slice(0, 5).map((rule) => (
-                <div key={rule.id} className="rounded-md border border-slate-100 bg-slate-50 p-4">
+                <div key={rule.id} className="rounded-md border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-bold text-slate-900">{rule.name}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-50">{rule.name}</p>
                       <p className="mt-1 text-xs text-slate-500">{rule.shipper} · {rule.lane}</p>
                       <p className="mt-0.5 text-xs text-slate-500">{rule.equipmentType} · {rule.urgency}</p>
                     </div>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700">
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200">
                       {rule.targetMarginPercent}% target
                     </span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-600">
+                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                     Minimum {rule.minimumMarginPercent ?? "none"}% · Priority {rule.priority}
                   </p>
                   {rule.notes ? <p className="mt-2 text-xs leading-5 text-slate-500">{rule.notes}</p> : null}
@@ -407,13 +424,13 @@ function MetricCard({
   accent: (typeof CARD_ACCENTS)[number];
 }) {
   return (
-    <article className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${accent.border}`}>
+    <article className={`${panelClass} ${accent.border}`}>
       <div className="p-5">
         <div className={`flex h-9 w-9 items-center justify-center rounded-md ${accent.icon}`}>
           <Icon className="h-4 w-4" />
         </div>
-        <p className="mt-4 text-sm font-medium text-slate-600">{label}</p>
-        <p className="mt-1 text-3xl font-black tracking-tight text-slate-950">{value}</p>
+        <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-400">{label}</p>
+        <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-slate-50">{value}</p>
         <p className="mt-2 text-xs text-slate-500">{sub}</p>
       </div>
     </article>
@@ -422,10 +439,10 @@ function MetricCard({
 
 function LaneProfileCard({ lane }: { lane: LaneIntelligenceProfile }) {
   return (
-    <article className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+    <article className="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.9fr_1.05fr] xl:items-start">
         <div>
-          <p className="font-black text-slate-950">{lane.origin} → {lane.destination}</p>
+          <p className="font-black text-slate-950 dark:text-slate-50">{lane.origin} → {lane.destination}</p>
           <p className="mt-1 text-xs font-semibold text-slate-500">
             {lane.equipment} · {lane.loadCount} loads · {lane.quoteRequestCount} quotes
           </p>
@@ -447,11 +464,11 @@ function LaneProfileCard({ lane }: { lane: LaneIntelligenceProfile }) {
             <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${confidenceClass(lane.quoteConfidence)}`}>
               {lane.quoteConfidence}% confidence
             </span>
-            <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
+            <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-900 dark:text-slate-300">
               {lane.winRate}% win rate
             </span>
           </div>
-          <p className="mt-2 text-xs leading-5 text-slate-600">{lane.recommendation}</p>
+          <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">{lane.recommendation}</p>
           <p className="mt-1 text-xs text-slate-400">
             Carrier depth: {lane.carrierCount} · Top carrier: {lane.topCarrier}
           </p>
@@ -471,9 +488,9 @@ function MiniStat({
   tone?: "red" | "emerald";
 }) {
   return (
-    <div className="rounded-md bg-white px-2 py-2">
+    <div className="rounded-md bg-white px-2 py-2 dark:bg-slate-900 dark:ring-1 dark:ring-white/5">
       <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">{label}</p>
-      <p className={`mt-1 font-black ${tone === "red" ? "text-red-700" : tone === "emerald" ? "text-emerald-700" : "text-slate-900"}`}>
+      <p className={`mt-1 font-black ${tone === "red" ? "text-red-700 dark:text-red-300" : tone === "emerald" ? "text-emerald-700 dark:text-emerald-300" : "text-slate-900 dark:text-slate-50"}`}>
         {value}
       </p>
     </div>
@@ -492,13 +509,13 @@ function PricingControlPanel({
   children: ReactNode;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <article className={panelClass}>
+      <div className={`flex items-center justify-between gap-3 ${panelHeaderClass}`}>
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-slate-400" />
-          <p className="text-sm font-black text-slate-800">{title}</p>
+          <p className="text-sm font-black text-slate-800 dark:text-slate-200">{title}</p>
         </div>
-        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
+        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           {summary}
         </span>
       </div>
@@ -519,14 +536,14 @@ function ProgressPanel({
   children: ReactNode;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3">
+    <article className={panelClass}>
+      <div className={`flex items-center justify-between gap-3 ${panelHeaderClass}`}>
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-slate-400" />
-          <p className="text-sm font-black text-slate-800">{title}</p>
+          <p className="text-sm font-black text-slate-800 dark:text-slate-200">{title}</p>
         </div>
         {badge ? (
-          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200">
             {badge}
           </span>
         ) : null}
@@ -550,10 +567,10 @@ function ProgressRow({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-sm">
-        <span className="font-medium text-slate-700">{label}</span>
+        <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
         <span className="text-xs font-semibold text-slate-500">{count}</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+      <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         <div
           className={`h-full rounded-full ${className}`}
           style={{ width: `${(count / max) * 100}%` }}
@@ -598,16 +615,16 @@ function quoteBarColor(status: string) {
 }
 
 function confidenceClass(confidence: number) {
-  if (confidence >= 80) return "bg-emerald-50 text-emerald-700";
-  if (confidence >= 60) return "bg-amber-50 text-amber-700";
-  return "bg-red-50 text-red-700";
+  if (confidence >= 80) return "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200";
+  if (confidence >= 60) return "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200";
+  return "bg-red-50 text-red-700 dark:bg-red-400/15 dark:text-red-200";
 }
 
 function opportunityToneClass(tone: Tone) {
-  if (tone === "red") return "border-red-200 bg-red-50 text-red-900";
-  if (tone === "amber") return "border-amber-200 bg-amber-50 text-amber-900";
-  if (tone === "emerald") return "border-emerald-200 bg-emerald-50 text-emerald-900";
-  return "border-sky-200 bg-sky-50 text-sky-900";
+  if (tone === "red") return "border-red-200 bg-red-50 text-red-900 dark:border-red-500/45 dark:bg-red-950/30 dark:text-red-100";
+  if (tone === "amber") return "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100";
+  if (tone === "emerald") return "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100";
+  return "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-500/45 dark:bg-sky-950/30 dark:text-sky-100";
 }
 
 function formatCurrency(value: number) {
@@ -620,7 +637,7 @@ function formatCurrency(value: number) {
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="m-5 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-medium text-slate-500">
+    <div className="m-5 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-950/45 dark:text-slate-400">
       {text}
     </div>
   );

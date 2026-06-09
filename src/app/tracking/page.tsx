@@ -32,13 +32,20 @@ const riskIcons: Record<string, ComponentType<{ className?: string }>> = {
 };
 
 const groupTone: Record<string, string> = {
-  "Pickup today": "border-sky-100 bg-sky-50 text-sky-700",
-  "Delivery today": "border-emerald-100 bg-emerald-50 text-emerald-700",
-  "No recent check call / update": "border-amber-100 bg-amber-50 text-amber-700",
-  "Customer update due": "border-cyan-100 bg-cyan-50 text-cyan-700",
-  "Delivered but missing POD": "border-orange-100 bg-orange-50 text-orange-700",
-  "Late pickup / delivery risk": "border-red-100 bg-red-50 text-red-700",
-  "Uncovered / not booked": "border-rose-100 bg-rose-50 text-rose-700",
+  "Pickup today":
+    "border-sky-100 bg-sky-50 text-sky-700 dark:border-sky-500/45 dark:bg-sky-950/30 dark:text-sky-200",
+  "Delivery today":
+    "border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-200",
+  "No recent check call / update":
+    "border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-200",
+  "Customer update due":
+    "border-cyan-100 bg-cyan-50 text-cyan-700 dark:border-cyan-500/45 dark:bg-cyan-950/30 dark:text-cyan-200",
+  "Delivered but missing POD":
+    "border-orange-100 bg-orange-50 text-orange-700 dark:border-orange-500/45 dark:bg-orange-950/30 dark:text-orange-200",
+  "Late pickup / delivery risk":
+    "border-red-100 bg-red-50 text-red-700 dark:border-red-500/45 dark:bg-red-950/30 dark:text-red-200",
+  "Uncovered / not booked":
+    "border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-500/45 dark:bg-rose-950/30 dark:text-rose-200",
 };
 
 function groupCount(groups: TrackingGroup[], title: string) {
@@ -71,18 +78,18 @@ function getPrimaryAction(load: LoadView, groupTitle: string) {
 
 function actionClass(tone: string) {
   if (tone === "danger") {
-    return "border-red-200 bg-red-50 text-red-700 hover:bg-red-100";
+    return "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-500/45 dark:bg-red-950/35 dark:text-red-100 dark:hover:bg-red-950/50";
   }
 
   if (tone === "success") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100";
+    return "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/45 dark:bg-emerald-950/35 dark:text-emerald-100 dark:hover:bg-emerald-950/50";
   }
 
   if (tone === "warning") {
-    return "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100";
+    return "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-500/45 dark:bg-amber-950/35 dark:text-amber-100 dark:hover:bg-amber-950/50";
   }
 
-  return "border-slate-900 bg-slate-950 text-white shadow-sm shadow-slate-200 hover:bg-slate-800";
+  return "border-slate-900 bg-slate-950 text-white shadow-sm shadow-slate-200 hover:bg-slate-800 dark:border-slate-800 dark:shadow-black/25 dark:hover:bg-slate-800";
 }
 
 function formatEvent(load: LoadView) {
@@ -113,42 +120,47 @@ export default async function TrackingPage() {
       value: totalActive,
       helper: "Under active tracking",
       icon: RadioTower,
-      tone: "border-slate-900 bg-slate-950 text-white",
+      tone: "border-slate-900 bg-slate-950 text-white dark:border-slate-800",
     },
     {
       label: "Uncovered",
       value: groupCount(groups, "Uncovered / not booked"),
       helper: "Need carrier coverage",
       icon: Truck,
-      tone: "border-rose-100 bg-white text-rose-600",
+      tone:
+        "border-rose-100 bg-white text-rose-600 dark:border-rose-500/45 dark:bg-slate-900/80 dark:text-rose-300",
     },
     {
       label: "Stale updates",
       value: groupCount(groups, "No recent check call / update"),
       helper: "No recent touch",
       icon: Clock,
-      tone: "border-amber-100 bg-white text-amber-600",
+      tone:
+        "border-amber-100 bg-white text-amber-600 dark:border-amber-500/45 dark:bg-slate-900/80 dark:text-amber-300",
     },
     {
       label: "Customer due",
       value: groupCount(groups, "Customer update due"),
       helper: "Needs shipper update",
       icon: MessageSquareText,
-      tone: "border-cyan-100 bg-white text-cyan-600",
+      tone:
+        "border-cyan-100 bg-white text-cyan-600 dark:border-cyan-500/45 dark:bg-slate-900/80 dark:text-cyan-300",
     },
     {
       label: "POD needed",
       value: groupCount(groups, "Delivered but missing POD"),
       helper: "Blocks billing",
       icon: FileWarning,
-      tone: "border-orange-100 bg-white text-orange-600",
+      tone:
+        "border-orange-100 bg-white text-orange-600 dark:border-orange-500/45 dark:bg-slate-900/80 dark:text-orange-300",
     },
     {
       label: "Exceptions",
       value: exceptionCount,
       helper: "Open issue records",
       icon: AlertTriangle,
-      tone: "border-red-100 bg-white text-red-600",
+      tone:
+        "border-red-100 bg-white text-red-600 dark:border-red-500/45 dark:bg-slate-900/80 dark:text-red-300",
     },
   ];
 
@@ -161,7 +173,7 @@ export default async function TrackingPage() {
       action={{ label: "Load Board", href: "/loads" }}
     >
       <section className="mb-6 grid gap-4 xl:grid-cols-[1.05fr_1.95fr]">
-        <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-700">
@@ -178,14 +190,14 @@ export default async function TrackingPage() {
           </div>
 
           {firstPriority && firstPriorityAction ? (
-            <div className="mt-5 rounded-lg border border-amber-100 bg-amber-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-700">
+            <div className="mt-5 rounded-lg border border-amber-100 bg-amber-50 p-4 dark:border-amber-500/45 dark:bg-amber-950/30">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-700 dark:text-amber-200">
                 First move
               </p>
               <p className="mt-2 font-black text-slate-950">
                 {firstPriority.loadNumber} · {firstPriority.shipper}
               </p>
-              <p className="mt-1 text-sm text-slate-700">{firstPriority.risk || groups[0].description}</p>
+              <p className="mt-1 text-sm text-slate-700 dark:text-amber-100">{firstPriority.risk || groups[0].description}</p>
               <Link
                 href={firstPriorityAction.href}
                 className={`mt-4 inline-flex items-center rounded-md border px-3 py-2 text-sm font-black transition ${actionClass(firstPriorityAction.tone)}`}
@@ -194,7 +206,7 @@ export default async function TrackingPage() {
               </Link>
             </div>
           ) : (
-            <div className="mt-5 rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+            <div className="mt-5 rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100">
               No tracked risks are waiting right now.
             </div>
           )}
@@ -206,7 +218,7 @@ export default async function TrackingPage() {
             const isInverted = metric.label === "Active loads";
 
             return (
-              <div key={metric.label} className={`rounded-lg border p-4 shadow-sm ${metric.tone}`}>
+              <div key={metric.label} className={`rounded-lg border p-4 shadow-sm dark:shadow-black/20 ${metric.tone}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className={`text-sm font-bold ${isInverted ? "text-slate-300" : "text-slate-600"}`}>
@@ -228,18 +240,18 @@ export default async function TrackingPage() {
       </section>
 
       {groups.length === 0 ? (
-        <div className="rounded-lg border border-slate-100 bg-white p-10 text-center text-sm font-semibold text-slate-500 shadow-sm">
+        <div className="rounded-lg border border-slate-100 bg-white p-10 text-center text-sm font-semibold text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25">
           No loads currently match the tracked risk categories.
         </div>
       ) : (
         <div className="grid gap-5">
           {groups.map((group) => {
             const Icon = riskIcons[group.title] ?? AlertTriangle;
-            const tone = groupTone[group.title] ?? "border-slate-100 bg-slate-50 text-slate-700";
+            const tone = groupTone[group.title] ?? "border-slate-100 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950/55 dark:text-slate-200";
 
             return (
-              <section key={group.title} className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4">
+              <section key={group.title} className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/40">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg border ${tone}`}>
                       <Icon className="h-5 w-5" />
@@ -251,7 +263,7 @@ export default async function TrackingPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 shadow-sm ring-1 ring-slate-100">
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-950 dark:text-slate-300 dark:ring-slate-800">
                     Work queue
                   </span>
                 </div>
@@ -262,14 +274,14 @@ export default async function TrackingPage() {
                     const event = formatEvent(load);
 
                     return (
-                      <article key={load.id} className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
+                      <article key={load.id} className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/45 dark:shadow-black/20">
                         <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr_auto] xl:items-start">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <Link href={`/loads/${load.id}`} className="text-lg font-black text-slate-950 hover:text-emerald-700">
                                 {load.loadNumber}
                               </Link>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600">
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                 {load.status}
                               </span>
                             </div>
@@ -282,7 +294,7 @@ export default async function TrackingPage() {
                           </div>
 
                           <div className="grid gap-3">
-                            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/80">
                               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
                                 Latest touch
                               </p>
@@ -290,16 +302,16 @@ export default async function TrackingPage() {
                               <p className="mt-1 text-xs leading-5 text-slate-500">{event.detail}</p>
                             </div>
                             <div className="grid gap-2 text-xs sm:grid-cols-2">
-                              <span className="rounded-md bg-slate-50 px-3 py-2 font-bold text-slate-600">
+                              <span className="rounded-md bg-slate-50 px-3 py-2 font-bold text-slate-600 dark:bg-slate-900/80 dark:text-slate-300">
                                 Carrier: {load.carrier}
                               </span>
-                              <span className="rounded-md bg-slate-50 px-3 py-2 font-bold text-slate-600">
+                              <span className="rounded-md bg-slate-50 px-3 py-2 font-bold text-slate-600 dark:bg-slate-900/80 dark:text-slate-300">
                                 Customer: {load.customerUpdateStatus || "Not flagged"}
                               </span>
-                              <span className={`rounded-md px-3 py-2 font-bold ${load.hasPod ? "bg-emerald-50 text-emerald-700" : "bg-orange-50 text-orange-700"}`}>
+                              <span className={`rounded-md px-3 py-2 font-bold ${load.hasPod ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200" : "bg-orange-50 text-orange-700 dark:bg-orange-400/15 dark:text-orange-200"}`}>
                                 POD: {load.hasPod ? "Received" : "Needed"}
                               </span>
-                              <span className={`rounded-md px-3 py-2 font-bold ${load.exceptions.length ? "bg-red-50 text-red-700" : "bg-slate-50 text-slate-600"}`}>
+                              <span className={`rounded-md px-3 py-2 font-bold ${load.exceptions.length ? "bg-red-50 text-red-700 dark:bg-red-400/15 dark:text-red-200" : "bg-slate-50 text-slate-600 dark:bg-slate-900/80 dark:text-slate-300"}`}>
                                 Exceptions: {load.exceptions.length}
                               </span>
                             </div>
@@ -314,7 +326,7 @@ export default async function TrackingPage() {
                             </Link>
                             <Link
                               href={`/loads/${load.id}`}
-                              className="inline-flex justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                              className="inline-flex justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
                             >
                               Open load
                             </Link>
@@ -322,12 +334,12 @@ export default async function TrackingPage() {
                         </div>
 
                         {load.risk && (
-                          <div className="mt-4 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+                          <div className="mt-4 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100">
                             {load.risk}
                           </div>
                         )}
 
-                        <div className="mt-4 border-t border-slate-100 pt-3 text-xs">
+                        <div className="mt-4 border-t border-slate-100 pt-3 text-xs dark:border-slate-800">
                           <details>
                             <summary className="cursor-pointer font-black text-emerald-700">Create exception</summary>
                             <div className="mt-3">
@@ -338,8 +350,8 @@ export default async function TrackingPage() {
                           {load.exceptions.length > 0 && (
                             <div className="mt-3 grid gap-2">
                               {load.exceptions.map((exception) => (
-                                <details key={exception.id} className="rounded-md border border-slate-100 bg-slate-50 p-3">
-                                  <summary className="cursor-pointer font-black text-slate-700">
+                                <details key={exception.id} className="rounded-md border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+                                  <summary className="cursor-pointer font-black text-slate-700 dark:text-slate-200">
                                     Update {exception.type} · {exception.status}
                                   </summary>
                                   <div className="mt-3">

@@ -50,10 +50,16 @@ function complianceBorderClass(status: string) {
 }
 
 function complianceBadgeClass(status: string) {
-  if (status === "Approved") return "bg-emerald-50 text-emerald-700";
-  if (status === "Pending") return "bg-amber-50 text-amber-700";
-  if (["Blocked", "Rejected"].includes(status)) return "bg-red-50 text-red-700";
-  return "bg-slate-100 text-slate-600";
+  if (status === "Approved") {
+    return "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200";
+  }
+  if (status === "Pending") {
+    return "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200";
+  }
+  if (["Blocked", "Rejected"].includes(status)) {
+    return "bg-red-50 text-red-700 dark:bg-red-400/15 dark:text-red-200";
+  }
+  return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
 }
 
 function getReadiness(carrier: CarrierItem) {
@@ -62,7 +68,8 @@ function getReadiness(carrier: CarrierItem) {
       icon: ShieldAlert,
       label: "Do not tender",
       detail: carrier.blockedReason || "Compliance has not cleared this carrier.",
-      className: "border-red-100 bg-red-50 text-red-800",
+      className:
+        "border-red-100 bg-red-50 text-red-800 dark:border-red-500/45 dark:bg-red-950/30 dark:text-red-100",
     };
   }
 
@@ -71,7 +78,8 @@ function getReadiness(carrier: CarrierItem) {
       icon: ShieldCheck,
       label: "Tender ready",
       detail: `Approved carrier${carrier.lastVettedAt ? ` · vetted ${carrier.lastVettedAt}` : ""}`,
-      className: "border-emerald-100 bg-emerald-50 text-emerald-800",
+      className:
+        "border-emerald-100 bg-emerald-50 text-emerald-800 dark:border-emerald-500/45 dark:bg-emerald-950/30 dark:text-emerald-100",
     };
   }
 
@@ -79,7 +87,8 @@ function getReadiness(carrier: CarrierItem) {
     icon: AlertTriangle,
     label: "Needs vetting",
     detail: "Finish authority, insurance, fraud, and callback checks before booking.",
-    className: "border-amber-100 bg-amber-50 text-amber-800",
+    className:
+      "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-500/45 dark:bg-amber-950/30 dark:text-amber-100",
   };
 }
 
@@ -114,17 +123,17 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
 
   return (
     <div className="grid gap-4">
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-700">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">
               Carrier desk
             </p>
-            <p className="mt-1 text-sm font-semibold text-slate-600">
+            <p className="mt-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
               Search capacity, confirm compliance, then open the carrier file before tendering.
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row xl:min-w-[820px] xl:justify-end">
+          <div className="flex flex-col gap-3 sm:flex-row xl:min-w-[720px] xl:justify-end">
             <label className="relative block flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -132,7 +141,7 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
                 placeholder="Search carrier, MC, DOT, contact, or lane"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="h-11 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium text-slate-950 placeholder:text-slate-400 outline-none focus:border-emerald-400 focus:bg-white"
+                className="h-11 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium text-slate-950 placeholder:text-slate-400 outline-none focus:border-emerald-400 focus:bg-white dark:border-slate-800 dark:bg-slate-950/55 dark:text-slate-100 dark:focus:bg-slate-950"
               />
             </label>
             <div className="flex flex-wrap gap-2">
@@ -144,8 +153,8 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
                   className={cn(
                     "rounded-md px-3 py-2 text-xs font-black transition-colors",
                     statusFilter === status
-                      ? "bg-slate-950 text-white"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                      ? "bg-slate-950 text-white dark:bg-slate-100 dark:text-slate-950"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
                   )}
                 >
                   {status}
@@ -164,13 +173,13 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-slate-100 bg-white py-12 text-center shadow-sm">
+        <div className="rounded-lg border border-slate-100 bg-white py-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
           <Truck className="mx-auto h-8 w-8 text-slate-300" />
-          <p className="mt-3 text-sm font-semibold text-slate-600">No carriers match your search</p>
+          <p className="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-300">No carriers match your search</p>
           <p className="mt-1 text-sm text-slate-400">Try a different name, MC number, DOT number, contact, or lane.</p>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((carrier) => {
             const readiness = getReadiness(carrier);
             const ReadinessIcon = readiness.icon;
@@ -183,7 +192,7 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
               <article
                 key={carrier.id}
                 className={cn(
-                  "overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md",
+                  "overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25 dark:hover:border-emerald-700 dark:hover:bg-slate-900",
                   complianceBorderClass(carrier.complianceStatus),
                 )}
               >
@@ -194,7 +203,7 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
                         <Truck className="h-4 w-4 flex-none text-slate-400" />
                         <Link
                           href={`/carriers/${carrier.id}`}
-                          className="truncate font-black text-slate-950 hover:text-emerald-700"
+                          className="truncate font-black text-slate-950 hover:text-emerald-700 dark:text-slate-50 dark:hover:text-emerald-300"
                         >
                           {carrier.company}
                         </Link>
@@ -226,15 +235,15 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
                       value={carrier.avgMargin > 0 ? `${carrier.avgMargin}%` : "-"}
                       valueClassName={
                         carrier.avgMargin > 15
-                          ? "text-emerald-700"
+                          ? "text-emerald-700 dark:text-emerald-300"
                           : carrier.avgMargin > 10
-                            ? "text-amber-700"
-                            : "text-slate-900"
+                            ? "text-amber-700 dark:text-amber-300"
+                            : "text-slate-900 dark:text-slate-50"
                       }
                     />
                   </div>
 
-                  <div className="mt-4 grid gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs">
+                  <div className="mt-4 grid gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-950/45 sm:grid-cols-2">
                     <ComplianceFact label="Authority" value={fieldValue(carrier.authorityStatus, "Check needed")} />
                     <ComplianceFact label="Insurance" value={fieldValue(carrier.insuranceStatus, "Check needed")} />
                     <ComplianceFact label="Safety" value={fieldValue(carrier.safetyRating, "Rating needed")} />
@@ -250,7 +259,7 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
                   </div>
 
                   {(hasEmail || hasPhone) && (
-                    <div className="mt-4 grid gap-1.5 text-sm text-slate-600">
+                    <div className="mt-4 grid gap-1.5 text-sm text-slate-600 dark:text-slate-300">
                       {hasEmail && (
                         <div className="flex items-center gap-2">
                           <Mail className="h-3.5 w-3.5 flex-none text-slate-400" />
@@ -272,7 +281,7 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
                       {carrier.preferredLanes.slice(0, 3).map((lane) => (
                         <span
                           key={lane}
-                          className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600"
+                          className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                         >
                           {lane}
                         </span>
@@ -285,14 +294,14 @@ export function CarrierListFilter({ carriers }: { carriers: CarrierItem[] }) {
                     </div>
                   )}
 
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                       {carrier.issuesCount ? `${carrier.issuesCount} issue${carrier.issuesCount === 1 ? "" : "s"}` : "No open internal issues"}
                     </div>
                     <Link
                       href={`/carriers/${carrier.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-slate-950 px-3 py-2 text-xs font-black text-white hover:bg-slate-800"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-slate-950 px-3 py-2 text-xs font-black text-white hover:bg-slate-800 dark:bg-slate-950 dark:ring-1 dark:ring-slate-700 dark:hover:bg-slate-900"
                     >
                       Open file
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -318,11 +327,11 @@ function ScoreTile({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-md bg-slate-50 p-2.5 text-center">
+    <div className="rounded-md bg-slate-50 p-2.5 text-center dark:bg-slate-950/45 dark:ring-1 dark:ring-white/5">
       <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
         {label}
       </p>
-      <p className={cn("mt-1 text-xl font-black text-slate-900", valueClassName)}>
+      <p className={cn("mt-1 text-xl font-black text-slate-900 dark:text-slate-50", valueClassName)}>
         {value}
       </p>
     </div>
@@ -333,7 +342,7 @@ function ComplianceFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="font-black uppercase tracking-[0.12em] text-slate-400">{label}</span>
-      <span className="text-right font-semibold text-slate-700">{value}</span>
+      <span className="text-right font-semibold text-slate-700 dark:text-slate-300">{value}</span>
     </div>
   );
 }

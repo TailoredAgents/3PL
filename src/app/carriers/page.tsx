@@ -8,11 +8,26 @@ import { getCarrierViews } from "@/lib/crm";
 export const dynamic = "force-dynamic";
 
 const CARD_ACCENTS = [
-  { border: "border-l-[3px] border-l-amber-400", icon: "bg-amber-50 text-amber-700" },
-  { border: "border-l-[3px] border-l-emerald-400", icon: "bg-emerald-50 text-emerald-700" },
-  { border: "border-l-[3px] border-l-sky-400", icon: "bg-sky-50 text-sky-700" },
-  { border: "border-l-[3px] border-l-violet-400", icon: "bg-violet-50 text-violet-700" },
+  {
+    border: "border-l-[3px] border-l-amber-400",
+    icon: "bg-amber-50 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  },
+  {
+    border: "border-l-[3px] border-l-emerald-400",
+    icon: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-200",
+  },
+  {
+    border: "border-l-[3px] border-l-sky-400",
+    icon: "bg-sky-50 text-sky-700 dark:bg-sky-400/15 dark:text-sky-200",
+  },
+  {
+    border: "border-l-[3px] border-l-violet-400",
+    icon: "bg-violet-50 text-violet-700 dark:bg-violet-400/15 dark:text-violet-200",
+  },
 ] as const;
+
+const panelClass =
+  "overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm shadow-slate-950/5 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/25";
 
 export default async function CarriersPage() {
   const carrierViews = await getCarrierViews();
@@ -47,14 +62,14 @@ export default async function CarriersPage() {
         {metrics.map((item, i) => (
           <article
             key={item.label}
-            className={`overflow-hidden rounded-lg border border-slate-100 bg-white shadow-md shadow-slate-950/5 ${CARD_ACCENTS[i].border}`}
+            className={`${panelClass} ${CARD_ACCENTS[i].border}`}
           >
             <div className="p-5">
               <div className={`flex h-9 w-9 items-center justify-center rounded-md ${CARD_ACCENTS[i].icon}`}>
                 <item.icon className="h-4 w-4" />
               </div>
-              <p className="mt-4 text-sm font-medium text-slate-600">{item.label}</p>
-              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950">
+              <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-400">{item.label}</p>
+              <p className="mt-1 text-4xl font-bold tracking-tight text-slate-950 dark:text-slate-50">
                 {item.value}
               </p>
               <p className="mt-2 text-xs font-semibold text-slate-400">{item.helper}</p>
@@ -64,12 +79,12 @@ export default async function CarriersPage() {
       </section>
 
       {blocked > 0 ? (
-        <section className="rounded-lg border border-red-100 bg-red-50 p-4 text-red-950 shadow-sm">
+        <section className="rounded-lg border border-red-100 bg-red-50 p-4 text-red-950 shadow-sm dark:border-red-500/45 dark:bg-red-950/30 dark:text-red-100">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 text-red-600" />
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-red-600 dark:text-red-300" />
             <div>
               <p className="font-black">Blocked carrier review needed</p>
-              <p className="mt-1 text-sm leading-6 text-red-800">
+              <p className="mt-1 text-sm leading-6 text-red-800 dark:text-red-200">
                 {blocked} carrier {blocked === 1 ? "has" : "have"} a block or rejection signal. Do not tender until compliance clears the record.
               </p>
             </div>
@@ -78,14 +93,14 @@ export default async function CarriersPage() {
       ) : null}
 
       {/* Create carrier — collapsed by default */}
-      <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50">
+      <details className={`group ${panelClass}`}>
+        <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-950/45">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100">
-              <Plus className="h-4 w-4 text-slate-600" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800">
+              <Plus className="h-4 w-4 text-slate-600 dark:text-slate-300" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900">Add carrier</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Add carrier</p>
               <p className="text-xs text-slate-500">
                 Verify compliance before tendering loads
               </p>
@@ -98,7 +113,7 @@ export default async function CarriersPage() {
             Collapse
           </span>
         </summary>
-        <div className="border-t border-slate-200 p-5">
+        <div className="border-t border-slate-200 p-5 dark:border-slate-800">
           <CarrierCreateForm />
         </div>
       </details>
